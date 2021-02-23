@@ -50,8 +50,7 @@ export default class A4Lian extends React.Component {
     }
     _onChange=()=> {
       // console.log("_onChange");
-      let state1   =this.state;
-      this.setState(state1);
+      localStorage.setItem("a4_print",JSON.stringify(this.state));
       console.log(this.state);
       var a4=document.getElementById("id_a4");
       while(a4.firstChild)  a4.removeChild(a4.firstChild);
@@ -78,7 +77,16 @@ export default class A4Lian extends React.Component {
     document.getElementById("id_start").addEventListener("input",this.onChange);
     document.getElementById("id_num").addEventListener("input",this.onChange_num);
     document.getElementById("id_year").addEventListener("input",this.onChange_year);
+    let todos=localStorage.getItem("a4_print");
     let cfg={};
+    if (todos) {
+      try{
+        cfg=JSON.parse(todos);
+      }
+      catch(SyntaxError){
+        // cfg={};
+      }
+    }
     if(!cfg.start) cfg.start=1;
     if(!cfg.num) cfg.num=1;
     if(!cfg.year) {
@@ -104,6 +112,7 @@ export default class A4Lian extends React.Component {
     console.log(start);
     this.state.start=start;
     this._onChange();
+    
     // myredux.ItemActionCreators.start_change(start)
   }
   onChange_num=(event)=>{
