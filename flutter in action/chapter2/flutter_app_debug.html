@@ -1,0 +1,319 @@
+
+<!DOCTYPE html>
+
+<html lang="zh-cn">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>2.5 调试Flutter应用 &#8212; flutter in action 1.0 documentation</title>
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="flutter">
+<h1>2.5 调试Flutter应用<a class="headerlink" href="#flutter" title="Permalink to this headline">¶</a></h1>
+<p>有各种各样的工具和功能来帮助调试Flutter应用程序。</p>
+<div class="section" id="dart">
+<h2>Dart 分析器<a class="headerlink" href="#dart" title="Permalink to this headline">¶</a></h2>
+<p>在运行应用程序前，请运行<code class="docutils literal notranslate"><span class="pre">flutter</span> <span class="pre">analyze</span></code>测试你的代码。这个工具是一个静态代码检查工具，它是<code class="docutils literal notranslate"><span class="pre">dartanalyzer</span></code>工具的一个包装，主要用于分析代码并帮助开发者发现可能的错误，比如，Dart分析器大量使用了代码中的类型注释来帮助追踪问题，避免<code class="docutils literal notranslate"><span class="pre">var</span></code>、无类型的参数、无类型的列表文字等。</p>
+<p>如果你使用IntelliJ的Flutter插件，那么分析器在打开IDE时就已经自动启用了，如果读者使用的是其它IDE，强烈建议读者启用Dart 分析器，因为在大多数时候，Dart 分析器可以在代码运行前发现大多数问题。</p>
+</div>
+<div class="section" id="dart-observatory">
+<h2>Dart Observatory (语句级的单步调试和分析器)<a class="headerlink" href="#dart-observatory" title="Permalink to this headline">¶</a></h2>
+<p>如果我们使用<code class="docutils literal notranslate"><span class="pre">flutter</span> <span class="pre">run</span></code>启动应用程序，那么当它运行时，我们可以打开Observatory工具的Web页面，例如Observatory默认监听<a class="reference external" href="http://127.0.0.1:8100/">http://127.0.0.1:8100/</a>，可以在浏览器中直接打开该链接。直接使用语句级单步调试器连接到您的应用程序。如果您使用的是IntelliJ，则还可以使用其内置的调试器来调试您的应用程序。</p>
+<p>Observatory 同时支持分析、检查堆等。有关Observatory的更多信息请参考<a class="reference external" href="https://dart-lang.github.io/observatory/">Observatory 文档</a>。</p>
+<p>如果您使用Observatory进行分析，请确保通过<code class="docutils literal notranslate"><span class="pre">--profile</span></code>选项来运行<code class="docutils literal notranslate"><span class="pre">flutter</span> <span class="pre">run</span></code>命令来运行应用程序。 否则，配置文件中将出现的主要问题将是调试断言，以验证框架的各种不变量（请参阅下面的“调试模式断言”）。</p>
+</div>
+<div class="section" id="debugger">
+<h2><code class="docutils literal notranslate"><span class="pre">debugger()</span></code> 声明<a class="headerlink" href="#debugger" title="Permalink to this headline">¶</a></h2>
+<p>当使用Dart Observatory（或另一个Dart调试器，例如IntelliJ IDE中的调试器）时，可以使用该<code class="docutils literal notranslate"><span class="pre">debugger()</span></code>语句插入编程式断点。要使用这个，你必须添加<code class="docutils literal notranslate"><span class="pre">import</span> <span class="pre">'dart:developer';</span></code>到相关文件顶部。</p>
+<p><code class="docutils literal notranslate"><span class="pre">debugger()</span></code>语句采用一个可选<code class="docutils literal notranslate"><span class="pre">when</span></code>参数，您可以指定该参数仅在特定条件为真时中断，如下所示：</p>
+<div class="highlight-dart notranslate"><div class="highlight"><pre><span></span><span class="kt">void</span> <span class="n">someFunction</span><span class="p">(</span><span class="kt">double</span> <span class="n">offset</span><span class="p">)</span> <span class="p">{</span>
+  <span class="n">debugger</span><span class="p">(</span><span class="nl">when:</span> <span class="n">offset</span> <span class="o">&gt;</span> <span class="m">30.0</span><span class="p">);</span>
+  <span class="c1">// ...</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="printdebugprintflutter-logs">
+<h2><code class="docutils literal notranslate"><span class="pre">print</span></code>、<code class="docutils literal notranslate"><span class="pre">debugPrint</span></code>、<code class="docutils literal notranslate"><span class="pre">flutter</span> <span class="pre">logs</span></code><a class="headerlink" href="#printdebugprintflutter-logs" title="Permalink to this headline">¶</a></h2>
+<p>Dart <code class="docutils literal notranslate"><span class="pre">print()</span></code>功能将输出到系统控制台，您可以使用<code class="docutils literal notranslate"><span class="pre">flutter</span> <span class="pre">logs</span></code>来查看它（基本上是一个包装<code class="docutils literal notranslate"><span class="pre">adb</span> <span class="pre">logcat</span></code>）。</p>
+<p>如果你一次输出太多，那么Android有时会丢弃一些日志行。为了避免这种情况，您可以使用Flutter的<code class="docutils literal notranslate"><span class="pre">foundation</span></code>库中的<a class="reference external" href="https://docs.flutter.io/flutter/foundation/debugPrint.html"><code class="docutils literal notranslate"><span class="pre">debugPrint()</span></code></a>。 这是一个封装print，它将输出限制在一个级别，避免被Android内核丢弃。</p>
+<p>Flutter框架中的许多类都有<code class="docutils literal notranslate"><span class="pre">toString</span></code>实现。按照惯例，这些输出通常包括对象的<code class="docutils literal notranslate"><span class="pre">runtimeType</span></code>单行输出，通常在表单中ClassName(more information about this instance…)。 树中使用的一些类也具有<code class="docutils literal notranslate"><span class="pre">toStringDeep</span></code>，从该点返回整个子树的多行描述。已一些具有详细信息<code class="docutils literal notranslate"><span class="pre">toString</span></code>的类会实现一个<code class="docutils literal notranslate"><span class="pre">toStringShort</span></code>，它只返回对象的类型或其他非常简短的（一个或两个单词）描述。</p>
+</div>
+<div class="section" id="id1">
+<h2>调试模式断言<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h2>
+<p>在Flutter应用调试过程中，Dart <code class="docutils literal notranslate"><span class="pre">assert</span></code>语句被启用，并且Flutter框架使用它来执行许多运行时检查来验证是否违反一些不可变的规则。</p>
+<p>当一个不可变的规则被违反时，它被报告给控制台，并带有一些上下文信息来帮助追踪问题的根源。</p>
+<p>要关闭调试模式并使用发布模式，请使用<code class="docutils literal notranslate"><span class="pre">flutter</span> <span class="pre">run</span> <span class="pre">--release</span></code>运行您的应用程序。 这也关闭了Observatory调试器。一个中间模式可以关闭除Observatory之外所有调试辅助工具的，称为“profile mode”，用<code class="docutils literal notranslate"><span class="pre">--profile</span></code>替代<code class="docutils literal notranslate"><span class="pre">--release</span></code>即可。</p>
+</div>
+<div class="section" id="id2">
+<h2>调试应用程序层<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h2>
+<p>Flutter框架的每一层都提供了将其当前状态或事件转储(dump)到控制台（使用<code class="docutils literal notranslate"><span class="pre">debugPrint</span></code>）的功能。</p>
+<div class="section" id="widget">
+<h3>Widget 树<a class="headerlink" href="#widget" title="Permalink to this headline">¶</a></h3>
+<p>要转储Widgets树的状态，请调用<a class="reference external" href="https://docs.flutter.io/flutter/widgets/debugDumpApp.html"><code class="docutils literal notranslate"><span class="pre">debugDumpApp()</span></code></a>。 只要应用程序已经构建了至少一次（即在调用<code class="docutils literal notranslate"><span class="pre">build()</span></code>之后的任何时间），您可以在应用程序未处于构建阶段（即，不在<code class="docutils literal notranslate"><span class="pre">build()</span></code>方法内调用 ）的任何时间调用此方法（在调用<code class="docutils literal notranslate"><span class="pre">runApp()</span></code>之后）。</p>
+<p>如, 这个应用程序:</p>
+<div class="highlight-dart notranslate"><div class="highlight"><pre><span></span>import &#39;package:flutter/material.dart&#39;;
+
+void main() {
+  runApp(
+    new MaterialApp(
+      home: new AppHome(),
+    ),
+  );
+}
+
+class AppHome extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return new Material(
+      child: new Center(
+        child: new FlatButton(
+          onPressed: () {
+            debugDumpApp();
+          },
+          child: new Text(&#39;Dump App&#39;),
+        ),
+      ),
+    );
+  }
+}
+</pre></div>
+</div>
+<p>…会输出这样的内容（精确的细节会根据框架的版本、设备的大小等等而变化）：</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>I/flutter <span class="o">(</span> <span class="m">6559</span><span class="o">)</span>: WidgetsFlutterBinding - CHECKED MODE
+I/flutter <span class="o">(</span> <span class="m">6559</span><span class="o">)</span>: RenderObjectToWidgetAdapter&lt;RenderBox&gt;<span class="o">([</span>GlobalObjectKey RenderView<span class="o">(</span><span class="m">497039273</span><span class="o">)]</span><span class="p">;</span> renderObject: RenderView<span class="o">)</span>
+I/flutter <span class="o">(</span> <span class="m">6559</span><span class="o">)</span>: └MaterialApp<span class="o">(</span>state: _MaterialAppState<span class="o">(</span><span class="m">1009803148</span><span class="o">))</span>
+I/flutter <span class="o">(</span> <span class="m">6559</span><span class="o">)</span>:  └ScrollConfiguration<span class="o">()</span>
+I/flutter <span class="o">(</span> <span class="m">6559</span><span class="o">)</span>:   └AnimatedTheme<span class="o">(</span>duration: 200ms<span class="p">;</span> state: _AnimatedThemeState<span class="o">(</span><span class="m">543295893</span><span class="p">;</span> ticker inactive<span class="p">;</span> ThemeDataTween<span class="o">(</span>ThemeData<span class="o">(</span>Brightness.light Color<span class="o">(</span>0xff2196f3<span class="o">)</span> etc...<span class="o">)</span> → null<span class="o">)))</span>
+I/flutter <span class="o">(</span> <span class="m">6559</span><span class="o">)</span>:    └Theme<span class="o">(</span>ThemeData<span class="o">(</span>Brightness.light Color<span class="o">(</span>0xff2196f3<span class="o">)</span> etc...<span class="o">))</span>
+I/flutter <span class="o">(</span> <span class="m">6559</span><span class="o">)</span>:     └WidgetsApp<span class="o">([</span>GlobalObjectKey _MaterialAppState<span class="o">(</span><span class="m">1009803148</span><span class="o">)]</span><span class="p">;</span> state: _WidgetsAppState<span class="o">(</span><span class="m">552902158</span><span class="o">))</span>
+I/flutter <span class="o">(</span> <span class="m">6559</span><span class="o">)</span>:      └CheckedModeBanner<span class="o">()</span>
+I/flutter <span class="o">(</span> <span class="m">6559</span><span class="o">)</span>:       └Banner<span class="o">()</span>
+I/flutter <span class="o">(</span> <span class="m">6559</span><span class="o">)</span>:        └CustomPaint<span class="o">(</span>renderObject: RenderCustomPaint<span class="o">)</span>
+I/flutter <span class="o">(</span> <span class="m">6559</span><span class="o">)</span>:         └DefaultTextStyle<span class="o">(</span>inherit: true<span class="p">;</span> color: Color<span class="o">(</span>0xd0ff0000<span class="o">)</span><span class="p">;</span> family: <span class="s2">&quot;monospace&quot;</span><span class="p">;</span> size: <span class="m">48</span>.0<span class="p">;</span> weight: <span class="m">900</span><span class="p">;</span> decoration: double Color<span class="o">(</span>0xffffff00<span class="o">)</span> TextDecoration.underline<span class="o">)</span>
+I/flutter <span class="o">(</span> <span class="m">6559</span><span class="o">)</span>:          └MediaQuery<span class="o">(</span>MediaQueryData<span class="o">(</span>size: Size<span class="o">(</span><span class="m">411</span>.4, <span class="m">683</span>.4<span class="o">)</span>, devicePixelRatio: <span class="m">2</span>.625, textScaleFactor: <span class="m">1</span>.0, padding: EdgeInsets<span class="o">(</span><span class="m">0</span>.0, <span class="m">24</span>.0, <span class="m">0</span>.0, <span class="m">0</span>.0<span class="o">)))</span>
+I/flutter <span class="o">(</span> <span class="m">6559</span><span class="o">)</span>:           └LocaleQuery<span class="o">(</span>null<span class="o">)</span>
+I/flutter <span class="o">(</span> <span class="m">6559</span><span class="o">)</span>:            └Title<span class="o">(</span>color: Color<span class="o">(</span>0xff2196f3<span class="o">))</span>
+... <span class="c1">#省略剩余内容</span>
+</pre></div>
+</div>
+<p>这是一个“扁平化”的树，显示了通过各种构建函数投影的所有widget（如果你在widget树的根中调用<code class="docutils literal notranslate"><span class="pre">toStringDeepwidget</span></code>，这是你获得的树）。 你会看到很多在你的应用源代码中没有出现的widget，因为它们是被框架中widget的<code class="docutils literal notranslate"><span class="pre">build()</span></code>函数插入的。例如，<a class="reference external" href="https://docs.flutter.io/flutter/material/InkFeature-class.html"><code class="docutils literal notranslate"><span class="pre">InkFeature</span></code></a>是Material widget的一个实现细节 。</p>
+<p>当按钮从被按下变为被释放时debugDumpApp()被调用，FlatButton对象同时调用<code class="docutils literal notranslate"><span class="pre">setState()</span></code>，并将自己标记为”dirty”。 这就是为什么如果你看转储，你会看到特定的对象标记为“dirty”。您还可以查看已注册了哪些手势监听器; 在这种情况下，一个单一的GestureDetector被列出，并且监听“tap”手势（“tap”是<code class="docutils literal notranslate"><span class="pre">TapGestureDetector</span></code>的<code class="docutils literal notranslate"><span class="pre">toStringShort</span></code>函数输出的）</p>
+<p>如果您编写自己的widget，则可以通过覆盖<a class="reference external" href="https://docs.flutter.io/flutter/widgets/Widget/debugFillProperties.html"><code class="docutils literal notranslate"><span class="pre">debugFillProperties()</span></code></a>来添加信息。 将<a class="reference external" href="https://docs.flutter.io/flutter/foundation/DiagnosticsProperty-class.html">DiagnosticsProperty</a>对象作为方法参数，并调用父类方法。 该函数是该<code class="docutils literal notranslate"><span class="pre">toString</span></code>方法用来填充小部件描述信息的。</p>
+</div>
+<div class="section" id="id3">
+<h3>渲染树<a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h3>
+<p>如果您尝试调试布局问题，那么Widget树可能不够详细。在这种情况下，您可以通过调用<code class="docutils literal notranslate"><span class="pre">debugDumpRenderTree()</span></code>转储渲染树。 正如<code class="docutils literal notranslate"><span class="pre">debugDumpApp()</span></code>，除布局或绘制阶段外，您可以随时调用此函数。作为一般规则，从<a class="reference external" href="https://docs.flutter.io/flutter/scheduler/SchedulerBinding/addPersistentFrameCallback.html">frame 回调</a> 或事件处理器中调用它是最佳解决方案。</p>
+<p>要调用<code class="docutils literal notranslate"><span class="pre">debugDumpRenderTree()</span></code>，您需要添加<code class="docutils literal notranslate"><span class="pre">import'package:flutter/rendering.dart';</span></code>到您的源文件。</p>
+<p>上面这个小例子的输出结果如下所示：</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>I/flutter <span class="o">(</span> <span class="m">6559</span><span class="o">)</span>: RenderView
+I/flutter <span class="o">(</span> <span class="m">6559</span><span class="o">)</span>:  │ debug mode enabled - android
+I/flutter <span class="o">(</span> <span class="m">6559</span><span class="o">)</span>:  │ window size: Size<span class="o">(</span><span class="m">1080</span>.0, <span class="m">1794</span>.0<span class="o">)</span> <span class="o">(</span>in physical pixels<span class="o">)</span>
+I/flutter <span class="o">(</span> <span class="m">6559</span><span class="o">)</span>:  │ device pixel ratio: <span class="m">2</span>.625 <span class="o">(</span>physical pixels per logical pixel<span class="o">)</span>
+I/flutter <span class="o">(</span> <span class="m">6559</span><span class="o">)</span>:  │ configuration: Size<span class="o">(</span><span class="m">411</span>.4, <span class="m">683</span>.4<span class="o">)</span> at <span class="m">2</span>.625x <span class="o">(</span>in logical pixels<span class="o">)</span>
+I/flutter <span class="o">(</span> <span class="m">6559</span><span class="o">)</span>:  │
+I/flutter <span class="o">(</span> <span class="m">6559</span><span class="o">)</span>:  └─child: RenderCustomPaint
+I/flutter <span class="o">(</span> <span class="m">6559</span><span class="o">)</span>:    │ creator: CustomPaint ← Banner ← CheckedModeBanner ←
+I/flutter <span class="o">(</span> <span class="m">6559</span><span class="o">)</span>:    │   WidgetsApp-<span class="o">[</span>GlobalObjectKey _MaterialAppState<span class="o">(</span><span class="m">1009803148</span><span class="o">)]</span> ←
+I/flutter <span class="o">(</span> <span class="m">6559</span><span class="o">)</span>:    │   Theme ← AnimatedTheme ← ScrollConfiguration ← MaterialApp ←
+I/flutter <span class="o">(</span> <span class="m">6559</span><span class="o">)</span>:    │   <span class="o">[</span>root<span class="o">]</span>
+I/flutter <span class="o">(</span> <span class="m">6559</span><span class="o">)</span>:    │ parentData: &lt;none&gt;
+I/flutter <span class="o">(</span> <span class="m">6559</span><span class="o">)</span>:    │ constraints: BoxConstraints<span class="o">(</span><span class="nv">w</span><span class="o">=</span><span class="m">411</span>.4, <span class="nv">h</span><span class="o">=</span><span class="m">683</span>.4<span class="o">)</span>
+I/flutter <span class="o">(</span> <span class="m">6559</span><span class="o">)</span>:    │ size: Size<span class="o">(</span><span class="m">411</span>.4, <span class="m">683</span>.4<span class="o">)</span>
+... <span class="c1"># 省略</span>
+</pre></div>
+</div>
+<p>这是根<code class="docutils literal notranslate"><span class="pre">RenderObject</span></code>对象的<code class="docutils literal notranslate"><span class="pre">toStringDeep</span></code>函数的输出。</p>
+<p>当调试布局问题时，关键要看的是<code class="docutils literal notranslate"><span class="pre">size</span></code>和<code class="docutils literal notranslate"><span class="pre">constraints</span></code>字段。约束沿着树向下传递，尺寸向上传递。</p>
+<p>如果您编写自己的渲染对象，则可以通过覆盖<a class="reference external" href="https://docs.flutter.io/flutter/rendering/Layer/debugFillProperties.html"><code class="docutils literal notranslate"><span class="pre">debugFillProperties()</span></code></a>将信息添加到转储。 将<a class="reference external" href="https://docs.flutter.io/flutter/foundation/DiagnosticsProperty-class.html">DiagnosticsProperty</a>对象作为方法的参数，并调用父类方法。</p>
+</div>
+<div class="section" id="layer">
+<h3>Layer树<a class="headerlink" href="#layer" title="Permalink to this headline">¶</a></h3>
+<p>读者可以理解为渲染树是可以分层的，而最终绘制需要将不同的层合成起来，而Layer则是绘制时需要合成的层，如果您尝试调试合成问题，则可以使用<a class="reference external" href="https://docs.flutter.io/flutter/rendering/debugDumpLayerTree.html"><code class="docutils literal notranslate"><span class="pre">debugDumpLayerTree()</span></code></a>。对于上面的例子，它会输出：</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>I/flutter : TransformLayer
+I/flutter :  │ creator: [root]
+I/flutter :  │ offset: Offset(0.0, 0.0)
+I/flutter :  │ transform:
+I/flutter :  │   [0] 3.5,0.0,0.0,0.0
+I/flutter :  │   [1] 0.0,3.5,0.0,0.0
+I/flutter :  │   [2] 0.0,0.0,1.0,0.0
+I/flutter :  │   [3] 0.0,0.0,0.0,1.0
+I/flutter :  │
+I/flutter :  ├─child 1: OffsetLayer
+I/flutter :  │ │ creator: RepaintBoundary ← _FocusScope ← Semantics ← Focus-[GlobalObjectKey MaterialPageRoute(560156430)] ← _ModalScope-[GlobalKey 328026813] ← _OverlayEntry-[GlobalKey 388965355] ← Stack ← Overlay-[GlobalKey 625702218] ← Navigator-[GlobalObjectKey _MaterialAppState(859106034)] ← Title ← ⋯
+I/flutter :  │ │ offset: Offset(0.0, 0.0)
+I/flutter :  │ │
+I/flutter :  │ └─child 1: PictureLayer
+I/flutter :  │
+I/flutter :  └─child 2: PictureLayer
+</pre></div>
+</div>
+<p>这是根<code class="docutils literal notranslate"><span class="pre">Layer</span></code>的<code class="docutils literal notranslate"><span class="pre">toStringDeep</span></code>输出的。</p>
+<p>根部的变换是应用设备像素比的变换; 在这种情况下，每个逻辑像素代表3.5个设备像素。</p>
+<p><code class="docutils literal notranslate"><span class="pre">RepaintBoundary</span></code> widget在渲染树的层中创建了一个<code class="docutils literal notranslate"><span class="pre">RenderRepaintBoundary</span></code>。这用于减少需要重绘的需求量。</p>
+</div>
+</div>
+<div class="section" id="id4">
+<h2>语义<a class="headerlink" href="#id4" title="Permalink to this headline">¶</a></h2>
+<p>您还可以调用<a class="reference external" href="https://docs.flutter.io/flutter/rendering/debugDumpSemanticsTree.html"><code class="docutils literal notranslate"><span class="pre">debugDumpSemanticsTree()</span></code></a>获取语义树（呈现给系统可访问性API的树）的转储。 要使用此功能，必须首先启用辅助功能，例如启用系统辅助工具或<code class="docutils literal notranslate"><span class="pre">SemanticsDebugger</span></code> （下面讨论）。</p>
+<p>对于上面的例子，它会输出:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>I/flutter : SemanticsNode(0; Rect.fromLTRB(0.0, 0.0, 411.4, 683.4))
+I/flutter :  ├SemanticsNode(1; Rect.fromLTRB(0.0, 0.0, 411.4, 683.4))
+I/flutter :  │ └SemanticsNode(2; Rect.fromLTRB(0.0, 0.0, 411.4, 683.4); canBeTapped)
+I/flutter :  └SemanticsNode(3; Rect.fromLTRB(0.0, 0.0, 411.4, 683.4))
+I/flutter :    └SemanticsNode(4; Rect.fromLTRB(0.0, 0.0, 82.0, 36.0); canBeTapped; &quot;Dump App&quot;)
+</pre></div>
+</div>
+</div>
+<div class="section" id="id5">
+<h2>调度<a class="headerlink" href="#id5" title="Permalink to this headline">¶</a></h2>
+<p>要找出相对于帧的开始/结束事件发生的位置，可以切换<a class="reference external" href="https://docs.flutter.io/flutter/scheduler/debugPrintBeginFrameBanner.html"><code class="docutils literal notranslate"><span class="pre">debugPrintBeginFrameBanner</span></code></a>和<a class="reference external" href="https://docs.flutter.io/flutter/scheduler/debugPrintEndFrameBanner.html"><code class="docutils literal notranslate"><span class="pre">debugPrintEndFrameBanner</span></code></a>布尔值以将帧的开始和结束打印到控制台。</p>
+<p>例如:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>I/flutter : ▄▄▄▄▄▄▄▄ Frame 12         30s 437.086ms ▄▄▄▄▄▄▄▄
+I/flutter : Debug print: Am I performing this work more than once per frame?
+I/flutter : Debug print: Am I performing this work more than once per frame?
+I/flutter : ▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀
+</pre></div>
+</div>
+<p><a class="reference external" href="https://docs.flutter.io/flutter/scheduler/debugPrintScheduleFrameStacks.html"><code class="docutils literal notranslate"><span class="pre">debugPrintScheduleFrameStacks</span></code></a>还可以用来打印导致当前帧被调度的调用堆栈。</p>
+</div>
+<div class="section" id="id6">
+<h2>可视化调试<a class="headerlink" href="#id6" title="Permalink to this headline">¶</a></h2>
+<p>您也可以通过设置<code class="docutils literal notranslate"><span class="pre">debugPaintSizeEnabled</span></code>为<code class="docutils literal notranslate"><span class="pre">true</span></code>以可视方式调试布局问题。 这是来自<code class="docutils literal notranslate"><span class="pre">rendering</span></code>库的布尔值。它可以在任何时候启用，并在为true时影响绘制。 设置它的最简单方法是在<code class="docutils literal notranslate"><span class="pre">void</span> <span class="pre">main()</span></code>的顶部设置。</p>
+<p>当它被启用时，所有的盒子都会得到一个明亮的深青色边框，padding（来自widget如Padding）显示为浅蓝色，子widget周围有一个深蓝色框， 对齐方式（来自widget如Center和Align）显示为黄色箭头. 空白（如没有任何子节点的Container）以灰色显示。</p>
+<p><a class="reference external" href="https://docs.flutter.io/flutter/rendering/debugPaintBaselinesEnabled.html"><code class="docutils literal notranslate"><span class="pre">debugPaintBaselinesEnabled</span></code></a>做了类似的事情，但对于具有基线的对象，文字基线以绿色显示，表意(ideographic)基线以橙色显示。</p>
+<p><a class="reference external" href="https://docs.flutter.io/flutter/rendering/debugPaintPointersEnabled.html"><code class="docutils literal notranslate"><span class="pre">debugPaintPointersEnabled</span></code></a>标志打开一个特殊模式，任何正在点击的对象都会以深青色突出显示。 这可以帮助您确定某个对象是否以某种不正确的方式进行hit测试（Flutter检测点击的位置是否有能响应用户操作的widget）,例如，如果它实际上超出了其父项的范围，首先不会考虑通过hit测试。</p>
+<p>如果您尝试调试合成图层，例如以确定是否以及在何处添加<code class="docutils literal notranslate"><span class="pre">RepaintBoundary</span></code> widget，则可以使用<a class="reference external" href="https://docs.flutter.io/flutter/rendering/debugPaintLayerBordersEnabled.html"><code class="docutils literal notranslate"><span class="pre">debugPaintLayerBordersEnabled</span></code></a> 标志， 该标志用橙色或轮廓线标出每个层的边界，或者使用<a class="reference external" href="https://docs.flutter.io/flutter/rendering/debugRepaintRainbowEnabled.html"><code class="docutils literal notranslate"><span class="pre">debugRepaintRainbowEnabled</span></code></a>标志， 只要他们重绘时，这会使该层被一组旋转色所覆盖。</p>
+<p>所有这些标志只能在调试模式下工作。通常，Flutter框架中以“<code class="docutils literal notranslate"><span class="pre">debug...</span></code>” 开头的任何内容都只能在调试模式下工作。</p>
+</div>
+<div class="section" id="id7">
+<h2>调试动画<a class="headerlink" href="#id7" title="Permalink to this headline">¶</a></h2>
+<p>调试动画最简单的方法是减慢它们的速度。为此，请将<a class="reference external" href="https://docs.flutter.io/flutter/scheduler/timeDilation.html"><code class="docutils literal notranslate"><span class="pre">timeDilation</span></code></a>变量（在scheduler库中）设置为大于1.0的数字，例如50.0。 最好在应用程序启动时只设置一次。如果您在运行中更改它，尤其是在动画运行时将其值改小，则在观察时可能会出现倒退，这可能会导致断言命中，并且这通常会干扰我们的开发工作。</p>
+</div>
+<div class="section" id="id8">
+<h2>调试性能问题<a class="headerlink" href="#id8" title="Permalink to this headline">¶</a></h2>
+<p>要了解您的应用程序导致重新布局或重新绘制的原因，您可以分别设置<a class="reference external" href="https://docs.flutter.io/flutter/rendering/debugPrintMarkNeedsLayoutStacks.html"><code class="docutils literal notranslate"><span class="pre">debugPrintMarkNeedsLayoutStacks</span></code></a>和 <a class="reference external" href="https://docs.flutter.io/flutter/rendering/debugPrintMarkNeedsPaintStacks.html"><code class="docutils literal notranslate"><span class="pre">debugPrintMarkNeedsPaintStacks</span></code></a>标志。 每当渲染盒被要求重新布局和重新绘制时，这些都会将堆栈跟踪记录到控制台。如果这种方法对您有用，您可以使用<code class="docutils literal notranslate"><span class="pre">services</span></code>库中的<code class="docutils literal notranslate"><span class="pre">debugPrintStack()</span></code>方法按需打印堆栈痕迹。</p>
+</div>
+<div class="section" id="id9">
+<h2>统计应用启动时间<a class="headerlink" href="#id9" title="Permalink to this headline">¶</a></h2>
+<p>要收集有关Flutter应用程序启动所需时间的详细信息，可以在运行<code class="docutils literal notranslate"><span class="pre">flutter</span> <span class="pre">run</span></code>时使用<code class="docutils literal notranslate"><span class="pre">trace-startup</span></code>和<code class="docutils literal notranslate"><span class="pre">profile</span></code>选项。</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>$ flutter run --trace-startup --profile
+</pre></div>
+</div>
+<p>跟踪输出保存为<code class="docutils literal notranslate"><span class="pre">start_up_info.json</span></code>，在Flutter工程目录在build目录下。输出列出了从应用程序启动到这些跟踪事件（以微秒捕获）所用的时间：</p>
+<ul class="simple">
+<li><p>进入Flutter引擎时.</p></li>
+<li><p>展示应用第一帧时.</p></li>
+<li><p>初始化Flutter框架时.</p></li>
+<li><p>完成Flutter框架初始化时.</p></li>
+</ul>
+<p>如 :</p>
+<div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+  <span class="nt">&quot;engineEnterTimestampMicros&quot;</span><span class="p">:</span> <span class="mi">96025565262</span><span class="p">,</span>
+  <span class="nt">&quot;timeToFirstFrameMicros&quot;</span><span class="p">:</span> <span class="mi">2171978</span><span class="p">,</span>
+  <span class="nt">&quot;timeToFrameworkInitMicros&quot;</span><span class="p">:</span> <span class="mi">514585</span><span class="p">,</span>
+  <span class="nt">&quot;timeAfterFrameworkInitMicros&quot;</span><span class="p">:</span> <span class="mi">1657393</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="id10">
+<h2>跟踪Dart代码性能<a class="headerlink" href="#id10" title="Permalink to this headline">¶</a></h2>
+<p>要执行自定义性能跟踪和测量Dart任意代码段的wall/CPU时间（类似于在Android上使用<a class="reference external" href="https://developer.android.com/studio/profile/systrace.html">systrace</a>）。 使用<code class="docutils literal notranslate"><span class="pre">dart:developer</span></code>的<a class="reference external" href="https://api.dartlang.org/stable/dart-developer/Timeline-class.html">Timeline</a>工具来包含你想测试的代码块，例如：</p>
+<div class="highlight-dart notranslate"><div class="highlight"><pre><span></span><span class="n">Timeline</span><span class="p">.</span><span class="n">startSync</span><span class="p">(</span><span class="s1">&#39;interesting function&#39;</span><span class="p">);</span>
+<span class="c1">// iWonderHowLongThisTakes();</span>
+<span class="n">Timeline</span><span class="p">.</span><span class="n">finishSync</span><span class="p">();</span>
+</pre></div>
+</div>
+<p>然后打开你应用程序的Observatory timeline页面，在“Recorded Streams”中选择‘Dart’复选框，并执行你想测量的功能。</p>
+<p>刷新页面将在Chrome的<a class="reference external" href="https://www.chromium.org/developers/how-tos/trace-event-profiling-tool">跟踪工具</a>中显示应用按时间顺序排列的timeline记录。</p>
+<p>请确保运行<code class="docutils literal notranslate"><span class="pre">flutter</span> <span class="pre">run</span></code>时带有<code class="docutils literal notranslate"><span class="pre">--profile</span></code>标志，以确保运行时性能特征与您的最终产品差异最小。</p>
+</div>
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">flutter in action</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2021, mahongquan.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.5.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="../_sources/chapter2/flutter_app_debug.md.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

@@ -1,0 +1,155 @@
+
+<!DOCTYPE html>
+
+<html lang="zh-cn">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>5.3 装饰容器DecoratedBox &#8212; flutter in action 1.0 documentation</title>
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="decoratedbox">
+<h1>5.3 装饰容器DecoratedBox<a class="headerlink" href="#decoratedbox" title="Permalink to this headline">¶</a></h1>
+<p><code class="docutils literal notranslate"><span class="pre">DecoratedBox</span></code>可以在其子组件绘制前(或后)绘制一些装饰（Decoration），如背景、边框、渐变等。<code class="docutils literal notranslate"><span class="pre">DecoratedBox</span></code>定义如下：</p>
+<div class="highlight-dart notranslate"><div class="highlight"><pre><span></span><span class="kd">const</span> <span class="n">DecoratedBox</span><span class="p">({</span>
+  <span class="n">Decoration</span> <span class="n">decoration</span><span class="p">,</span>
+  <span class="n">DecorationPosition</span> <span class="n">position</span> <span class="o">=</span> <span class="n">DecorationPosition</span><span class="p">.</span><span class="n">background</span><span class="p">,</span>
+  <span class="n">Widget</span> <span class="n">child</span>
+<span class="p">})</span>
+</pre></div>
+</div>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">decoration</span></code>：代表将要绘制的装饰，它的类型为<code class="docutils literal notranslate"><span class="pre">Decoration</span></code>。<code class="docutils literal notranslate"><span class="pre">Decoration</span></code>是一个抽象类，它定义了一个接口 <code class="docutils literal notranslate"><span class="pre">createBoxPainter()</span></code>，子类的主要职责是需要通过实现它来创建一个画笔，该画笔用于绘制装饰。</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">position</span></code>：此属性决定在哪里绘制<code class="docutils literal notranslate"><span class="pre">Decoration</span></code>，它接收<code class="docutils literal notranslate"><span class="pre">DecorationPosition</span></code>的枚举类型，该枚举类有两个值：</p>
+<ul>
+<li><p><code class="docutils literal notranslate"><span class="pre">background</span></code>：在子组件之后绘制，即背景装饰。</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">foreground</span></code>：在子组件之上绘制，即前景。</p></li>
+</ul>
+</li>
+</ul>
+<div class="section" id="boxdecoration">
+<h2>BoxDecoration<a class="headerlink" href="#boxdecoration" title="Permalink to this headline">¶</a></h2>
+<p>我们通常会直接使用<code class="docutils literal notranslate"><span class="pre">BoxDecoration</span></code>类，它是一个Decoration的子类，实现了常用的装饰元素的绘制。</p>
+<div class="highlight-dart notranslate"><div class="highlight"><pre><span></span><span class="n">BoxDecoration</span><span class="p">({</span>
+  <span class="n">Color</span> <span class="n">color</span><span class="p">,</span> <span class="c1">//颜色</span>
+  <span class="n">DecorationImage</span> <span class="n">image</span><span class="p">,</span><span class="c1">//图片</span>
+  <span class="n">BoxBorder</span> <span class="n">border</span><span class="p">,</span> <span class="c1">//边框</span>
+  <span class="n">BorderRadiusGeometry</span> <span class="n">borderRadius</span><span class="p">,</span> <span class="c1">//圆角</span>
+  <span class="n">List</span><span class="o">&lt;</span><span class="n">BoxShadow</span><span class="o">&gt;</span> <span class="n">boxShadow</span><span class="p">,</span> <span class="c1">//阴影,可以指定多个</span>
+  <span class="n">Gradient</span> <span class="n">gradient</span><span class="p">,</span> <span class="c1">//渐变</span>
+  <span class="n">BlendMode</span> <span class="n">backgroundBlendMode</span><span class="p">,</span> <span class="c1">//背景混合模式</span>
+  <span class="n">BoxShape</span> <span class="n">shape</span> <span class="o">=</span> <span class="n">BoxShape</span><span class="p">.</span><span class="n">rectangle</span><span class="p">,</span> <span class="c1">//形状</span>
+<span class="p">})</span>
+</pre></div>
+</div>
+<p>各个属性名都是自解释的，详情读者可以查看API文档。下面我们实现一个带阴影的背景色渐变的按钮：</p>
+<div class="highlight-dart notranslate"><div class="highlight"><pre><span></span> <span class="n">DecoratedBox</span><span class="p">(</span>
+    <span class="nl">decoration:</span> <span class="n">BoxDecoration</span><span class="p">(</span>
+      <span class="nl">gradient:</span> <span class="n">LinearGradient</span><span class="p">(</span><span class="nl">colors:</span><span class="p">[</span><span class="n">Colors</span><span class="p">.</span><span class="n">red</span><span class="p">,</span><span class="n">Colors</span><span class="p">.</span><span class="n">orange</span><span class="p">[</span><span class="m">700</span><span class="p">]]),</span> <span class="c1">//背景渐变</span>
+      <span class="nl">borderRadius:</span> <span class="n">BorderRadius</span><span class="p">.</span><span class="n">circular</span><span class="p">(</span><span class="m">3.0</span><span class="p">),</span> <span class="c1">//3像素圆角</span>
+      <span class="nl">boxShadow:</span> <span class="p">[</span> <span class="c1">//阴影</span>
+        <span class="n">BoxShadow</span><span class="p">(</span>
+            <span class="nl">color:</span><span class="n">Colors</span><span class="p">.</span><span class="n">black54</span><span class="p">,</span>
+            <span class="nl">offset:</span> <span class="n">Offset</span><span class="p">(</span><span class="m">2.0</span><span class="p">,</span><span class="m">2.0</span><span class="p">),</span>
+            <span class="nl">blurRadius:</span> <span class="m">4.0</span>
+        <span class="p">)</span>
+      <span class="p">]</span>
+    <span class="p">),</span>
+  <span class="nl">child:</span> <span class="n">Padding</span><span class="p">(</span><span class="nl">padding:</span> <span class="n">EdgeInsets</span><span class="p">.</span><span class="n">symmetric</span><span class="p">(</span><span class="nl">horizontal:</span> <span class="m">80.0</span><span class="p">,</span> <span class="nl">vertical:</span> <span class="m">18.0</span><span class="p">),</span>
+    <span class="nl">child:</span> <span class="n">Text</span><span class="p">(</span><span class="s2">&quot;Login&quot;</span><span class="p">,</span> <span class="nl">style:</span> <span class="n">TextStyle</span><span class="p">(</span><span class="nl">color:</span> <span class="n">Colors</span><span class="p">.</span><span class="n">white</span><span class="p">),),</span>
+  <span class="p">)</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p>运行后效果如图5-9所示：</p>
+<p><img alt="图5-9" src="../_images/5-9.png" /></p>
+<p>怎么样，通过<code class="docutils literal notranslate"><span class="pre">BoxDecoration</span></code>我们实现了一个渐变按钮的外观，但此示例还不是一个标准的按钮，因为它还不能响应点击事件，我们将在后面“自定义组件”一章中实现一个完整功能的<code class="docutils literal notranslate"><span class="pre">GradientButton</span></code>。另外，上面的例子中使用了<code class="docutils literal notranslate"><span class="pre">LinearGradient</span></code>类，它用于定义线性渐变的类，Flutter中还提供了其它渐变配置类，如<code class="docutils literal notranslate"><span class="pre">RadialGradient</span></code>、<code class="docutils literal notranslate"><span class="pre">SweepGradient</span></code>，读者若有需要可以自行查看API文档。</p>
+</div>
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">flutter in action</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2021, mahongquan.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.5.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="../_sources/chapter5/decoratedbox.md.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

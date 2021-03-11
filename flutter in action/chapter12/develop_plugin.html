@@ -1,0 +1,171 @@
+
+<!DOCTYPE html>
+
+<html lang="zh-cn">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>12.3 开发Flutter插件 &#8212; flutter in action 1.0 documentation</title>
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="flutter">
+<h1>12.3 开发Flutter插件<a class="headerlink" href="#flutter" title="Permalink to this headline">¶</a></h1>
+<p>下面我们通过一个获取电池电量的插件来介绍一下Flutter插件的开发流程。该插件中我们在Dart中通过<code class="docutils literal notranslate"><span class="pre">getBatteryLevel</span></code> 调用Android <code class="docutils literal notranslate"><span class="pre">BatteryManager</span></code> API和iOS <code class="docutils literal notranslate"><span class="pre">device.batteryLevel</span></code> API。</p>
+<div class="section" id="id1">
+<h2>创建一个新的应用程序项目<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h2>
+<p>首先创建一个新的应用程序:</p>
+<ul class="simple">
+<li><p>在终端中运行：<code class="docutils literal notranslate"><span class="pre">flutter</span> <span class="pre">create</span> <span class="pre">batterylevel</span></code></p></li>
+</ul>
+<p>默认情况下，模板支持使用Java编写Android代码，或使用Objective-C编写iOS代码。要使用Kotlin或Swift，请使用-i和/或-a标志:</p>
+<ul class="simple">
+<li><p>在终端中运行: <code class="docutils literal notranslate"><span class="pre">flutter</span> <span class="pre">create</span> <span class="pre">-i</span> <span class="pre">swift</span> <span class="pre">-a</span> <span class="pre">kotlin</span> <span class="pre">batterylevel</span></code></p></li>
+</ul>
+</div>
+<div class="section" id="id2">
+<h2>创建Flutter平台客户端<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h2>
+<p>该应用的<code class="docutils literal notranslate"><span class="pre">State</span></code>类拥有当前的应用状态。我们需要延长这一点以保持当前的电量</p>
+<p>首先，我们构建通道。我们使用<code class="docutils literal notranslate"><span class="pre">MethodChannel</span></code>调用一个方法来返回电池电量。</p>
+<p>通道的客户端和宿主通过通道构造函数中传递的通道名称进行连接。单个应用中使用的所有通道名称必须是唯一的; 我们建议在通道名称前加一个唯一的“域名前缀”，例如<code class="docutils literal notranslate"><span class="pre">samples.flutter.io/battery</span></code>。</p>
+<div class="highlight-dart notranslate"><div class="highlight"><pre><span></span><span class="k">import</span> <span class="s1">&#39;dart:async&#39;</span><span class="p">;</span>
+
+<span class="k">import</span> <span class="s1">&#39;package:flutter/material.dart&#39;</span><span class="p">;</span>
+<span class="k">import</span> <span class="s1">&#39;package:flutter/services.dart&#39;</span><span class="p">;</span>
+<span class="p">...</span>
+<span class="kd">class</span> <span class="nc">_MyHomePageState</span> <span class="kd">extends</span> <span class="n">State</span><span class="o">&lt;</span><span class="n">MyHomePage</span><span class="o">&gt;</span> <span class="p">{</span>
+  <span class="kd">static</span> <span class="kd">const</span> <span class="n">platform</span> <span class="o">=</span> <span class="kd">const</span> <span class="n">MethodChannel</span><span class="p">(</span><span class="s1">&#39;samples.flutter.io/battery&#39;</span><span class="p">);</span>
+
+  <span class="c1">// Get battery level.</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>接下来，我们调用通道上的方法，指定通过字符串标识符调用方法<code class="docutils literal notranslate"><span class="pre">getBatteryLevel</span></code>。 该调用可能失败(平台不支持平台API，例如在模拟器中运行时)，所以我们将invokeMethod调用包装在try-catch语句中。</p>
+<p>我们使用返回的结果，在<code class="docutils literal notranslate"><span class="pre">setState</span></code>中来更新用户界面状态<code class="docutils literal notranslate"><span class="pre">batteryLevel</span></code>。</p>
+<div class="highlight-dart notranslate"><div class="highlight"><pre><span></span>  <span class="c1">// Get battery level.</span>
+  <span class="kt">String</span> <span class="n">_batteryLevel</span> <span class="o">=</span> <span class="s1">&#39;Unknown battery level.&#39;</span><span class="p">;</span>
+
+  <span class="n">Future</span><span class="o">&lt;</span><span class="n">Null</span><span class="o">&gt;</span> <span class="n">_getBatteryLevel</span><span class="p">()</span> <span class="kd">async</span> <span class="p">{</span>
+    <span class="kt">String</span> <span class="n">batteryLevel</span><span class="p">;</span>
+    <span class="k">try</span> <span class="p">{</span>
+      <span class="kd">final</span> <span class="kt">int</span> <span class="n">result</span> <span class="o">=</span> <span class="kd">await</span> <span class="n">platform</span><span class="p">.</span><span class="n">invokeMethod</span><span class="p">(</span><span class="s1">&#39;getBatteryLevel&#39;</span><span class="p">);</span>
+      <span class="n">batteryLevel</span> <span class="o">=</span> <span class="s1">&#39;Battery level at </span><span class="si">$</span><span class="n">result</span><span class="s1"> % .&#39;</span><span class="p">;</span>
+    <span class="p">}</span> <span class="n">on</span> <span class="n">PlatformException</span> <span class="k">catch</span> <span class="p">(</span><span class="n">e</span><span class="p">)</span> <span class="p">{</span>
+      <span class="n">batteryLevel</span> <span class="o">=</span> <span class="s2">&quot;Failed to get battery level: &#39;</span><span class="si">${</span><span class="n">e</span><span class="p">.</span><span class="n">message</span><span class="si">}</span><span class="s2">&#39;.&quot;</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="n">setState</span><span class="p">(()</span> <span class="p">{</span>
+      <span class="n">_batteryLevel</span> <span class="o">=</span> <span class="n">batteryLevel</span><span class="p">;</span>
+    <span class="p">});</span>
+  <span class="p">}</span>
+</pre></div>
+</div>
+<p>最后，我们在build创建包含一个小字体显示电池状态和一个用于刷新值的按钮的用户界面。</p>
+<div class="highlight-dart notranslate"><div class="highlight"><pre><span></span>@override
+Widget build(BuildContext context) {
+  return new Material(
+    child: new Center(
+      child: new Column(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        children: [
+          new RaisedButton(
+            child: new Text(&#39;Get Battery Level&#39;),
+            onPressed: _getBatteryLevel,
+          ),
+          new Text(_batteryLevel),
+        ],
+      ),
+    ),
+  );
+}
+</pre></div>
+</div>
+<p>至此Flutter部分的测试代码写好了，接下来我们需要实现Android和iOS平台下的API，由于平台API实现部分篇幅较大，我们将在接下来的两节中，分别介绍Android和iOS端API的实现。</p>
+</div>
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">flutter in action</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2021, mahongquan.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.5.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="../_sources/chapter12/develop_plugin.md.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

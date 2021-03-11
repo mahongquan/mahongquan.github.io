@@ -1,0 +1,187 @@
+
+<!DOCTYPE html>
+
+<html lang="zh-cn">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>4.5 层叠布局 Stack、Positioned &#8212; flutter in action 1.0 documentation</title>
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="stackpositioned">
+<h1>4.5 层叠布局 Stack、Positioned<a class="headerlink" href="#stackpositioned" title="Permalink to this headline">¶</a></h1>
+<p>层叠布局和Web中的绝对定位、Android中的Frame布局是相似的，子组件可以根据距父容器四个角的位置来确定自身的位置。绝对定位允许子组件堆叠起来（按照代码中声明的顺序）。Flutter中使用<code class="docutils literal notranslate"><span class="pre">Stack</span></code>和<code class="docutils literal notranslate"><span class="pre">Positioned</span></code>这两个组件来配合实现绝对定位。<code class="docutils literal notranslate"><span class="pre">Stack</span></code>允许子组件堆叠，而<code class="docutils literal notranslate"><span class="pre">Positioned</span></code>用于根据<code class="docutils literal notranslate"><span class="pre">Stack</span></code>的四个角来确定子组件的位置。</p>
+<div class="section" id="stack">
+<h2>Stack<a class="headerlink" href="#stack" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-dart notranslate"><div class="highlight"><pre><span></span><span class="n">Stack</span><span class="p">({</span>
+  <span class="k">this</span><span class="p">.</span><span class="n">alignment</span> <span class="o">=</span> <span class="n">AlignmentDirectional</span><span class="p">.</span><span class="n">topStart</span><span class="p">,</span>
+  <span class="k">this</span><span class="p">.</span><span class="n">textDirection</span><span class="p">,</span>
+  <span class="k">this</span><span class="p">.</span><span class="n">fit</span> <span class="o">=</span> <span class="n">StackFit</span><span class="p">.</span><span class="n">loose</span><span class="p">,</span>
+  <span class="k">this</span><span class="p">.</span><span class="n">overflow</span> <span class="o">=</span> <span class="n">Overflow</span><span class="p">.</span><span class="n">clip</span><span class="p">,</span>
+  <span class="n">List</span><span class="o">&lt;</span><span class="n">Widget</span><span class="o">&gt;</span> <span class="n">children</span> <span class="o">=</span> <span class="kd">const</span> <span class="o">&lt;</span><span class="n">Widget</span><span class="o">&gt;</span><span class="p">[],</span>
+<span class="p">})</span>
+</pre></div>
+</div>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">alignment</span></code>：此参数决定如何去对齐没有定位（没有使用<code class="docutils literal notranslate"><span class="pre">Positioned</span></code>）或部分定位的子组件。所谓部分定位，在这里<strong>特指没有在某一个轴上定位：</strong><code class="docutils literal notranslate"><span class="pre">left</span></code>、<code class="docutils literal notranslate"><span class="pre">right</span></code>为横轴，<code class="docutils literal notranslate"><span class="pre">top</span></code>、<code class="docutils literal notranslate"><span class="pre">bottom</span></code>为纵轴，只要包含某个轴上的一个定位属性就算在该轴上有定位。</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">textDirection</span></code>：和<code class="docutils literal notranslate"><span class="pre">Row</span></code>、<code class="docutils literal notranslate"><span class="pre">Wrap</span></code>的<code class="docutils literal notranslate"><span class="pre">textDirection</span></code>功能一样，都用于确定<code class="docutils literal notranslate"><span class="pre">alignment</span></code>对齐的参考系，即：<code class="docutils literal notranslate"><span class="pre">textDirection</span></code>的值为<code class="docutils literal notranslate"><span class="pre">TextDirection.ltr</span></code>，则<code class="docutils literal notranslate"><span class="pre">alignment</span></code>的<code class="docutils literal notranslate"><span class="pre">start</span></code>代表左，<code class="docutils literal notranslate"><span class="pre">end</span></code>代表右，即<code class="docutils literal notranslate"><span class="pre">从左往右</span></code>的顺序；<code class="docutils literal notranslate"><span class="pre">textDirection</span></code>的值为<code class="docutils literal notranslate"><span class="pre">TextDirection.rtl</span></code>，则alignment的<code class="docutils literal notranslate"><span class="pre">start</span></code>代表右，<code class="docutils literal notranslate"><span class="pre">end</span></code>代表左，即<code class="docutils literal notranslate"><span class="pre">从右往左</span></code>的顺序。</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">fit</span></code>：此参数用于确定<strong>没有定位</strong>的子组件如何去适应<code class="docutils literal notranslate"><span class="pre">Stack</span></code>的大小。<code class="docutils literal notranslate"><span class="pre">StackFit.loose</span></code>表示使用子组件的大小，<code class="docutils literal notranslate"><span class="pre">StackFit.expand</span></code>表示扩伸到<code class="docutils literal notranslate"><span class="pre">Stack</span></code>的大小。</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">overflow</span></code>：此属性决定如何显示超出<code class="docutils literal notranslate"><span class="pre">Stack</span></code>显示空间的子组件；值为<code class="docutils literal notranslate"><span class="pre">Overflow.clip</span></code>时，超出部分会被剪裁（隐藏），值为<code class="docutils literal notranslate"><span class="pre">Overflow.visible</span></code> 时则不会。</p></li>
+</ul>
+</div>
+<div class="section" id="positioned">
+<h2>Positioned<a class="headerlink" href="#positioned" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-dart notranslate"><div class="highlight"><pre><span></span>const Positioned({
+  Key key,
+  this.left, 
+  this.top,
+  this.right,
+  this.bottom,
+  this.width,
+  this.height,
+  @required Widget child,
+})
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">left</span></code>、<code class="docutils literal notranslate"><span class="pre">top</span></code> 、<code class="docutils literal notranslate"><span class="pre">right</span></code>、 <code class="docutils literal notranslate"><span class="pre">bottom</span></code>分别代表离<code class="docutils literal notranslate"><span class="pre">Stack</span></code>左、上、右、底四边的距离。<code class="docutils literal notranslate"><span class="pre">width</span></code>和<code class="docutils literal notranslate"><span class="pre">height</span></code>用于指定需要定位元素的宽度和高度。注意，<code class="docutils literal notranslate"><span class="pre">Positioned</span></code>的<code class="docutils literal notranslate"><span class="pre">width</span></code>、<code class="docutils literal notranslate"><span class="pre">height</span></code> 和其它地方的意义稍微有点区别，此处用于配合<code class="docutils literal notranslate"><span class="pre">left</span></code>、<code class="docutils literal notranslate"><span class="pre">top</span></code> 、<code class="docutils literal notranslate"><span class="pre">right</span></code>、 <code class="docutils literal notranslate"><span class="pre">bottom</span></code>来定位组件，举个例子，在水平方向时，你只能指定<code class="docutils literal notranslate"><span class="pre">left</span></code>、<code class="docutils literal notranslate"><span class="pre">right</span></code>、<code class="docutils literal notranslate"><span class="pre">width</span></code>三个属性中的两个，如指定<code class="docutils literal notranslate"><span class="pre">left</span></code>和<code class="docutils literal notranslate"><span class="pre">width</span></code>后，<code class="docutils literal notranslate"><span class="pre">right</span></code>会自动算出(<code class="docutils literal notranslate"><span class="pre">left</span></code>+<code class="docutils literal notranslate"><span class="pre">width</span></code>)，如果同时指定三个属性则会报错，垂直方向同理。</p>
+</div>
+<div class="section" id="id1">
+<h2>示例<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h2>
+<p>在下面的例子中，我们通过对几个<code class="docutils literal notranslate"><span class="pre">Text</span></code>组件的定位来演示<code class="docutils literal notranslate"><span class="pre">Stack</span></code>和<code class="docutils literal notranslate"><span class="pre">Positioned</span></code>的特性：</p>
+<div class="highlight-dart notranslate"><div class="highlight"><pre><span></span><span class="c1">//通过ConstrainedBox来确保Stack占满屏幕</span>
+<span class="n">ConstrainedBox</span><span class="p">(</span>
+  <span class="nl">constraints:</span> <span class="n">BoxConstraints</span><span class="p">.</span><span class="n">expand</span><span class="p">(),</span>
+  <span class="nl">child:</span> <span class="n">Stack</span><span class="p">(</span>
+    <span class="nl">alignment:</span><span class="n">Alignment</span><span class="p">.</span><span class="n">center</span> <span class="p">,</span> <span class="c1">//指定未定位或部分定位widget的对齐方式</span>
+    <span class="nl">children:</span> <span class="o">&lt;</span><span class="n">Widget</span><span class="o">&gt;</span><span class="p">[</span>
+      <span class="n">Container</span><span class="p">(</span><span class="nl">child:</span> <span class="n">Text</span><span class="p">(</span><span class="s2">&quot;Hello world&quot;</span><span class="p">,</span><span class="nl">style:</span> <span class="n">TextStyle</span><span class="p">(</span><span class="nl">color:</span> <span class="n">Colors</span><span class="p">.</span><span class="n">white</span><span class="p">)),</span>
+        <span class="nl">color:</span> <span class="n">Colors</span><span class="p">.</span><span class="n">red</span><span class="p">,</span>
+      <span class="p">),</span>
+      <span class="n">Positioned</span><span class="p">(</span>
+        <span class="nl">left:</span> <span class="m">18.0</span><span class="p">,</span>
+        <span class="nl">child:</span> <span class="n">Text</span><span class="p">(</span><span class="s2">&quot;I am Jack&quot;</span><span class="p">),</span>
+      <span class="p">),</span>
+      <span class="n">Positioned</span><span class="p">(</span>
+        <span class="nl">top:</span> <span class="m">18.0</span><span class="p">,</span>
+        <span class="nl">child:</span> <span class="n">Text</span><span class="p">(</span><span class="s2">&quot;Your friend&quot;</span><span class="p">),</span>
+      <span class="p">)</span>        
+    <span class="p">],</span>
+  <span class="p">),</span>
+<span class="p">);</span>
+</pre></div>
+</div>
+<p>运行效果见图4-9：</p>
+<p><img alt="图4-9" src="../_images/4-9.png" /></p>
+<p>由于第一个子文本组件<code class="docutils literal notranslate"><span class="pre">Text(&quot;Hello</span> <span class="pre">world&quot;)</span></code>没有指定定位，并且<code class="docutils literal notranslate"><span class="pre">alignment</span></code>值为<code class="docutils literal notranslate"><span class="pre">Alignment.center</span></code>，所以它会居中显示。第二个子文本组件<code class="docutils literal notranslate"><span class="pre">Text(&quot;I</span> <span class="pre">am</span> <span class="pre">Jack&quot;)</span></code>只指定了水平方向的定位(<code class="docutils literal notranslate"><span class="pre">left</span></code>)，所以属于部分定位，即垂直方向上没有定位，那么它在垂直方向的对齐方式则会按照<code class="docutils literal notranslate"><span class="pre">alignment</span></code>指定的对齐方式对齐，即垂直方向居中。对于第三个子文本组件<code class="docutils literal notranslate"><span class="pre">Text(&quot;Your</span> <span class="pre">friend&quot;)</span></code>，和第二个<code class="docutils literal notranslate"><span class="pre">Text</span></code>原理一样，只不过是水平方向没有定位，则水平方向居中。</p>
+<p>我们给上例中的<code class="docutils literal notranslate"><span class="pre">Stack</span></code>指定一个<code class="docutils literal notranslate"><span class="pre">fit</span></code>属性，然后将三个子文本组件的顺序调整一下：</p>
+<div class="highlight-dart notranslate"><div class="highlight"><pre><span></span><span class="n">Stack</span><span class="p">(</span>
+  <span class="nl">alignment:</span><span class="n">Alignment</span><span class="p">.</span><span class="n">center</span> <span class="p">,</span>
+  <span class="nl">fit:</span> <span class="n">StackFit</span><span class="p">.</span><span class="n">expand</span><span class="p">,</span> <span class="c1">//未定位widget占满Stack整个空间</span>
+  <span class="nl">children:</span> <span class="o">&lt;</span><span class="n">Widget</span><span class="o">&gt;</span><span class="p">[</span>
+    <span class="n">Positioned</span><span class="p">(</span>
+      <span class="nl">left:</span> <span class="m">18.0</span><span class="p">,</span>
+      <span class="nl">child:</span> <span class="n">Text</span><span class="p">(</span><span class="s2">&quot;I am Jack&quot;</span><span class="p">),</span>
+    <span class="p">),</span>
+    <span class="n">Container</span><span class="p">(</span><span class="nl">child:</span> <span class="n">Text</span><span class="p">(</span><span class="s2">&quot;Hello world&quot;</span><span class="p">,</span><span class="nl">style:</span> <span class="n">TextStyle</span><span class="p">(</span><span class="nl">color:</span> <span class="n">Colors</span><span class="p">.</span><span class="n">white</span><span class="p">)),</span>
+      <span class="nl">color:</span> <span class="n">Colors</span><span class="p">.</span><span class="n">red</span><span class="p">,</span>
+    <span class="p">),</span>
+    <span class="n">Positioned</span><span class="p">(</span>
+      <span class="nl">top:</span> <span class="m">18.0</span><span class="p">,</span>
+      <span class="nl">child:</span> <span class="n">Text</span><span class="p">(</span><span class="s2">&quot;Your friend&quot;</span><span class="p">),</span>
+    <span class="p">)</span>
+  <span class="p">],</span>
+<span class="p">),</span>
+</pre></div>
+</div>
+<p>显示效果如图4-10所示：</p>
+<p><img alt="图4-10" src="../_images/4-10.png" /></p>
+<p>可以看到，由于第二个子文本组件没有定位，所以<code class="docutils literal notranslate"><span class="pre">fit</span></code>属性会对它起作用，就会占满<code class="docutils literal notranslate"><span class="pre">Stack</span></code>。由于<code class="docutils literal notranslate"><span class="pre">Stack</span></code>子元素是堆叠的，所以第一个子文本组件被第二个遮住了，而第三个在最上层，所以可以正常显示。</p>
+</div>
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">flutter in action</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2021, mahongquan.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.5.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="../_sources/chapter4/stack.md.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

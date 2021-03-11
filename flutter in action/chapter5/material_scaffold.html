@@ -1,0 +1,388 @@
+
+<!DOCTYPE html>
+
+<html lang="zh-cn">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>5.6 Scaffold、TabBar、底部导航 &#8212; flutter in action 1.0 documentation</title>
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="scaffoldtabbar">
+<h1>5.6 Scaffold、TabBar、底部导航<a class="headerlink" href="#scaffoldtabbar" title="Permalink to this headline">¶</a></h1>
+<p>Material组件库提供了丰富多样的组件，本节介绍一些常用的组件，其余的读者可以自行查看文档或Flutter Gallery中Material组件部分的示例。</p>
+<blockquote>
+<div><p>Flutter Gallery是Flutter官方提供的Flutter Demo，源码位于flutter源码中的examples目录下，笔者强烈建议用户将Flutter Gallery示例跑起来，它是一个很全面的Flutter示例应用，是非常好的参考Demo，也是笔者学习Flutter的第一手资料。</p>
+</div></blockquote>
+<div class="section" id="scaffold">
+<h2>5.6.1 Scaffold<a class="headerlink" href="#scaffold" title="Permalink to this headline">¶</a></h2>
+<p>一个完整的路由页可能会包含导航栏、抽屉菜单(Drawer)以及底部Tab导航菜单等。如果每个路由页面都需要开发者自己手动去实现这些，这会是一件非常麻烦且无聊的事。幸运的是，Flutter Material组件库提供了一些现成的组件来减少我们的开发任务。<code class="docutils literal notranslate"><span class="pre">Scaffold</span></code>是一个路由页的骨架，我们使用它可以很容易地拼装出一个完整的页面。</p>
+<div class="section" id="id1">
+<h3>示例<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h3>
+<p>我们实现一个页面，它包含：</p>
+<ol class="simple">
+<li><p>一个导航栏</p></li>
+<li><p>导航栏右边有一个分享按钮</p></li>
+<li><p>有一个抽屉菜单</p></li>
+<li><p>有一个底部导航</p></li>
+<li><p>右下角有一个悬浮的动作按钮</p></li>
+</ol>
+<p>最终效果如图5-18、图5-19所示：</p>
+<p><img alt="图5-18" src="../_images/5-18.png" /> <img alt="图5-19" src="../_images/5-19.png" /></p>
+<p>实现代码如下：</p>
+<div class="highlight-dart notranslate"><div class="highlight"><pre><span></span>class ScaffoldRoute extends StatefulWidget {
+  @override
+  _ScaffoldRouteState createState() =&gt; _ScaffoldRouteState();
+}
+
+class _ScaffoldRouteState extends State&lt;ScaffoldRoute&gt; {
+  int _selectedIndex = 1;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar( //导航栏
+        title: Text(&quot;App Name&quot;), 
+        actions: &lt;Widget&gt;[ //导航栏右侧菜单
+          IconButton(icon: Icon(Icons.share), onPressed: () {}),
+        ],
+      ),
+      drawer: new MyDrawer(), //抽屉
+      bottomNavigationBar: BottomNavigationBar( // 底部导航
+        items: &lt;BottomNavigationBarItem&gt;[
+          BottomNavigationBarItem(icon: Icon(Icons.home), title: Text(&#39;Home&#39;)),
+          BottomNavigationBarItem(icon: Icon(Icons.business), title: Text(&#39;Business&#39;)),
+          BottomNavigationBarItem(icon: Icon(Icons.school), title: Text(&#39;School&#39;)),
+        ],
+        currentIndex: _selectedIndex,
+        fixedColor: Colors.blue,
+        onTap: _onItemTapped,
+      ),
+      floatingActionButton: FloatingActionButton( //悬浮按钮
+          child: Icon(Icons.add),
+          onPressed:_onAdd
+      ),
+    );
+  }
+  void _onItemTapped(int index) {
+    setState(() {
+      _selectedIndex = index;
+    });
+  }
+  void _onAdd(){
+  }
+}
+</pre></div>
+</div>
+<p>上面代码中我们用到了如下组件：</p>
+<p>| 组件名称             | 解释           |
+| ——————– | ————– |
+| AppBar               | 一个导航栏骨架 |
+| MyDrawer             | 抽屉菜单       |
+| BottomNavigationBar  | 底部导航栏     |
+| FloatingActionButton | 漂浮按钮       |</p>
+<p>下面我们来分别介绍一下它们。</p>
+</div>
+</div>
+<div class="section" id="appbar">
+<h2>5.6.2 AppBar<a class="headerlink" href="#appbar" title="Permalink to this headline">¶</a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">AppBar</span></code>是一个Material风格的导航栏，通过它可以设置导航栏标题、导航栏菜单、导航栏底部的Tab标题等。下面我们看看AppBar的定义：</p>
+<div class="highlight-dart notranslate"><div class="highlight"><pre><span></span><span class="n">AppBar</span><span class="p">({</span>
+  <span class="n">Key</span> <span class="n">key</span><span class="p">,</span>
+  <span class="k">this</span><span class="p">.</span><span class="n">leading</span><span class="p">,</span> <span class="c1">//导航栏最左侧Widget，常见为抽屉菜单按钮或返回按钮。</span>
+  <span class="k">this</span><span class="p">.</span><span class="n">automaticallyImplyLeading</span> <span class="o">=</span> <span class="kc">true</span><span class="p">,</span> <span class="c1">//如果leading为null，是否自动实现默认的leading按钮</span>
+  <span class="k">this</span><span class="p">.</span><span class="n">title</span><span class="p">,</span><span class="c1">// 页面标题</span>
+  <span class="k">this</span><span class="p">.</span><span class="n">actions</span><span class="p">,</span> <span class="c1">// 导航栏右侧菜单</span>
+  <span class="k">this</span><span class="p">.</span><span class="n">bottom</span><span class="p">,</span> <span class="c1">// 导航栏底部菜单，通常为Tab按钮组</span>
+  <span class="k">this</span><span class="p">.</span><span class="n">elevation</span> <span class="o">=</span> <span class="m">4.0</span><span class="p">,</span> <span class="c1">// 导航栏阴影</span>
+  <span class="k">this</span><span class="p">.</span><span class="n">centerTitle</span><span class="p">,</span> <span class="c1">//标题是否居中 </span>
+  <span class="k">this</span><span class="p">.</span><span class="n">backgroundColor</span><span class="p">,</span>
+  <span class="p">...</span>   <span class="c1">//其它属性见源码注释</span>
+<span class="p">})</span>
+</pre></div>
+</div>
+<p>如果给<code class="docutils literal notranslate"><span class="pre">Scaffold</span></code>添加了抽屉菜单，默认情况下<code class="docutils literal notranslate"><span class="pre">Scaffold</span></code>会自动将<code class="docutils literal notranslate"><span class="pre">AppBar</span></code>的<code class="docutils literal notranslate"><span class="pre">leading</span></code>设置为菜单按钮（如上面截图所示），点击它便可打开抽屉菜单。如果我们想自定义菜单图标，可以手动来设置<code class="docutils literal notranslate"><span class="pre">leading</span></code>，如：</p>
+<div class="highlight-dart notranslate"><div class="highlight"><pre><span></span><span class="n">Scaffold</span><span class="p">(</span>
+  <span class="nl">appBar:</span> <span class="n">AppBar</span><span class="p">(</span>
+    <span class="nl">title:</span> <span class="n">Text</span><span class="p">(</span><span class="s2">&quot;App Name&quot;</span><span class="p">),</span>
+    <span class="nl">leading:</span> <span class="n">Builder</span><span class="p">(</span><span class="nl">builder:</span> <span class="p">(</span><span class="n">context</span><span class="p">)</span> <span class="p">{</span>
+      <span class="k">return</span> <span class="n">IconButton</span><span class="p">(</span>
+        <span class="nl">icon:</span> <span class="n">Icon</span><span class="p">(</span><span class="n">Icons</span><span class="p">.</span><span class="n">dashboard</span><span class="p">,</span> <span class="nl">color:</span> <span class="n">Colors</span><span class="p">.</span><span class="n">white</span><span class="p">),</span> <span class="c1">//自定义图标</span>
+        <span class="nl">onPressed:</span> <span class="p">()</span> <span class="p">{</span>
+          <span class="c1">// 打开抽屉菜单  </span>
+          <span class="n">Scaffold</span><span class="p">.</span><span class="n">of</span><span class="p">(</span><span class="n">context</span><span class="p">).</span><span class="n">openDrawer</span><span class="p">();</span> 
+        <span class="p">},</span>
+      <span class="p">);</span>
+    <span class="p">}),</span>
+    <span class="p">...</span>  
+  <span class="p">)</span>  
+</pre></div>
+</div>
+<p>代码运行效果如图5-20所示：</p>
+<p><img alt="图5-20" src="../_images/5-20.png" /></p>
+<p>可以看到左侧菜单已经替换成功。</p>
+<p>代码中打开抽屉菜单的方法在<code class="docutils literal notranslate"><span class="pre">ScaffoldState</span></code>中，通过<code class="docutils literal notranslate"><span class="pre">Scaffold.of(context)</span></code>可以获取父级最近的<code class="docutils literal notranslate"><span class="pre">Scaffold</span></code> 组件的<code class="docutils literal notranslate"><span class="pre">State</span></code>对象。</p>
+<div class="section" id="tabbar">
+<h3>TabBar<a class="headerlink" href="#tabbar" title="Permalink to this headline">¶</a></h3>
+<p>下面我们通过“bottom”属性来添加一个导航栏底部Tab按钮组，将要实现的效果如图5-21所示：</p>
+<p><img alt="图5-21" src="../_images/5-21.png" /></p>
+<p>Material组件库中提供了一个<code class="docutils literal notranslate"><span class="pre">TabBar</span></code>组件，它可以快速生成<code class="docutils literal notranslate"><span class="pre">Tab</span></code>菜单，下面是上图对应的源码：</p>
+<div class="highlight-dart notranslate"><div class="highlight"><pre><span></span>class _ScaffoldRouteState extends State&lt;ScaffoldRoute&gt;
+    with SingleTickerProviderStateMixin {
+
+  TabController _tabController; //需要定义一个Controller
+  List tabs = [&quot;新闻&quot;, &quot;历史&quot;, &quot;图片&quot;];
+
+  @override
+  void initState() {
+    super.initState();
+    // 创建Controller  
+    _tabController = TabController(length: tabs.length, vsync: this);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        ... //省略无关代码
+        bottom: TabBar(   //生成Tab菜单
+          controller: _tabController,
+          tabs: tabs.map((e) =&gt; Tab(text: e)).toList()
+        ),
+      ),
+      ... //省略无关代码
+
+  }
+</pre></div>
+</div>
+<p>上面代码首先创建了一个<code class="docutils literal notranslate"><span class="pre">TabController</span></code> ，它是用于控制/监听<code class="docutils literal notranslate"><span class="pre">Tab</span></code>菜单切换的。接下来通过TabBar生成了一个底部菜单栏，<code class="docutils literal notranslate"><span class="pre">TabBar</span></code>的<code class="docutils literal notranslate"><span class="pre">tabs</span></code>属性接受一个Widget数组，表示每一个Tab子菜单，我们可以自定义，也可以像示例中一样直接使用<code class="docutils literal notranslate"><span class="pre">Tab</span></code> 组件，它是Material组件库提供的Material风格的Tab菜单。</p>
+<p><code class="docutils literal notranslate"><span class="pre">Tab</span></code>组件有三个可选参数，除了可以指定文字外，还可以指定Tab菜单图标，或者直接自定义组件样式。<code class="docutils literal notranslate"><span class="pre">Tab</span></code>组件定义如下：</p>
+<div class="highlight-dart notranslate"><div class="highlight"><pre><span></span><span class="n">Tab</span><span class="p">({</span>
+  <span class="n">Key</span> <span class="n">key</span><span class="p">,</span>
+  <span class="k">this</span><span class="p">.</span><span class="n">text</span><span class="p">,</span> <span class="c1">// 菜单文本</span>
+  <span class="k">this</span><span class="p">.</span><span class="n">icon</span><span class="p">,</span> <span class="c1">// 菜单图标</span>
+  <span class="k">this</span><span class="p">.</span><span class="n">child</span><span class="p">,</span> <span class="c1">// 自定义组件样式</span>
+<span class="p">})</span>
+</pre></div>
+</div>
+<p>开发者可以根据实际需求来定制。</p>
+</div>
+<div class="section" id="tabbarview">
+<h3>TabBarView<a class="headerlink" href="#tabbarview" title="Permalink to this headline">¶</a></h3>
+<p>通过<code class="docutils literal notranslate"><span class="pre">TabBar</span></code>我们只能生成一个静态的菜单，真正的Tab页还没有实现。由于<code class="docutils literal notranslate"><span class="pre">Tab</span></code>菜单和Tab页的切换需要同步，我们需要通过<code class="docutils literal notranslate"><span class="pre">TabController</span></code>去监听Tab菜单的切换去切换Tab页，代码如：</p>
+<div class="highlight-dart notranslate"><div class="highlight"><pre><span></span><span class="n">_tabController</span><span class="p">.</span><span class="n">addListener</span><span class="p">((){</span>  
+  <span class="k">switch</span><span class="p">(</span><span class="n">_tabController</span><span class="p">.</span><span class="n">index</span><span class="p">){</span>
+    <span class="k">case</span> <span class="m">1</span><span class="o">:</span> <span class="p">...;</span>
+    <span class="k">case</span> <span class="m">2</span><span class="o">:</span> <span class="p">...</span> <span class="p">;</span>   
+  <span class="p">}</span>
+<span class="p">});</span>
+</pre></div>
+</div>
+<p>如果我们Tab页可以滑动切换的话，还需要在滑动过程中更新TabBar指示器的偏移！显然，要手动处理这些是很麻烦的，为此，Material库提供了一个<code class="docutils literal notranslate"><span class="pre">TabBarView</span></code>组件，通过它不仅可以轻松的实现Tab页，而且可以非常容易的配合TabBar来实现同步切换和滑动状态同步，示例如下：</p>
+<div class="highlight-dart notranslate"><div class="highlight"><pre><span></span><span class="n">Scaffold</span><span class="p">(</span>
+  <span class="nl">appBar:</span> <span class="n">AppBar</span><span class="p">(</span>
+    <span class="p">...</span> <span class="c1">//省略无关代码</span>
+    <span class="nl">bottom:</span> <span class="n">TabBar</span><span class="p">(</span>
+      <span class="nl">controller:</span> <span class="n">_tabController</span><span class="p">,</span>
+      <span class="nl">tabs:</span> <span class="n">tabs</span><span class="p">.</span><span class="n">map</span><span class="p">((</span><span class="n">e</span><span class="p">)</span> <span class="o">=&gt;</span> <span class="n">Tab</span><span class="p">(</span><span class="nl">text:</span> <span class="n">e</span><span class="p">)).</span><span class="n">toList</span><span class="p">()),</span>
+  <span class="p">),</span>
+  <span class="nl">drawer:</span> <span class="k">new</span> <span class="n">MyDrawer</span><span class="p">(),</span>
+  <span class="nl">body:</span> <span class="n">TabBarView</span><span class="p">(</span>
+    <span class="nl">controller:</span> <span class="n">_tabController</span><span class="p">,</span>
+    <span class="nl">children:</span> <span class="n">tabs</span><span class="p">.</span><span class="n">map</span><span class="p">((</span><span class="n">e</span><span class="p">)</span> <span class="p">{</span> <span class="c1">//创建3个Tab页</span>
+      <span class="k">return</span> <span class="n">Container</span><span class="p">(</span>
+        <span class="nl">alignment:</span> <span class="n">Alignment</span><span class="p">.</span><span class="n">center</span><span class="p">,</span>
+        <span class="nl">child:</span> <span class="n">Text</span><span class="p">(</span><span class="n">e</span><span class="p">,</span> <span class="nl">textScaleFactor:</span> <span class="m">5</span><span class="p">),</span>
+      <span class="p">);</span>
+    <span class="p">}).</span><span class="n">toList</span><span class="p">(),</span>
+  <span class="p">),</span>
+  <span class="p">...</span> <span class="c1">// 省略无关代码  </span>
+<span class="p">)</span>    
+</pre></div>
+</div>
+<p>运行后效果如图5-22所示：</p>
+<p><img alt="图5-22" src="../_images/5-22.png" /></p>
+<p>现在，无论是点击导航栏Tab菜单还是在页面上左右滑动，Tab页面都会切换，并且Tab菜单的状态和Tab页面始终保持同步！那它们是如何实现同步的呢？细心的读者可能已经发现，上例中<code class="docutils literal notranslate"><span class="pre">TabBar</span></code>和<code class="docutils literal notranslate"><span class="pre">TabBarView</span></code>的<code class="docutils literal notranslate"><span class="pre">controller</span></code>是同一个！正是如此，<code class="docutils literal notranslate"><span class="pre">TabBar</span></code>和<code class="docutils literal notranslate"><span class="pre">TabBarView</span></code>正是通过同一个<code class="docutils literal notranslate"><span class="pre">controller</span></code>来实现菜单切换和滑动状态同步的，有关<code class="docutils literal notranslate"><span class="pre">TabController</span></code>的详细信息，我们不在本书做过多介绍，使用时读者直接查看SDK即可。</p>
+<p>另外，Material组件库也提供了一个<code class="docutils literal notranslate"><span class="pre">PageView</span></code> 组件，它和<code class="docutils literal notranslate"><span class="pre">TabBarView</span></code>功能相似，读者可以自行了解一下。</p>
+</div>
+</div>
+<div class="section" id="drawer">
+<h2>5.6.3 抽屉菜单Drawer<a class="headerlink" href="#drawer" title="Permalink to this headline">¶</a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">Scaffold</span></code>的<code class="docutils literal notranslate"><span class="pre">drawer</span></code>和<code class="docutils literal notranslate"><span class="pre">endDrawer</span></code>属性可以分别接受一个Widget来作为页面的左、右抽屉菜单。如果开发者提供了抽屉菜单，那么当用户手指从屏幕左（或右）侧向里滑动时便可打开抽屉菜单。本节开始部分的示例中实现了一个左抽屉菜单<code class="docutils literal notranslate"><span class="pre">MyDrawer</span></code>，它的源码如下：</p>
+<div class="highlight-dart notranslate"><div class="highlight"><pre><span></span>class MyDrawer extends StatelessWidget {
+  const MyDrawer({
+    Key key,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Drawer(
+      child: MediaQuery.removePadding(
+        context: context,
+        //移除抽屉菜单顶部默认留白
+        removeTop: true,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: &lt;Widget&gt;[
+            Padding(
+              padding: const EdgeInsets.only(top: 38.0),
+              child: Row(
+                children: &lt;Widget&gt;[
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                    child: ClipOval(
+                      child: Image.asset(
+                        &quot;imgs/avatar.png&quot;,
+                        width: 80,
+                      ),
+                    ),
+                  ),
+                  Text(
+                    &quot;Wendux&quot;,
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  )
+                ],
+              ),
+            ),
+            Expanded(
+              child: ListView(
+                children: &lt;Widget&gt;[
+                  ListTile(
+                    leading: const Icon(Icons.add),
+                    title: const Text(&#39;Add account&#39;),
+                  ),
+                  ListTile(
+                    leading: const Icon(Icons.settings),
+                    title: const Text(&#39;Manage accounts&#39;),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+</pre></div>
+</div>
+<p>抽屉菜单通常将<code class="docutils literal notranslate"><span class="pre">Drawer</span></code>组件作为根节点，它实现了Material风格的菜单面板，<code class="docutils literal notranslate"><span class="pre">MediaQuery.removePadding</span></code>可以移除Drawer默认的一些留白（比如Drawer默认顶部会留和手机状态栏等高的留白），读者可以尝试传递不同的参数来看看实际效果。抽屉菜单页由顶部和底部组成，顶部由用户头像和昵称组成，底部是一个菜单列表，用ListView实现，关于ListView我们将在后面“可滚动组件”一节详细介绍。</p>
+</div>
+<div class="section" id="floatingactionbutton">
+<h2>5.6.4 FloatingActionButton<a class="headerlink" href="#floatingactionbutton" title="Permalink to this headline">¶</a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">FloatingActionButton</span></code>是Material设计规范中的一种特殊Button，通常悬浮在页面的某一个位置作为某种常用动作的快捷入口，如本节示例中页面右下角的”➕”号按钮。我们可以通过<code class="docutils literal notranslate"><span class="pre">Scaffold</span></code>的<code class="docutils literal notranslate"><span class="pre">floatingActionButton</span></code>属性来设置一个<code class="docutils literal notranslate"><span class="pre">FloatingActionButton</span></code>，同时通过<code class="docutils literal notranslate"><span class="pre">floatingActionButtonLocation</span></code>属性来指定其在页面中悬浮的位置，这个比较简单，不再赘述。</p>
+</div>
+<div class="section" id="tab">
+<h2>5.6.5  底部Tab导航栏<a class="headerlink" href="#tab" title="Permalink to this headline">¶</a></h2>
+<p>我们可以通过<code class="docutils literal notranslate"><span class="pre">Scaffold</span></code>的<code class="docutils literal notranslate"><span class="pre">bottomNavigationBar</span></code>属性来设置底部导航，如本节开始示例所示，我们通过Material组件库提供的<code class="docutils literal notranslate"><span class="pre">BottomNavigationBar</span></code>和<code class="docutils literal notranslate"><span class="pre">BottomNavigationBarItem</span></code>两种组件来实现Material风格的底部导航栏。可以看到上面的实现代码非常简单，所以不再赘述，但是如果我们想实现如图5-23所示效果的底部导航栏应该怎么做呢？</p>
+<p><img alt="图5-23" src="../_images/5-23.png" /></p>
+<p>Material组件库中提供了一个<code class="docutils literal notranslate"><span class="pre">BottomAppBar</span></code> 组件，它可以和<code class="docutils literal notranslate"><span class="pre">FloatingActionButton</span></code>配合实现这种“打洞”效果，源码如下：</p>
+<div class="highlight-dart notranslate"><div class="highlight"><pre><span></span><span class="nl">bottomNavigationBar:</span> <span class="n">BottomAppBar</span><span class="p">(</span>
+  <span class="nl">color:</span> <span class="n">Colors</span><span class="p">.</span><span class="n">white</span><span class="p">,</span>
+  <span class="nl">shape:</span> <span class="n">CircularNotchedRectangle</span><span class="p">(),</span> <span class="c1">// 底部导航栏打一个圆形的洞</span>
+  <span class="nl">child:</span> <span class="n">Row</span><span class="p">(</span>
+    <span class="nl">children:</span> <span class="p">[</span>
+      <span class="n">IconButton</span><span class="p">(</span><span class="nl">icon:</span> <span class="n">Icon</span><span class="p">(</span><span class="n">Icons</span><span class="p">.</span><span class="n">home</span><span class="p">)),</span>
+      <span class="n">SizedBox</span><span class="p">(),</span> <span class="c1">//中间位置空出</span>
+      <span class="n">IconButton</span><span class="p">(</span><span class="nl">icon:</span> <span class="n">Icon</span><span class="p">(</span><span class="n">Icons</span><span class="p">.</span><span class="n">business</span><span class="p">)),</span>
+    <span class="p">],</span>
+    <span class="nl">mainAxisAlignment:</span> <span class="n">MainAxisAlignment</span><span class="p">.</span><span class="n">spaceAround</span><span class="p">,</span> <span class="c1">//均分底部导航栏横向空间</span>
+  <span class="p">),</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p>可以看到，上面代码中没有控制打洞位置的属性，实际上，打洞的位置取决于<code class="docutils literal notranslate"><span class="pre">FloatingActionButton</span></code>的位置，上面<code class="docutils literal notranslate"><span class="pre">FloatingActionButton</span></code>的位置为：</p>
+<div class="highlight-dart notranslate"><div class="highlight"><pre><span></span><span class="nl">floatingActionButtonLocation:</span> <span class="n">FloatingActionButtonLocation</span><span class="p">.</span><span class="n">centerDocked</span><span class="p">,</span>
+</pre></div>
+</div>
+<p>所以打洞位置在底部导航栏的正中间。</p>
+<p><code class="docutils literal notranslate"><span class="pre">BottomAppBar</span></code>的<code class="docutils literal notranslate"><span class="pre">shape</span></code>属性决定洞的外形，<code class="docutils literal notranslate"><span class="pre">CircularNotchedRectangle</span></code>实现了一个圆形的外形，我们也可以自定义外形，比如，Flutter Gallery示例中就有一个“钻石”形状的示例，读者感兴趣可以自行查看。</p>
+</div>
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">flutter in action</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2021, mahongquan.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.5.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="../_sources/chapter5/material_scaffold.md.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

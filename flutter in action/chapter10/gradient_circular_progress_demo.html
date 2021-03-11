@@ -1,0 +1,486 @@
+
+<!DOCTYPE html>
+
+<html lang="zh-cn">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>10.5 自绘实例：圆形背景渐变进度条 &#8212; flutter in action 1.0 documentation</title>
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="id1">
+<h1>10.5 自绘实例：圆形背景渐变进度条<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h1>
+<p>本节我们实现一个圆形背景渐变进度条，它支持：</p>
+<ol class="simple">
+<li><p>支持多种背景渐变色。</p></li>
+<li><p>任意弧度；进度条可以不是整圆。</p></li>
+<li><p>可以自定义粗细、两端是否圆角等样式。</p></li>
+</ol>
+<p>可以发现要实现这样的一个进度条是无法通过现有组件组合而成的，所以我们通过自绘方式实现，代码如下：</p>
+<div class="highlight-dart notranslate"><div class="highlight"><pre><span></span>import &#39;dart:math&#39;;
+import &#39;package:flutter/material.dart&#39;;
+
+class GradientCircularProgressIndicator extends StatelessWidget {
+  GradientCircularProgressIndicator({
+    this.strokeWidth = 2.0,
+    @required this.radius,
+    @required this.colors,
+    this.stops,
+    this.strokeCapRound = false,
+    this.backgroundColor = const Color(0xFFEEEEEE),
+    this.totalAngle = 2 * pi,
+    this.value
+  });
+
+  ///粗细
+  final double strokeWidth;
+
+  /// 圆的半径
+  final double radius;
+
+  ///两端是否为圆角
+  final bool strokeCapRound;
+
+  /// 当前进度，取值范围 [0.0-1.0]
+  final double value;
+
+  /// 进度条背景色
+  final Color backgroundColor;
+
+  /// 进度条的总弧度，2*PI为整圆，小于2*PI则不是整圆
+  final double totalAngle;
+
+  /// 渐变色数组
+  final List&lt;Color&gt; colors;
+
+  /// 渐变色的终止点，对应colors属性
+  final List&lt;double&gt; stops;
+
+  @override
+  Widget build(BuildContext context) {
+    double _offset = .0;
+    // 如果两端为圆角，则需要对起始位置进行调整，否则圆角部分会偏离起始位置
+    // 下面调整的角度的计算公式是通过数学几何知识得出，读者有兴趣可以研究一下为什么是这样  
+    if (strokeCapRound) {
+      _offset = asin(strokeWidth / (radius * 2 - strokeWidth));
+    }
+    var _colors = colors;
+    if (_colors == null) {
+      Color color = Theme
+          .of(context)
+          .accentColor;
+      _colors = [color, color];
+    }
+    return Transform.rotate(
+      angle: -pi / 2.0 - _offset, 
+      child: CustomPaint(
+          size: Size.fromRadius(radius),
+          painter: _GradientCircularProgressPainter(
+            strokeWidth: strokeWidth,
+            strokeCapRound: strokeCapRound,
+            backgroundColor: backgroundColor,
+            value: value,
+            total: totalAngle,
+            radius: radius,
+            colors: _colors,
+          )
+      ),
+    );
+  }
+}
+
+//实现画笔
+class _GradientCircularProgressPainter extends CustomPainter {
+  _GradientCircularProgressPainter({
+    this.strokeWidth: 10.0,
+    this.strokeCapRound: false,
+    this.backgroundColor = const Color(0xFFEEEEEE),
+    this.radius,
+    this.total = 2 * pi,
+    @required this.colors,
+    this.stops,
+    this.value
+  });
+
+  final double strokeWidth;
+  final bool strokeCapRound;
+  final double value;
+  final Color backgroundColor;
+  final List&lt;Color&gt; colors;
+  final double total;
+  final double radius;
+  final List&lt;double&gt; stops;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    if (radius != null) {
+      size = Size.fromRadius(radius);
+    }
+    double _offset = strokeWidth / 2.0;
+    double _value = (value ?? .0);
+    _value = _value.clamp(.0, 1.0) * total;
+    double _start = .0;
+
+    if (strokeCapRound) {
+      _start = asin(strokeWidth/ (size.width - strokeWidth));
+    }
+
+    Rect rect = Offset(_offset, _offset) &amp; Size(
+        size.width - strokeWidth,
+        size.height - strokeWidth
+    );
+
+    var paint = Paint()
+      ..strokeCap = strokeCapRound ? StrokeCap.round : StrokeCap.butt
+      ..style = PaintingStyle.stroke
+      ..isAntiAlias = true
+      ..strokeWidth = strokeWidth;
+
+    // 先画背景
+    if (backgroundColor != Colors.transparent) {
+      paint.color = backgroundColor;
+      canvas.drawArc(
+          rect,
+          _start,
+          total,
+          false,
+          paint
+      );
+    }
+
+    // 再画前景，应用渐变
+    if (_value &gt; 0) {
+      paint.shader = SweepGradient(
+        startAngle: 0.0,
+        endAngle: _value,
+        colors: colors,
+        stops: stops,
+      ).createShader(rect);
+
+      canvas.drawArc(
+          rect,
+          _start,
+          _value,
+          false,
+          paint
+      );
+    }
+  }
+
+  @override
+  bool shouldRepaint(CustomPainter oldDelegate) =&gt; true;
+
+}
+</pre></div>
+</div>
+<p>下面我们来测试一下，为了尽可能多的展示<code class="docutils literal notranslate"><span class="pre">GradientCircularProgressIndicator</span></code>的不同外观和用途，这个示例代码会比较长，并且添加了动画，建议读者将此示例运行起来观看实际效果，我们先看看其中的一帧动画的截图：</p>
+<p><img alt="gradient_circular_progress" src="../_images/gradient_circular_progress.png" /></p>
+<p>示例代码：</p>
+<div class="highlight-dart notranslate"><div class="highlight"><pre><span></span>import &#39;dart:math&#39;;
+import &#39;package:flutter/material.dart&#39;;
+import &#39;../widgets/index.dart&#39;;
+
+class GradientCircularProgressRoute extends StatefulWidget {
+  @override
+  GradientCircularProgressRouteState createState() {
+    return new GradientCircularProgressRouteState();
+  }
+}
+
+class GradientCircularProgressRouteState
+    extends State&lt;GradientCircularProgressRoute&gt; with TickerProviderStateMixin {
+  AnimationController _animationController;
+
+  @override
+  void initState() {
+    super.initState();
+    _animationController =
+        new AnimationController(vsync: this, duration: Duration(seconds: 3));
+    bool isForward = true;
+    _animationController.addStatusListener((status) {
+      if (status == AnimationStatus.forward) {
+        isForward = true;
+      } else if (status == AnimationStatus.completed ||
+          status == AnimationStatus.dismissed) {
+        if (isForward) {
+          _animationController.reverse();
+        } else {
+          _animationController.forward();
+        }
+      } else if (status == AnimationStatus.reverse) {
+        isForward = false;
+      }
+    });
+    _animationController.forward();
+  }
+
+  @override
+  void dispose() {
+    _animationController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SingleChildScrollView(
+      child: Center(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: &lt;Widget&gt;[
+            AnimatedBuilder(
+              animation: _animationController,
+              builder: (BuildContext context, Widget child) {
+                return Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 16.0),
+                  child: Column(
+                    children: &lt;Widget&gt;[
+                      Wrap(
+                        spacing: 10.0,
+                        runSpacing: 16.0,
+                        children: &lt;Widget&gt;[
+                          GradientCircularProgressIndicator(
+                            // No gradient
+                            colors: [Colors.blue, Colors.blue],
+                            radius: 50.0,
+                            strokeWidth: 3.0,
+                            value: _animationController.value,
+                          ),
+                          GradientCircularProgressIndicator(
+                            colors: [Colors.red, Colors.orange],
+                            radius: 50.0,
+                            strokeWidth: 3.0,
+                            value: _animationController.value,
+                          ),
+                          GradientCircularProgressIndicator(
+                            colors: [Colors.red, Colors.orange, Colors.red],
+                            radius: 50.0,
+                            strokeWidth: 5.0,
+                            value: _animationController.value,
+                          ),
+                          GradientCircularProgressIndicator(
+                            colors: [Colors.teal, Colors.cyan],
+                            radius: 50.0,
+                            strokeWidth: 5.0,
+                            strokeCapRound: true,
+                            value: CurvedAnimation(
+                                    parent: _animationController,
+                                    curve: Curves.decelerate)
+                                .value,
+                          ),
+                          TurnBox(
+                            turns: 1 / 8,
+                            child: GradientCircularProgressIndicator(
+                                colors: [Colors.red, Colors.orange, Colors.red],
+                                radius: 50.0,
+                                strokeWidth: 5.0,
+                                strokeCapRound: true,
+                                backgroundColor: Colors.red[50],
+                                totalAngle: 1.5 * pi,
+                                value: CurvedAnimation(
+                                        parent: _animationController,
+                                        curve: Curves.ease)
+                                    .value),
+                          ),
+                          RotatedBox(
+                            quarterTurns: 1,
+                            child: GradientCircularProgressIndicator(
+                                colors: [Colors.blue[700], Colors.blue[200]],
+                                radius: 50.0,
+                                strokeWidth: 3.0,
+                                strokeCapRound: true,
+                                backgroundColor: Colors.transparent,
+                                value: _animationController.value),
+                          ),
+                          GradientCircularProgressIndicator(
+                            colors: [
+                              Colors.red,
+                              Colors.amber,
+                              Colors.cyan,
+                              Colors.green[200],
+                              Colors.blue,
+                              Colors.red
+                            ],
+                            radius: 50.0,
+                            strokeWidth: 5.0,
+                            strokeCapRound: true,
+                            value: _animationController.value,
+                          ),
+                        ],
+                      ),
+                      GradientCircularProgressIndicator(
+                        colors: [Colors.blue[700], Colors.blue[200]],
+                        radius: 100.0,
+                        strokeWidth: 20.0,
+                        value: _animationController.value,
+                      ),
+
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 16.0),
+                        child: GradientCircularProgressIndicator(
+                          colors: [Colors.blue[700], Colors.blue[300]],
+                          radius: 100.0,
+                          strokeWidth: 20.0,
+                          value: _animationController.value,
+                          strokeCapRound: true,
+                        ),
+                      ),
+                      //剪裁半圆
+                      ClipRect(
+                        child: Align(
+                          alignment: Alignment.topCenter,
+                          heightFactor: .5,
+                          child: Padding(
+                            padding: const EdgeInsets.only(bottom: 8.0),
+                            child: SizedBox(
+                              //width: 100.0,
+                              child: TurnBox(
+                                turns: .75,
+                                child: GradientCircularProgressIndicator(
+                                  colors: [Colors.teal, Colors.cyan[500]],
+                                  radius: 100.0,
+                                  strokeWidth: 8.0,
+                                  value: _animationController.value,
+                                  totalAngle: pi,
+                                  strokeCapRound: true,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                      SizedBox(
+                        height: 104.0,
+                        width: 200.0,
+                        child: Stack(
+                          alignment: Alignment.center,
+                          children: &lt;Widget&gt;[
+                            Positioned(
+                              height: 200.0,
+                              top: .0,
+                              child: TurnBox(
+                                turns: .75,
+                                child: GradientCircularProgressIndicator(
+                                  colors: [Colors.teal, Colors.cyan[500]],
+                                  radius: 100.0,
+                                  strokeWidth: 8.0,
+                                  value: _animationController.value,
+                                  totalAngle: pi,
+                                  strokeCapRound: true,
+                                ),
+                              ),
+                            ),
+                            Padding(
+                              padding: const EdgeInsets.only(top: 10.0),
+                              child: Text(
+                                &quot;${(_animationController.value * 100).toInt()}%&quot;,
+                                style: TextStyle(
+                                  fontSize: 25.0,
+                                  color: Colors.blueGrey,
+                                ),
+                              ),
+                            )
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+</pre></div>
+</div>
+<p>怎么样，很炫酷吧！<code class="docutils literal notranslate"><span class="pre">GradientCircularProgressIndicator</span></code>已经被添加进了笔者维护的flukit组件库中了，读者如果有需要，可以直接依赖flukit包。</p>
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">flutter in action</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2021, mahongquan.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.5.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="../_sources/chapter10/gradient_circular_progress_demo.md.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

@@ -1,0 +1,233 @@
+
+<!DOCTYPE html>
+
+<html lang="zh-cn">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>3.4 按钮 &#8212; flutter in action 1.0 documentation</title>
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="id1">
+<h1>3.4 按钮<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="material">
+<h2>3.4.1 Material组件库中的按钮<a class="headerlink" href="#material" title="Permalink to this headline">¶</a></h2>
+<p>Material 组件库中提供了多种按钮组件如<code class="docutils literal notranslate"><span class="pre">RaisedButton</span></code>、<code class="docutils literal notranslate"><span class="pre">FlatButton</span></code>、<code class="docutils literal notranslate"><span class="pre">OutlineButton</span></code>等，它们都是直接或间接对<code class="docutils literal notranslate"><span class="pre">RawMaterialButton</span></code>组件的包装定制，所以他们大多数属性都和<code class="docutils literal notranslate"><span class="pre">RawMaterialButton</span></code>一样。在介绍各个按钮时我们先介绍其默认外观，而按钮的外观大都可以通过属性来自定义，我们在后面统一介绍这些属性。另外，所有Material 库中的按钮都有如下相同点：</p>
+<ol class="simple">
+<li><p>按下时都会有“水波动画”（又称“涟漪动画”，就是点击时按钮上会出现水波荡漾的动画）。</p></li>
+<li><p>有一个<code class="docutils literal notranslate"><span class="pre">onPressed</span></code>属性来设置点击回调，当按钮按下时会执行该回调，如果不提供该回调则按钮会处于禁用状态，禁用状态不响应用户点击。</p></li>
+</ol>
+<div class="section" id="raisedbutton">
+<h3>RaisedButton<a class="headerlink" href="#raisedbutton" title="Permalink to this headline">¶</a></h3>
+<p><code class="docutils literal notranslate"><span class="pre">RaisedButton</span></code> 即”漂浮”按钮，它默认带有阴影和灰色背景。按下后，阴影会变大，如图3-10所示：</p>
+<p><img alt="图3-10" src="../_images/3-10.png" /></p>
+<p>使用<code class="docutils literal notranslate"><span class="pre">RaisedButton</span></code>非常简单，如：</p>
+<div class="highlight-dart notranslate"><div class="highlight"><pre><span></span><span class="n">RaisedButton</span><span class="p">(</span>
+  <span class="nl">child:</span> <span class="n">Text</span><span class="p">(</span><span class="s2">&quot;normal&quot;</span><span class="p">),</span>
+  <span class="nl">onPressed:</span> <span class="p">()</span> <span class="p">{},</span>
+<span class="p">);</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="flatbutton">
+<h3>FlatButton<a class="headerlink" href="#flatbutton" title="Permalink to this headline">¶</a></h3>
+<p><code class="docutils literal notranslate"><span class="pre">FlatButton</span></code>即扁平按钮，默认背景透明并不带阴影。按下后，会有背景色，如图3-11所示：</p>
+<p><img alt="图3-11" src="../_images/3-11.png" /></p>
+<p>使用FlatButton也很简单，代码如下：</p>
+<div class="highlight-dart notranslate"><div class="highlight"><pre><span></span><span class="n">FlatButton</span><span class="p">(</span>
+  <span class="nl">child:</span> <span class="n">Text</span><span class="p">(</span><span class="s2">&quot;normal&quot;</span><span class="p">),</span>
+  <span class="nl">onPressed:</span> <span class="p">()</span> <span class="p">{},</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="outlinebutton">
+<h3>OutlineButton<a class="headerlink" href="#outlinebutton" title="Permalink to this headline">¶</a></h3>
+<p><code class="docutils literal notranslate"><span class="pre">OutlineButton</span></code>默认有一个边框，不带阴影且背景透明。按下后，边框颜色会变亮、同时出现背景和阴影(较弱)，如图3-12所示：</p>
+<p><img alt="图3-12" src="../_images/3-12.png" /></p>
+<p>使用<code class="docutils literal notranslate"><span class="pre">OutlineButton</span></code>也很简单，代码如下：</p>
+<div class="highlight-dart notranslate"><div class="highlight"><pre><span></span><span class="n">OutlineButton</span><span class="p">(</span>
+  <span class="nl">child:</span> <span class="n">Text</span><span class="p">(</span><span class="s2">&quot;normal&quot;</span><span class="p">),</span>
+  <span class="nl">onPressed:</span> <span class="p">()</span> <span class="p">{},</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="iconbutton">
+<h3>IconButton<a class="headerlink" href="#iconbutton" title="Permalink to this headline">¶</a></h3>
+<p><code class="docutils literal notranslate"><span class="pre">IconButton</span></code>是一个可点击的Icon，不包括文字，默认没有背景，点击后会出现背景，如图3-13所示：</p>
+<p><img alt="图3-13" src="../_images/3-13.png" /></p>
+<p>代码如下：</p>
+<div class="highlight-dart notranslate"><div class="highlight"><pre><span></span><span class="n">IconButton</span><span class="p">(</span>
+  <span class="nl">icon:</span> <span class="n">Icon</span><span class="p">(</span><span class="n">Icons</span><span class="p">.</span><span class="n">thumb_up</span><span class="p">),</span>
+  <span class="nl">onPressed:</span> <span class="p">()</span> <span class="p">{},</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="id2">
+<h3>带图标的按钮<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h3>
+<p><code class="docutils literal notranslate"><span class="pre">RaisedButton</span></code>、<code class="docutils literal notranslate"><span class="pre">FlatButton</span></code>、<code class="docutils literal notranslate"><span class="pre">OutlineButton</span></code>都有一个<code class="docutils literal notranslate"><span class="pre">icon</span></code> 构造函数，通过它可以轻松创建带图标的按钮，如图3-14所示：</p>
+<p><img alt="图3-14" src="../_images/3-14.png" /></p>
+<p>代码如下：</p>
+<div class="highlight-dart notranslate"><div class="highlight"><pre><span></span><span class="n">RaisedButton</span><span class="p">.</span><span class="n">icon</span><span class="p">(</span>
+  <span class="nl">icon:</span> <span class="n">Icon</span><span class="p">(</span><span class="n">Icons</span><span class="p">.</span><span class="n">send</span><span class="p">),</span>
+  <span class="nl">label:</span> <span class="n">Text</span><span class="p">(</span><span class="s2">&quot;发送&quot;</span><span class="p">),</span>
+  <span class="nl">onPressed:</span> <span class="n">_onPressed</span><span class="p">,</span>
+<span class="p">),</span>
+<span class="n">OutlineButton</span><span class="p">.</span><span class="n">icon</span><span class="p">(</span>
+  <span class="nl">icon:</span> <span class="n">Icon</span><span class="p">(</span><span class="n">Icons</span><span class="p">.</span><span class="n">add</span><span class="p">),</span>
+  <span class="nl">label:</span> <span class="n">Text</span><span class="p">(</span><span class="s2">&quot;添加&quot;</span><span class="p">),</span>
+  <span class="nl">onPressed:</span> <span class="n">_onPressed</span><span class="p">,</span>
+<span class="p">),</span>
+<span class="n">FlatButton</span><span class="p">.</span><span class="n">icon</span><span class="p">(</span>
+  <span class="nl">icon:</span> <span class="n">Icon</span><span class="p">(</span><span class="n">Icons</span><span class="p">.</span><span class="n">info</span><span class="p">),</span>
+  <span class="nl">label:</span> <span class="n">Text</span><span class="p">(</span><span class="s2">&quot;详情&quot;</span><span class="p">),</span>
+  <span class="nl">onPressed:</span> <span class="n">_onPressed</span><span class="p">,</span>
+<span class="p">),</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="id3">
+<h2>3.4.2 自定义按钮外观<a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h2>
+<p>按钮外观可以通过其属性来定义，不同按钮属性大同小异，我们以FlatButton为例，介绍一下常见的按钮属性，详细的信息可以查看API文档。</p>
+<div class="highlight-dart notranslate"><div class="highlight"><pre><span></span>const FlatButton({
+  ...  
+  @required this.onPressed, //按钮点击回调
+  this.textColor, //按钮文字颜色
+  this.disabledTextColor, //按钮禁用时的文字颜色
+  this.color, //按钮背景颜色
+  this.disabledColor,//按钮禁用时的背景颜色
+  this.highlightColor, //按钮按下时的背景颜色
+  this.splashColor, //点击时，水波动画中水波的颜色
+  this.colorBrightness,//按钮主题，默认是浅色主题 
+  this.padding, //按钮的填充
+  this.shape, //外形
+  @required this.child, //按钮的内容
+})
+</pre></div>
+</div>
+<p>其中大多数属性名都是自解释的，我们不赘述。下面我们通过一个示例来看看如何自定义按钮。</p>
+<div class="section" id="id4">
+<h3>示例<a class="headerlink" href="#id4" title="Permalink to this headline">¶</a></h3>
+<p>定义一个背景蓝色，两边圆角的按钮。效果如图3-15所示：</p>
+<p><img alt="图3-15" src="../_images/3-15.png" /></p>
+<p>代码如下：</p>
+<div class="highlight-dart notranslate"><div class="highlight"><pre><span></span><span class="n">FlatButton</span><span class="p">(</span>
+  <span class="nl">color:</span> <span class="n">Colors</span><span class="p">.</span><span class="n">blue</span><span class="p">,</span>
+  <span class="nl">highlightColor:</span> <span class="n">Colors</span><span class="p">.</span><span class="n">blue</span><span class="p">[</span><span class="m">700</span><span class="p">],</span>
+  <span class="nl">colorBrightness:</span> <span class="n">Brightness</span><span class="p">.</span><span class="n">dark</span><span class="p">,</span>
+  <span class="nl">splashColor:</span> <span class="n">Colors</span><span class="p">.</span><span class="n">grey</span><span class="p">,</span>
+  <span class="nl">child:</span> <span class="n">Text</span><span class="p">(</span><span class="s2">&quot;Submit&quot;</span><span class="p">),</span>
+  <span class="nl">shape:</span><span class="n">RoundedRectangleBorder</span><span class="p">(</span><span class="nl">borderRadius:</span> <span class="n">BorderRadius</span><span class="p">.</span><span class="n">circular</span><span class="p">(</span><span class="m">20.0</span><span class="p">)),</span>
+  <span class="nl">onPressed:</span> <span class="p">()</span> <span class="p">{},</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p>很简单吧，在上面的代码中，我们主要通过<code class="docutils literal notranslate"><span class="pre">shape</span></code>来指定其外形为一个圆角矩形。因为按钮背景是蓝色(深色)，我们需要指定按钮主题<code class="docutils literal notranslate"><span class="pre">colorBrightness</span></code>为<code class="docutils literal notranslate"><span class="pre">Brightness.dark</span></code>，这是为了保证按钮文字颜色为浅色。</p>
+<p>Flutter 中没有提供去除背景的设置，假若我们需要去除背景，则可以通过将背景颜色设置为全透明来实现。对应上面的代码，便是将 <code class="docutils literal notranslate"><span class="pre">color:</span> <span class="pre">Colors.blue</span></code> 替换为 <code class="docutils literal notranslate"><span class="pre">color:</span> <span class="pre">Color(0x000000)</span></code>。</p>
+<p>细心的读者可能会发现这个按钮没有阴影(点击之后也没有)，这样会显得没有质感。其实这也很容易，将上面的<code class="docutils literal notranslate"><span class="pre">FlatButton</span></code>换成<code class="docutils literal notranslate"><span class="pre">RaisedButton</span></code>就行，其它代码不用改（这里 color 也不做更改），换了之后的效果如图3-16所示：</p>
+<p><img alt="图3-16" src="../_images/3-16.png" /></p>
+<p>是不是有质感了！之所以会这样，是因为<code class="docutils literal notranslate"><span class="pre">RaisedButton</span></code>默认有配置阴影：</p>
+<div class="highlight-dart notranslate"><div class="highlight"><pre><span></span><span class="kd">const</span> <span class="n">RaisedButton</span><span class="p">({</span>
+  <span class="p">...</span>
+  <span class="k">this</span><span class="p">.</span><span class="n">elevation</span> <span class="o">=</span> <span class="m">2.0</span><span class="p">,</span> <span class="c1">//正常状态下的阴影</span>
+  <span class="k">this</span><span class="p">.</span><span class="n">highlightElevation</span> <span class="o">=</span> <span class="m">8.0</span><span class="p">,</span><span class="c1">//按下时的阴影</span>
+  <span class="k">this</span><span class="p">.</span><span class="n">disabledElevation</span> <span class="o">=</span> <span class="m">0.0</span><span class="p">,</span><span class="c1">// 禁用时的阴影</span>
+  <span class="p">...</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>值得注意的是，在Material 组件库中，我们会在很多组件中见到elevation相关的属性，它们都是用来控制阴影的，这是因为阴影在Material设计风格中是一种很重要的表现形式，以后在介绍其它组件时，便不再赘述。</p>
+<p>如果我们想实现一个背景渐变的圆角按钮，按钮有没有相应的属性呢？答案是否定的，但是，我们可以通过其它方式来实现，我们将在后面”自定义组件”一章中实现。</p>
+</div>
+</div>
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">flutter in action</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2021, mahongquan.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.5.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="../_sources/chapter3/buttons.md.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

@@ -1,0 +1,124 @@
+
+<!DOCTYPE html>
+
+<html lang="zh-cn">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>10.1 自定义组件方法简介 &#8212; flutter in action 1.0 documentation</title>
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="id1">
+<h1>10.1 自定义组件方法简介<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h1>
+<p>当Flutter提供的现有组件无法满足我们的需求，或者我们为了共享代码需要封装一些通用组件，这时我们就需要自定义组件。在Flutter中自定义组件有三种方式：通过组合其它组件、自绘和实现RenderObject。本节我们先分别介绍一下这三种方式的特点，后面章节中则详细介绍它们的细节。</p>
+<div class="section" id="widget">
+<h2>组合其它Widget<a class="headerlink" href="#widget" title="Permalink to this headline">¶</a></h2>
+<p>这种方式是通过拼装其它组件来组合成一个新的组件。例如我们之前介绍的<code class="docutils literal notranslate"><span class="pre">Container</span></code>就是一个组合组件，它是由<code class="docutils literal notranslate"><span class="pre">DecoratedBox</span></code>、<code class="docutils literal notranslate"><span class="pre">ConstrainedBox</span></code>、<code class="docutils literal notranslate"><span class="pre">Transform</span></code>、<code class="docutils literal notranslate"><span class="pre">Padding</span></code>、<code class="docutils literal notranslate"><span class="pre">Align</span></code>等组件组成。</p>
+<p>在Flutter中，组合的思想非常重要，Flutter提供了非常多的基础组件，而我们的界面开发其实就是按照需要组合这些组件来实现各种不同的布局而已。</p>
+</div>
+<div class="section" id="id2">
+<h2>自绘<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h2>
+<p>如果遇到无法通过现有的组件来实现需要的UI时，我们可以通过自绘组件的方式来实现，例如我们需要一个颜色渐变的圆形进度条，而Flutter提供的<code class="docutils literal notranslate"><span class="pre">CircularProgressIndicator</span></code>并不支持在显示精确进度时对进度条应用渐变色（其<code class="docutils literal notranslate"><span class="pre">valueColor</span></code> 属性只支持执行旋转动画时变化Indicator的颜色），这时最好的方法就是通过自定义组件来绘制出我们期望的外观。我们可以通过Flutter中提供的<code class="docutils literal notranslate"><span class="pre">CustomPaint</span></code>和<code class="docutils literal notranslate"><span class="pre">Canvas</span></code>来实现UI自绘。</p>
+</div>
+<div class="section" id="renderobject">
+<h2>实现RenderObject<a class="headerlink" href="#renderobject" title="Permalink to this headline">¶</a></h2>
+<p>Flutter提供的自身具有UI外观的组件，如文本<code class="docutils literal notranslate"><span class="pre">Text</span></code>、<code class="docutils literal notranslate"><span class="pre">Image</span></code>都是通过相应的<code class="docutils literal notranslate"><span class="pre">RenderObject</span></code>（我们将在“Flutter核心原理”一章中详细介绍<code class="docutils literal notranslate"><span class="pre">RenderObject</span></code>）渲染出来的，如Text是由<code class="docutils literal notranslate"><span class="pre">RenderParagraph</span></code>渲染；而<code class="docutils literal notranslate"><span class="pre">Image</span></code>是由<code class="docutils literal notranslate"><span class="pre">RenderImage</span></code>渲染。<code class="docutils literal notranslate"><span class="pre">RenderObject</span></code>是一个抽象类，它定义了一个抽象方法<code class="docutils literal notranslate"><span class="pre">paint(...)</span></code>：</p>
+<div class="highlight-dart notranslate"><div class="highlight"><pre><span></span><span class="kt">void</span> <span class="n">paint</span><span class="p">(</span><span class="n">PaintingContext</span> <span class="n">context</span><span class="p">,</span> <span class="n">Offset</span> <span class="n">offset</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">PaintingContext</span></code>代表组件的绘制上下文，通过<code class="docutils literal notranslate"><span class="pre">PaintingContext.canvas</span></code>可以获得<code class="docutils literal notranslate"><span class="pre">Canvas</span></code>，而绘制逻辑主要是通过<code class="docutils literal notranslate"><span class="pre">Canvas</span></code> API来实现。子类需要重写此方法以实现自身的绘制逻辑，如<code class="docutils literal notranslate"><span class="pre">RenderParagraph</span></code>需要实现文本绘制逻辑，而<code class="docutils literal notranslate"><span class="pre">RenderImage</span></code>需要实现图片绘制逻辑。</p>
+<p>可以发现，<code class="docutils literal notranslate"><span class="pre">RenderObject</span></code>中最终也是通过<code class="docutils literal notranslate"><span class="pre">Canvas</span></code> API来绘制的，那么通过实现<code class="docutils literal notranslate"><span class="pre">RenderObject</span></code>的方式和上面介绍的通过<code class="docutils literal notranslate"><span class="pre">CustomPaint</span></code>和<code class="docutils literal notranslate"><span class="pre">Canvas</span></code>自绘的方式有什么区别？其实答案很简单，<code class="docutils literal notranslate"><span class="pre">CustomPaint</span></code>只是为了方便开发者封装的一个代理类，它直接继承自<code class="docutils literal notranslate"><span class="pre">SingleChildRenderObjectWidget</span></code>，通过<code class="docutils literal notranslate"><span class="pre">RenderCustomPaint</span></code>的<code class="docutils literal notranslate"><span class="pre">paint</span></code>方法将<code class="docutils literal notranslate"><span class="pre">Canvas</span></code>和画笔<code class="docutils literal notranslate"><span class="pre">Painter</span></code>(需要开发者实现，后面章节介绍)连接起来实现了最终的绘制（绘制逻辑在<code class="docutils literal notranslate"><span class="pre">Painter</span></code>中）。</p>
+</div>
+<div class="section" id="id3">
+<h2>总结<a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h2>
+<p>“组合”是自定义组件最简单的方法，在任何需要自定义组件的场景下，我们都应该优先考虑是否能够通过组合来实现。而自绘和通过实现<code class="docutils literal notranslate"><span class="pre">RenderObject</span></code>的方法本质上是一样的，都需要开发者调用<code class="docutils literal notranslate"><span class="pre">Canvas</span></code> API手动去绘制UI，优点是强大灵活，理论上可以实现任何外观的UI，而缺点是必须了解<code class="docutils literal notranslate"><span class="pre">Canvas</span></code> API细节，并且得自己去实现绘制逻辑。</p>
+<p>在本章接下来的小节中，我们将通过一些实例来详细介绍自定义UI的过程，由于后两种方法本质是相同的，并且Flutter中很多基础组件都是通过<code class="docutils literal notranslate"><span class="pre">RenderObject</span></code>的形式来实现的，所以后续我们只介绍<code class="docutils literal notranslate"><span class="pre">CustomPaint</span></code>和<code class="docutils literal notranslate"><span class="pre">Canvas</span></code>的方式，读者如果对自定义<code class="docutils literal notranslate"><span class="pre">RenderObject</span></code>的方法好奇，可以查看Flutter中相关基础组件对应的<code class="docutils literal notranslate"><span class="pre">RenderObject</span></code>的实现源码，如<code class="docutils literal notranslate"><span class="pre">RenderParagraph</span></code>或<code class="docutils literal notranslate"><span class="pre">RenderImage</span></code>。</p>
+</div>
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">flutter in action</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2021, mahongquan.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.5.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="../_sources/chapter10/intro.md.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

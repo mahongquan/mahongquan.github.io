@@ -1,0 +1,143 @@
+
+<!DOCTYPE html>
+
+<html lang="zh-cn">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>13.4 国际化常见问题 &#8212; flutter in action 1.0 documentation</title>
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="id1">
+<h1>13.4 国际化常见问题<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h1>
+<p>本节主要解答一下在国际化中常见的问题。</p>
+<div class="section" id="id2">
+<h2>默认语言区域不对<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h2>
+<p>在一些非大陆行货渠道买的一些Android和iOS设备，会出现默认的Locale不是中文简体的情况。这属于正常现象，但是为了防止设备获取的Locale与实际的地区不一致，所有的支持多语言的APP都必须提供一个手动选择语言的入口。</p>
+</div>
+<div class="section" id="id3">
+<h2>如何对应用标题进行国际化<a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">MaterialApp</span></code>有一个<code class="docutils literal notranslate"><span class="pre">title</span></code>属性，用于指定APP的标题。在Android系统中，APP的标题会出现在任务管理器中。所以也需要对<code class="docutils literal notranslate"><span class="pre">title</span></code>进行国际化。但是问题是很多国际化的配置都是在<code class="docutils literal notranslate"><span class="pre">MaterialApp</span></code>上设置的，我们无法在构建<code class="docutils literal notranslate"><span class="pre">MaterialApp</span></code>时通过<code class="docutils literal notranslate"><span class="pre">Localizations.of</span></code>来获取本地化资源，如：</p>
+<div class="highlight-dart notranslate"><div class="highlight"><pre><span></span><span class="n">MaterialApp</span><span class="p">(</span>
+  <span class="nl">title:</span> <span class="n">DemoLocalizations</span><span class="p">.</span><span class="n">of</span><span class="p">(</span><span class="n">context</span><span class="p">).</span><span class="n">title</span><span class="p">,</span> <span class="c1">//不能正常工作！</span>
+  <span class="nl">localizationsDelegates:</span> <span class="p">[</span>
+    <span class="c1">// 本地化的代理类</span>
+    <span class="n">GlobalMaterialLocalizations</span><span class="p">.</span><span class="n">delegate</span><span class="p">,</span>
+    <span class="n">GlobalWidgetsLocalizations</span><span class="p">.</span><span class="n">delegate</span><span class="p">,</span>
+    <span class="n">DemoLocalizationsDelegate</span><span class="p">()</span> <span class="c1">// 设置Delegate</span>
+  <span class="p">],</span>
+<span class="p">);</span>
+</pre></div>
+</div>
+<p>上面代码运行后，<code class="docutils literal notranslate"><span class="pre">DemoLocalizations.of(context).title</span></code> 是会报错的，原因是<code class="docutils literal notranslate"><span class="pre">Localizations.of</span></code>会从当前的context沿着widget树向顶部查找<code class="docutils literal notranslate"><span class="pre">DemoLocalizations</span></code>，但是我们在<code class="docutils literal notranslate"><span class="pre">MaterialApp</span></code>中设置完<code class="docutils literal notranslate"><span class="pre">DemoLocalizationsDelegate</span></code>后，实际上<code class="docutils literal notranslate"><span class="pre">DemoLocalizations</span></code>是在当前context的子树中的，所以<code class="docutils literal notranslate"><span class="pre">DemoLocalizations.of(context)</span></code>会返回null，报错。那么我们该如何处理这种情况呢？其实很简单，我们只需要设置一个<code class="docutils literal notranslate"><span class="pre">onGenerateTitle</span></code>回调即可：</p>
+<div class="highlight-dart notranslate"><div class="highlight"><pre><span></span><span class="n">MaterialApp</span><span class="p">(</span>
+  <span class="nl">onGenerateTitle:</span> <span class="p">(</span><span class="n">context</span><span class="p">){</span>
+    <span class="c1">// 此时context在Localizations的子树中</span>
+    <span class="k">return</span> <span class="n">DemoLocalizations</span><span class="p">.</span><span class="n">of</span><span class="p">(</span><span class="n">context</span><span class="p">).</span><span class="n">title</span><span class="p">;</span>
+  <span class="p">},</span>
+  <span class="nl">localizationsDelegates:</span> <span class="p">[</span>
+    <span class="n">DemoLocalizationsDelegate</span><span class="p">(),</span>
+    <span class="p">...</span>
+  <span class="p">],</span>
+<span class="p">);</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="locale">
+<h2>如何为英语系的国家指定同一个locale<a class="headerlink" href="#locale" title="Permalink to this headline">¶</a></h2>
+<p>英语系的国家非常多，如美国、英国、澳大利亚等，这些英语系国家虽然说的都是英语，但也会有一些区别。如果我们的APP只想提供一种英语（如美国英语）供所有英语系国家使用，我们可以在前面介绍的<code class="docutils literal notranslate"><span class="pre">localeListResolutionCallback</span></code>中来做兼容：</p>
+<div class="highlight-dart notranslate"><div class="highlight"><pre><span></span><span class="nl">localeListResolutionCallback:</span>
+    <span class="p">(</span><span class="n">List</span><span class="o">&lt;</span><span class="n">Locale</span><span class="o">&gt;</span> <span class="n">locales</span><span class="p">,</span> <span class="n">Iterable</span><span class="o">&lt;</span><span class="n">Locale</span><span class="o">&gt;</span> <span class="n">supportedLocales</span><span class="p">)</span> <span class="p">{</span>
+  <span class="c1">// 判断当前locale是否为英语系国家，如果是直接返回Locale(&#39;en&#39;, &#39;US&#39;)     </span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</div>
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">flutter in action</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2021, mahongquan.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.5.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="../_sources/chapter13/faq.md.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

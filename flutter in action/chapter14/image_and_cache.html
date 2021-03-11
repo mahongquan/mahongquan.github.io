@@ -1,0 +1,510 @@
+
+<!DOCTYPE html>
+
+<html lang="zh-cn">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>14.5 图片加载原理与缓存 &#8212; flutter in action 1.0 documentation</title>
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="id1">
+<h1>14.5 图片加载原理与缓存<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h1>
+<p>在本书前面章节已经介绍过<code class="docutils literal notranslate"><span class="pre">Image</span></code> 组件，并提到Flutter框架对加载过的图片是有缓存的（内存），默认最大缓存数量是1000，最大缓存空间为100M。本节便详细介绍Image的原理及图片缓存机制，下面我们先看看<code class="docutils literal notranslate"><span class="pre">ImageProvider</span></code> 类。</p>
+<div class="section" id="imageprovider">
+<h2>14.5.1 ImageProvider<a class="headerlink" href="#imageprovider" title="Permalink to this headline">¶</a></h2>
+<p>我们已经知道<code class="docutils literal notranslate"><span class="pre">Image</span></code> 组件的<code class="docutils literal notranslate"><span class="pre">image</span></code> 参数是一个必选参数，它是<code class="docutils literal notranslate"><span class="pre">ImageProvider</span></code>类型。下面我们便详细介绍一下<code class="docutils literal notranslate"><span class="pre">ImageProvider</span></code>，<code class="docutils literal notranslate"><span class="pre">ImageProvider</span></code>是一个抽象类，定义了图片数据获取和加载的相关接口。它的主要职责有两个：</p>
+<ol class="simple">
+<li><p>提供图片数据源</p></li>
+<li><p>缓存图片</p></li>
+</ol>
+<p>我们看看<code class="docutils literal notranslate"><span class="pre">ImageProvider</span></code>抽象类的详细定义：</p>
+<div class="highlight-dart notranslate"><div class="highlight"><pre><span></span>abstract class ImageProvider&lt;T&gt; {
+
+  ImageStream resolve(ImageConfiguration configuration) {
+    // 实现代码省略
+  }
+  Future&lt;bool&gt; evict({ ImageCache cache,
+                      ImageConfiguration configuration = ImageConfiguration.empty }) async {
+    // 实现代码省略
+  }
+
+  Future&lt;T&gt; obtainKey(ImageConfiguration configuration); 
+  @protected
+  ImageStreamCompleter load(T key); // 需子类实现
+}
+</pre></div>
+</div>
+<div class="section" id="load-t-key">
+<h3><code class="docutils literal notranslate"><span class="pre">load(T</span> <span class="pre">key)</span></code>方法<a class="headerlink" href="#load-t-key" title="Permalink to this headline">¶</a></h3>
+<p>加载图片数据源的接口，不同的数据源的加载方法不同，每个<code class="docutils literal notranslate"><span class="pre">ImageProvider</span></code>的子类必须实现它。比如<code class="docutils literal notranslate"><span class="pre">NetworkImage</span></code>类和<code class="docutils literal notranslate"><span class="pre">AssetImage</span></code>类，它们都是<code class="docutils literal notranslate"><span class="pre">ImageProvider</span></code>的子类，但它们需要从不同的数据源来加载图片数据：<code class="docutils literal notranslate"><span class="pre">NetworkImage</span></code>是从网络来加载图片数据，而<code class="docutils literal notranslate"><span class="pre">AssetImage</span></code>则是从最终的应用包里来加载（加载打到应用安装包里的资源图片）。 我们以<code class="docutils literal notranslate"><span class="pre">NetworkImage</span></code>为例，看看其load方法的实现：</p>
+<div class="highlight-dart notranslate"><div class="highlight"><pre><span></span>
+@override
+ImageStreamCompleter load(image_provider.NetworkImage key) {
+
+  final StreamController&lt;ImageChunkEvent&gt; chunkEvents = StreamController&lt;ImageChunkEvent&gt;();
+  
+  return MultiFrameImageStreamCompleter(
+    codec: _loadAsync(key, chunkEvents), //调用
+    chunkEvents: chunkEvents.stream,
+    scale: key.scale,
+    ... //省略无关代码
+  );
+}
+</pre></div>
+</div>
+<p>我们看到，<code class="docutils literal notranslate"><span class="pre">load</span></code>方法的返回值类型是<code class="docutils literal notranslate"><span class="pre">ImageStreamCompleter</span></code> ，它是一个抽象类，定义了管理图片加载过程的一些接口，<code class="docutils literal notranslate"><span class="pre">Image</span></code> Widget中正是通过它来监听图片加载状态的（我们将在下面介绍<code class="docutils literal notranslate"><span class="pre">Image</span></code> 原理时详细介绍）。</p>
+<p><code class="docutils literal notranslate"><span class="pre">MultiFrameImageStreamCompleter</span></code> 是 <code class="docutils literal notranslate"><span class="pre">ImageStreamCompleter</span></code>的一个子类，是flutter sdk预置的类，通过该类，我们以方便、轻松地创建出一个<code class="docutils literal notranslate"><span class="pre">ImageStreamCompleter</span></code>实例来做为<code class="docutils literal notranslate"><span class="pre">load</span></code>方法的返回值。</p>
+<p>我们可以看到，<code class="docutils literal notranslate"><span class="pre">MultiFrameImageStreamCompleter</span></code> 需要一个<code class="docutils literal notranslate"><span class="pre">codec</span></code>参数，该参数类型为<code class="docutils literal notranslate"><span class="pre">Future&lt;ui.Codec&gt;</span> </code>。<code class="docutils literal notranslate"><span class="pre">Codec</span> </code> 是处理图片编解码的类的一个handler，实际上，它只是一个flutter engine API 的包装类，也就是说图片的编解码逻辑不是在Dart 代码部分实现，而是在flutter engine中实现的。<code class="docutils literal notranslate"><span class="pre">Codec</span></code>类部分定义如下：</p>
+<div class="highlight-dart notranslate"><div class="highlight"><pre><span></span>@pragma(&#39;vm:entry-point&#39;)
+class Codec extends NativeFieldWrapperClass2 {
+  // 此类由flutter engine创建，不应该手动实例化此类或直接继承此类。
+  @pragma(&#39;vm:entry-point&#39;)
+  Codec._();
+
+  /// 图片中的帧数(动态图会有多帧)
+  int get frameCount native &#39;Codec_frameCount&#39;;
+
+  /// 动画重复的次数
+  /// * 0 表示只执行一次
+  /// * -1 表示循环执行
+  int get repetitionCount native &#39;Codec_repetitionCount&#39;;
+
+  /// 获取下一个动画帧
+  Future&lt;FrameInfo&gt; getNextFrame() {
+    return _futurize(_getNextFrame);
+  }
+
+  String _getNextFrame(_Callback&lt;FrameInfo&gt; callback) native &#39;Codec_getNextFrame&#39;;
+</pre></div>
+</div>
+<p>我们可以看到<code class="docutils literal notranslate"><span class="pre">Codec</span></code>最终的结果是一个或多个（动图）帧，而这些帧最终会绘制到屏幕上。</p>
+<p><code class="docutils literal notranslate"><span class="pre">MultiFrameImageStreamCompleter</span> <span class="pre">的</span></code> <code class="docutils literal notranslate"><span class="pre">codec</span></code>参数值为<code class="docutils literal notranslate"><span class="pre">_loadAsync</span></code>方法的返回值，我们继续看<code class="docutils literal notranslate"><span class="pre">_loadAsync</span></code>方法的实现：</p>
+<div class="highlight-dart notranslate"><div class="highlight"><pre><span></span> <span class="n">Future</span><span class="o">&lt;</span><span class="n">ui</span><span class="p">.</span><span class="n">Codec</span><span class="o">&gt;</span> <span class="n">_loadAsync</span><span class="p">(</span>
+    <span class="n">NetworkImage</span> <span class="n">key</span><span class="p">,</span>
+    <span class="n">StreamController</span><span class="o">&lt;</span><span class="n">ImageChunkEvent</span><span class="o">&gt;</span> <span class="n">chunkEvents</span><span class="p">,</span>
+  <span class="p">)</span> <span class="kd">async</span> <span class="p">{</span>
+    <span class="k">try</span> <span class="p">{</span>
+      <span class="c1">//下载图片</span>
+      <span class="kd">final</span> <span class="n">Uri</span> <span class="n">resolved</span> <span class="o">=</span> <span class="n">Uri</span><span class="p">.</span><span class="n">base</span><span class="p">.</span><span class="n">resolve</span><span class="p">(</span><span class="n">key</span><span class="p">.</span><span class="n">url</span><span class="p">);</span>
+      <span class="kd">final</span> <span class="n">HttpClientRequest</span> <span class="n">request</span> <span class="o">=</span> <span class="kd">await</span> <span class="n">_httpClient</span><span class="p">.</span><span class="n">getUrl</span><span class="p">(</span><span class="n">resolved</span><span class="p">);</span>
+      <span class="n">headers</span><span class="o">?</span><span class="p">.</span><span class="n">forEach</span><span class="p">((</span><span class="kt">String</span> <span class="n">name</span><span class="p">,</span> <span class="kt">String</span> <span class="n">value</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">request</span><span class="p">.</span><span class="n">headers</span><span class="p">.</span><span class="n">add</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">value</span><span class="p">);</span>
+      <span class="p">});</span>
+      <span class="kd">final</span> <span class="n">HttpClientResponse</span> <span class="n">response</span> <span class="o">=</span> <span class="kd">await</span> <span class="n">request</span><span class="p">.</span><span class="n">close</span><span class="p">();</span>
+      <span class="k">if</span> <span class="p">(</span><span class="n">response</span><span class="p">.</span><span class="n">statusCode</span> <span class="o">!=</span> <span class="n">HttpStatus</span><span class="p">.</span><span class="n">ok</span><span class="p">)</span>
+        <span class="k">throw</span> <span class="n">Exception</span><span class="p">(...);</span>
+      <span class="c1">// 接收图片数据 </span>
+      <span class="kd">final</span> <span class="n">Uint8List</span> <span class="n">bytes</span> <span class="o">=</span> <span class="kd">await</span> <span class="n">consolidateHttpClientResponseBytes</span><span class="p">(</span>
+        <span class="n">response</span><span class="p">,</span>
+        <span class="nl">onBytesReceived:</span> <span class="p">(</span><span class="kt">int</span> <span class="n">cumulative</span><span class="p">,</span> <span class="kt">int</span> <span class="n">total</span><span class="p">)</span> <span class="p">{</span>
+          <span class="n">chunkEvents</span><span class="p">.</span><span class="n">add</span><span class="p">(</span><span class="n">ImageChunkEvent</span><span class="p">(</span>
+            <span class="nl">cumulativeBytesLoaded:</span> <span class="n">cumulative</span><span class="p">,</span>
+            <span class="nl">expectedTotalBytes:</span> <span class="n">total</span><span class="p">,</span>
+          <span class="p">));</span>
+        <span class="p">},</span>
+      <span class="p">);</span>
+      <span class="k">if</span> <span class="p">(</span><span class="n">bytes</span><span class="p">.</span><span class="n">lengthInBytes</span> <span class="o">==</span> <span class="m">0</span><span class="p">)</span>
+        <span class="k">throw</span> <span class="n">Exception</span><span class="p">(</span><span class="s1">&#39;NetworkImage is an empty file: </span><span class="si">$</span><span class="n">resolved</span><span class="s1">&#39;</span><span class="p">);</span>
+      <span class="c1">// 对图片数据进行解码</span>
+      <span class="k">return</span> <span class="n">PaintingBinding</span><span class="p">.</span><span class="n">instance</span><span class="p">.</span><span class="n">instantiateImageCodec</span><span class="p">(</span><span class="n">bytes</span><span class="p">);</span>
+    <span class="p">}</span> <span class="k">finally</span> <span class="p">{</span>
+      <span class="n">chunkEvents</span><span class="p">.</span><span class="n">close</span><span class="p">();</span>
+    <span class="p">}</span>
+  <span class="p">}</span>
+</pre></div>
+</div>
+<p>可以看到<code class="docutils literal notranslate"><span class="pre">_loadAsync</span></code>方法主要做了两件事：</p>
+<ol class="simple">
+<li><p>下载图片。</p></li>
+<li><p>对下载的图片数据进行解码。</p></li>
+</ol>
+<p>下载逻辑比较简单：通过<code class="docutils literal notranslate"><span class="pre">HttpClient</span></code>从网上下载图片，另外下载请求会设置一些自定义的header，开发者可以通过<code class="docutils literal notranslate"><span class="pre">NetworkImage</span></code>的<code class="docutils literal notranslate"><span class="pre">headers</span></code>命名参数来传递。</p>
+<p>在图片下载完成后调用了<code class="docutils literal notranslate"><span class="pre">PaintingBinding.instance.instantiateImageCodec(bytes)</span></code>对图片进行解码，值得注意的是<code class="docutils literal notranslate"><span class="pre">instantiateImageCodec(...)</span></code>也是一个Native API的包装，实际上会调用Flutter engine的<code class="docutils literal notranslate"><span class="pre">instantiateImageCodec</span></code>方法，源码如下：</p>
+<div class="highlight-dart notranslate"><div class="highlight"><pre><span></span><span class="kt">String</span> <span class="n">_instantiateImageCodec</span><span class="p">(</span><span class="n">Uint8List</span> <span class="n">list</span><span class="p">,</span> <span class="n">_Callback</span><span class="o">&lt;</span><span class="n">Codec</span><span class="o">&gt;</span> <span class="n">callback</span><span class="p">,</span> <span class="n">_ImageInfo</span> <span class="n">imageInfo</span><span class="p">,</span> <span class="kt">int</span> <span class="n">targetWidth</span><span class="p">,</span> <span class="kt">int</span> <span class="n">targetHeight</span><span class="p">)</span>
+  <span class="kd">native</span> <span class="s1">&#39;instantiateImageCodec&#39;</span><span class="p">;</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="obtainkey-imageconfiguration">
+<h3><code class="docutils literal notranslate"><span class="pre">obtainKey(ImageConfiguration)</span></code>方法<a class="headerlink" href="#obtainkey-imageconfiguration" title="Permalink to this headline">¶</a></h3>
+<p>该接口主要是为了配合实现图片缓存，<code class="docutils literal notranslate"><span class="pre">ImageProvider</span></code>从数据源加载完数据后，会在全局的<code class="docutils literal notranslate"><span class="pre">ImageCache</span></code>中缓存图片数据，而图片数据缓存是一个Map，而Map的key便是调用此方法的返回值，不同的key代表不同的图片数据缓存。</p>
+</div>
+<div class="section" id="resolve-imageconfiguration">
+<h3><code class="docutils literal notranslate"><span class="pre">resolve(ImageConfiguration)</span></code> 方法<a class="headerlink" href="#resolve-imageconfiguration" title="Permalink to this headline">¶</a></h3>
+<p><code class="docutils literal notranslate"><span class="pre">resolve</span></code>方法是<code class="docutils literal notranslate"><span class="pre">ImageProvider</span></code>的暴露的给<code class="docutils literal notranslate"><span class="pre">Image</span></code>的主入口方法，它接受一个<code class="docutils literal notranslate"><span class="pre">ImageConfiguration</span></code>参数，返回<code class="docutils literal notranslate"><span class="pre">ImageStream</span></code>，即图片数据流。我们重点看一下<code class="docutils literal notranslate"><span class="pre">resolve</span></code>执行流程：</p>
+<div class="highlight-dart notranslate"><div class="highlight"><pre><span></span><span class="n">ImageStream</span> <span class="n">resolve</span><span class="p">(</span><span class="n">ImageConfiguration</span> <span class="n">configuration</span><span class="p">)</span> <span class="p">{</span>
+  <span class="p">...</span> <span class="c1">//省略无关代码</span>
+  <span class="kd">final</span> <span class="n">ImageStream</span> <span class="n">stream</span> <span class="o">=</span> <span class="n">ImageStream</span><span class="p">();</span>
+  <span class="n">T</span> <span class="n">obtainedKey</span><span class="p">;</span> <span class="c1">//</span>
+  <span class="c1">//定义错误处理函数</span>
+  <span class="n">Future</span><span class="o">&lt;</span><span class="kt">void</span><span class="o">&gt;</span> <span class="n">handleError</span><span class="p">(</span><span class="kt">dynamic</span> <span class="n">exception</span><span class="p">,</span> <span class="n">StackTrace</span> <span class="n">stack</span><span class="p">)</span> <span class="kd">async</span> <span class="p">{</span>
+    <span class="p">...</span> <span class="c1">//省略无关代码</span>
+    <span class="n">stream</span><span class="p">.</span><span class="n">setCompleter</span><span class="p">(</span><span class="n">imageCompleter</span><span class="p">);</span>
+    <span class="n">imageCompleter</span><span class="p">.</span><span class="n">setError</span><span class="p">(...);</span>
+  <span class="p">}</span>
+
+  <span class="c1">// 创建一个新Zone，主要是为了当发生错误时不会干扰MainZone</span>
+  <span class="kd">final</span> <span class="n">Zone</span> <span class="n">dangerZone</span> <span class="o">=</span> <span class="n">Zone</span><span class="p">.</span><span class="n">current</span><span class="p">.</span><span class="n">fork</span><span class="p">(...);</span>
+  
+  <span class="n">dangerZone</span><span class="p">.</span><span class="n">runGuarded</span><span class="p">(()</span> <span class="p">{</span>
+    <span class="n">Future</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span> <span class="n">key</span><span class="p">;</span>
+    <span class="c1">// 先验证是否已经有缓存</span>
+    <span class="k">try</span> <span class="p">{</span>
+      <span class="c1">// 生成缓存key，后面会根据此key来检测是否有缓存</span>
+      <span class="n">key</span> <span class="o">=</span> <span class="n">obtainKey</span><span class="p">(</span><span class="n">configuration</span><span class="p">);</span>
+    <span class="p">}</span> <span class="k">catch</span> <span class="p">(</span><span class="n">error</span><span class="p">,</span> <span class="n">stackTrace</span><span class="p">)</span> <span class="p">{</span>
+      <span class="n">handleError</span><span class="p">(</span><span class="n">error</span><span class="p">,</span> <span class="n">stackTrace</span><span class="p">);</span>
+      <span class="k">return</span><span class="p">;</span>
+    <span class="p">}</span>
+    <span class="n">key</span><span class="p">.</span><span class="n">then</span><span class="o">&lt;</span><span class="kt">void</span><span class="o">&gt;</span><span class="p">((</span><span class="n">T</span> <span class="n">key</span><span class="p">)</span> <span class="p">{</span>
+      <span class="n">obtainedKey</span> <span class="o">=</span> <span class="n">key</span><span class="p">;</span>
+      <span class="c1">// 缓存的处理逻辑在这里，记为A，下面详细介绍</span>
+      <span class="kd">final</span> <span class="n">ImageStreamCompleter</span> <span class="n">completer</span> <span class="o">=</span> <span class="n">PaintingBinding</span><span class="p">.</span><span class="n">instance</span>
+          <span class="p">.</span><span class="n">imageCache</span><span class="p">.</span><span class="n">putIfAbsent</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="p">()</span> <span class="o">=&gt;</span> <span class="n">load</span><span class="p">(</span><span class="n">key</span><span class="p">),</span> <span class="nl">onError:</span> <span class="n">handleError</span><span class="p">);</span>
+      <span class="k">if</span> <span class="p">(</span><span class="n">completer</span> <span class="o">!=</span> <span class="kc">null</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">stream</span><span class="p">.</span><span class="n">setCompleter</span><span class="p">(</span><span class="n">completer</span><span class="p">);</span>
+      <span class="p">}</span>
+    <span class="p">}).</span><span class="n">catchError</span><span class="p">(</span><span class="n">handleError</span><span class="p">);</span>
+  <span class="p">});</span>
+  <span class="k">return</span> <span class="n">stream</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">ImageConfiguration</span></code>  包含图片和设备的相关信息，如图片的大小、所在的<code class="docutils literal notranslate"><span class="pre">AssetBundle</span> </code>(只有打到安装包的图片存在)以及当前的设备平台、devicePixelRatio（设备像素比等）。Flutter SDK提供了一个便捷函数<code class="docutils literal notranslate"><span class="pre">createLocalImageConfiguration</span></code>来创建<code class="docutils literal notranslate"><span class="pre">ImageConfiguration</span></code>  对象：</p>
+<div class="highlight-dart notranslate"><div class="highlight"><pre><span></span><span class="n">ImageConfiguration</span> <span class="n">createLocalImageConfiguration</span><span class="p">(</span><span class="n">BuildContext</span> <span class="n">context</span><span class="p">,</span> <span class="p">{</span> <span class="n">Size</span> <span class="n">size</span> <span class="p">})</span> <span class="p">{</span>
+  <span class="k">return</span> <span class="n">ImageConfiguration</span><span class="p">(</span>
+    <span class="nl">bundle:</span> <span class="n">DefaultAssetBundle</span><span class="p">.</span><span class="n">of</span><span class="p">(</span><span class="n">context</span><span class="p">),</span>
+    <span class="nl">devicePixelRatio:</span> <span class="n">MediaQuery</span><span class="p">.</span><span class="n">of</span><span class="p">(</span><span class="n">context</span><span class="p">,</span> <span class="nl">nullOk:</span> <span class="kc">true</span><span class="p">)</span><span class="o">?</span><span class="p">.</span><span class="n">devicePixelRatio</span> <span class="o">??</span> <span class="m">1.0</span><span class="p">,</span>
+    <span class="nl">locale:</span> <span class="n">Localizations</span><span class="p">.</span><span class="n">localeOf</span><span class="p">(</span><span class="n">context</span><span class="p">,</span> <span class="nl">nullOk:</span> <span class="kc">true</span><span class="p">),</span>
+    <span class="nl">textDirection:</span> <span class="n">Directionality</span><span class="p">.</span><span class="n">of</span><span class="p">(</span><span class="n">context</span><span class="p">),</span>
+    <span class="nl">size:</span> <span class="n">size</span><span class="p">,</span>
+    <span class="nl">platform:</span> <span class="n">defaultTargetPlatform</span><span class="p">,</span>
+  <span class="p">);</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>我们可以发现这些信息基本都是通过<code class="docutils literal notranslate"><span class="pre">Context</span></code>来获取。</p>
+<p>上面代码A处就是处理缓存的主要代码，这里的<code class="docutils literal notranslate"><span class="pre">PaintingBinding.instance.imageCache</span></code> 是 <code class="docutils literal notranslate"><span class="pre">ImageCache</span></code>的一个实例，它是<code class="docutils literal notranslate"><span class="pre">PaintingBinding</span></code>的一个属性，而Flutter框架中的<code class="docutils literal notranslate"><span class="pre">PaintingBinding.instance</span></code>是一个单例，<code class="docutils literal notranslate"><span class="pre">imageCache</span></code>事实上也是一个单例，也就是说图片缓存是全局的，统一由<code class="docutils literal notranslate"><span class="pre">PaintingBinding.instance.imageCache</span></code> 来管理。</p>
+<p>下面我们看看<code class="docutils literal notranslate"><span class="pre">ImageCache</span></code>类定义：</p>
+<div class="highlight-dart notranslate"><div class="highlight"><pre><span></span><span class="kd">const</span> <span class="kt">int</span> <span class="n">_kDefaultSize</span> <span class="o">=</span> <span class="m">1000</span><span class="p">;</span>
+<span class="kd">const</span> <span class="kt">int</span> <span class="n">_kDefaultSizeBytes</span> <span class="o">=</span> <span class="m">100</span> <span class="o">&lt;&lt;</span> <span class="m">20</span><span class="p">;</span> <span class="c1">// 100 MiB</span>
+
+<span class="kd">class</span> <span class="nc">ImageCache</span> <span class="p">{</span>
+  <span class="c1">// 正在加载中的图片队列</span>
+  <span class="kd">final</span> <span class="n">Map</span><span class="o">&lt;</span><span class="kt">Object</span><span class="p">,</span> <span class="n">_PendingImage</span><span class="o">&gt;</span> <span class="n">_pendingImages</span> <span class="o">=</span> <span class="o">&lt;</span><span class="kt">Object</span><span class="p">,</span> <span class="n">_PendingImage</span><span class="o">&gt;</span><span class="p">{};</span>
+  <span class="c1">// 缓存队列</span>
+  <span class="kd">final</span> <span class="n">Map</span><span class="o">&lt;</span><span class="kt">Object</span><span class="p">,</span> <span class="n">_CachedImage</span><span class="o">&gt;</span> <span class="n">_cache</span> <span class="o">=</span> <span class="o">&lt;</span><span class="kt">Object</span><span class="p">,</span> <span class="n">_CachedImage</span><span class="o">&gt;</span><span class="p">{};</span>
+
+  <span class="c1">// 缓存数量上限(1000)</span>
+  <span class="kt">int</span> <span class="n">_maximumSize</span> <span class="o">=</span> <span class="n">_kDefaultSize</span><span class="p">;</span>
+  <span class="c1">// 缓存容量上限 (100 MB)</span>
+  <span class="kt">int</span> <span class="n">_maximumSizeBytes</span> <span class="o">=</span> <span class="n">_kDefaultSizeBytes</span><span class="p">;</span>
+  
+  <span class="c1">// 缓存上限设置的setter</span>
+  <span class="kd">set</span> <span class="n">maximumSize</span><span class="p">(</span><span class="kt">int</span> <span class="n">value</span><span class="p">)</span> <span class="p">{...}</span>
+  <span class="kd">set</span> <span class="n">maximumSizeBytes</span><span class="p">(</span><span class="kt">int</span> <span class="n">value</span><span class="p">)</span> <span class="p">{...}</span>
+ 
+  <span class="p">...</span> <span class="c1">// 省略部分定义</span>
+
+  <span class="c1">// 清除所有缓存</span>
+  <span class="kt">void</span> <span class="n">clear</span><span class="p">()</span> <span class="p">{</span>
+    <span class="c1">// ...省略具体实现代码</span>
+  <span class="p">}</span>
+
+  <span class="c1">// 清除指定key对应的图片缓存</span>
+  <span class="kt">bool</span> <span class="n">evict</span><span class="p">(</span><span class="kt">Object</span> <span class="n">key</span><span class="p">)</span> <span class="p">{</span>
+   <span class="c1">// ...省略具体实现代码</span>
+  <span class="p">}</span>
+
+ 
+  <span class="n">ImageStreamCompleter</span> <span class="n">putIfAbsent</span><span class="p">(</span><span class="kt">Object</span> <span class="n">key</span><span class="p">,</span> <span class="n">ImageStreamCompleter</span> <span class="n">loader</span><span class="p">(),</span> <span class="p">{</span> <span class="n">ImageErrorListener</span> <span class="n">onError</span> <span class="p">})</span> <span class="p">{</span>
+    <span class="k">assert</span><span class="p">(</span><span class="n">key</span> <span class="o">!=</span> <span class="kc">null</span><span class="p">);</span>
+    <span class="k">assert</span><span class="p">(</span><span class="n">loader</span> <span class="o">!=</span> <span class="kc">null</span><span class="p">);</span>
+    <span class="n">ImageStreamCompleter</span> <span class="n">result</span> <span class="o">=</span> <span class="n">_pendingImages</span><span class="p">[</span><span class="n">key</span><span class="p">]</span><span class="o">?</span><span class="p">.</span><span class="n">completer</span><span class="p">;</span>
+    <span class="c1">// 图片还未加载成功，直接返回</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">result</span> <span class="o">!=</span> <span class="kc">null</span><span class="p">)</span>
+      <span class="k">return</span> <span class="n">result</span><span class="p">;</span>
+ 
+    <span class="c1">// 有缓存，继续往下走</span>
+    <span class="c1">// 先移除缓存，后再添加，可以让最新使用过的缓存在_map中的位置更近一些，清理时会LRU来清除</span>
+    <span class="kd">final</span> <span class="n">_CachedImage</span> <span class="n">image</span> <span class="o">=</span> <span class="n">_cache</span><span class="p">.</span><span class="n">remove</span><span class="p">(</span><span class="n">key</span><span class="p">);</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">image</span> <span class="o">!=</span> <span class="kc">null</span><span class="p">)</span> <span class="p">{</span>
+      <span class="n">_cache</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">image</span><span class="p">;</span>
+      <span class="k">return</span> <span class="n">image</span><span class="p">.</span><span class="n">completer</span><span class="p">;</span>
+    <span class="p">}</span>
+    <span class="k">try</span> <span class="p">{</span>
+      <span class="n">result</span> <span class="o">=</span> <span class="n">loader</span><span class="p">();</span>
+    <span class="p">}</span> <span class="k">catch</span> <span class="p">(</span><span class="n">error</span><span class="p">,</span> <span class="n">stackTrace</span><span class="p">)</span> <span class="p">{</span>
+      <span class="k">if</span> <span class="p">(</span><span class="n">onError</span> <span class="o">!=</span> <span class="kc">null</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">onError</span><span class="p">(</span><span class="n">error</span><span class="p">,</span> <span class="n">stackTrace</span><span class="p">);</span>
+        <span class="k">return</span> <span class="kc">null</span><span class="p">;</span>
+      <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+        <span class="n">rethrow</span><span class="p">;</span>
+      <span class="p">}</span>
+    <span class="p">}</span>
+    <span class="kt">void</span> <span class="n">listener</span><span class="p">(</span><span class="n">ImageInfo</span> <span class="n">info</span><span class="p">,</span> <span class="kt">bool</span> <span class="n">syncCall</span><span class="p">)</span> <span class="p">{</span>
+      <span class="kd">final</span> <span class="kt">int</span> <span class="n">imageSize</span> <span class="o">=</span> <span class="n">info</span><span class="o">?</span><span class="p">.</span><span class="n">image</span> <span class="o">==</span> <span class="kc">null</span> <span class="o">?</span> <span class="m">0</span> <span class="o">:</span> <span class="n">info</span><span class="p">.</span><span class="n">image</span><span class="p">.</span><span class="n">height</span> <span class="o">*</span> <span class="n">info</span><span class="p">.</span><span class="n">image</span><span class="p">.</span><span class="n">width</span> <span class="o">*</span> <span class="m">4</span><span class="p">;</span>
+      <span class="kd">final</span> <span class="n">_CachedImage</span> <span class="n">image</span> <span class="o">=</span> <span class="n">_CachedImage</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="n">imageSize</span><span class="p">);</span>
+      <span class="c1">// 下面是缓存处理的逻辑</span>
+      <span class="k">if</span> <span class="p">(</span><span class="n">maximumSizeBytes</span> <span class="o">&gt;</span> <span class="m">0</span> <span class="o">&amp;&amp;</span> <span class="n">imageSize</span> <span class="o">&gt;</span> <span class="n">maximumSizeBytes</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">_maximumSizeBytes</span> <span class="o">=</span> <span class="n">imageSize</span> <span class="o">+</span> <span class="m">1000</span><span class="p">;</span>
+      <span class="p">}</span>
+      <span class="n">_currentSizeBytes</span> <span class="o">+=</span> <span class="n">imageSize</span><span class="p">;</span>
+      <span class="kd">final</span> <span class="n">_PendingImage</span> <span class="n">pendingImage</span> <span class="o">=</span> <span class="n">_pendingImages</span><span class="p">.</span><span class="n">remove</span><span class="p">(</span><span class="n">key</span><span class="p">);</span>
+      <span class="k">if</span> <span class="p">(</span><span class="n">pendingImage</span> <span class="o">!=</span> <span class="kc">null</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">pendingImage</span><span class="p">.</span><span class="n">removeListener</span><span class="p">();</span>
+      <span class="p">}</span>
+
+      <span class="n">_cache</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">image</span><span class="p">;</span>
+      <span class="n">_checkCacheSize</span><span class="p">();</span>
+    <span class="p">}</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">maximumSize</span> <span class="o">&gt;</span> <span class="m">0</span> <span class="o">&amp;&amp;</span> <span class="n">maximumSizeBytes</span> <span class="o">&gt;</span> <span class="m">0</span><span class="p">)</span> <span class="p">{</span>
+      <span class="kd">final</span> <span class="n">ImageStreamListener</span> <span class="n">streamListener</span> <span class="o">=</span> <span class="n">ImageStreamListener</span><span class="p">(</span><span class="n">listener</span><span class="p">);</span>
+      <span class="n">_pendingImages</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">_PendingImage</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="n">streamListener</span><span class="p">);</span>
+      <span class="c1">// Listener is removed in [_PendingImage.removeListener].</span>
+      <span class="n">result</span><span class="p">.</span><span class="n">addListener</span><span class="p">(</span><span class="n">streamListener</span><span class="p">);</span>
+    <span class="p">}</span>
+    <span class="k">return</span> <span class="n">result</span><span class="p">;</span>
+  <span class="p">}</span>
+
+  <span class="c1">// 当缓存数量超过最大值或缓存的大小超过最大缓存容量，会调用此方法清理到缓存上限以内</span>
+  <span class="kt">void</span> <span class="n">_checkCacheSize</span><span class="p">()</span> <span class="p">{</span>
+   <span class="k">while</span> <span class="p">(</span><span class="n">_currentSizeBytes</span> <span class="o">&gt;</span> <span class="n">_maximumSizeBytes</span> <span class="o">||</span> <span class="n">_cache</span><span class="p">.</span><span class="n">length</span> <span class="o">&gt;</span> <span class="n">_maximumSize</span><span class="p">)</span> <span class="p">{</span>
+      <span class="kd">final</span> <span class="kt">Object</span> <span class="n">key</span> <span class="o">=</span> <span class="n">_cache</span><span class="p">.</span><span class="n">keys</span><span class="p">.</span><span class="n">first</span><span class="p">;</span>
+      <span class="kd">final</span> <span class="n">_CachedImage</span> <span class="n">image</span> <span class="o">=</span> <span class="n">_cache</span><span class="p">[</span><span class="n">key</span><span class="p">];</span>
+      <span class="n">_currentSizeBytes</span> <span class="o">-=</span> <span class="n">image</span><span class="p">.</span><span class="n">sizeBytes</span><span class="p">;</span>
+      <span class="n">_cache</span><span class="p">.</span><span class="n">remove</span><span class="p">(</span><span class="n">key</span><span class="p">);</span>
+    <span class="p">}</span>
+    <span class="p">...</span> <span class="c1">//省略无关代码</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>有缓存则使用缓存，没有缓存则调用load方法加载图片，加载成功后:</p>
+<ol class="simple">
+<li><p>先判断图片数据有没有缓存，如果有，则直接返回<code class="docutils literal notranslate"><span class="pre">ImageStream</span></code>。</p></li>
+<li><p>如果没有缓存，则调用<code class="docutils literal notranslate"><span class="pre">load(T</span> <span class="pre">key)</span></code>方法从数据源加载图片数据，加载成功后先缓存，然后返回ImageStream。</p></li>
+</ol>
+<p>另外，我们可以看到<code class="docutils literal notranslate"><span class="pre">ImageCache</span></code>类中有设置缓存上限的setter，所以，如果我们可以自定义缓存上限：</p>
+<div class="highlight-dart notranslate"><div class="highlight"><pre><span></span> <span class="n">PaintingBinding</span><span class="p">.</span><span class="n">instance</span><span class="p">.</span><span class="n">imageCache</span><span class="p">.</span><span class="n">maximumSize</span><span class="o">=</span><span class="m">2000</span><span class="p">;</span> <span class="c1">//最多2000张</span>
+ <span class="n">PaintingBinding</span><span class="p">.</span><span class="n">instance</span><span class="p">.</span><span class="n">imageCache</span><span class="p">.</span><span class="n">maximumSizeBytes</span> <span class="o">=</span> <span class="m">200</span> <span class="o">&lt;&lt;</span> <span class="m">20</span><span class="p">;</span> <span class="c1">//最大200M</span>
+</pre></div>
+</div>
+<p>现在我们看一下缓存的key，因为Map中相同key的值会被覆盖，也就是说key是图片缓存的一个唯一标识，只要是不同key，那么图片数据就会分别缓存（即使事实上是同一张图片）。那么图片的唯一标识是什么呢？跟踪源码，很容易发现key正是<code class="docutils literal notranslate"><span class="pre">ImageProvider.obtainKey()</span></code>方法的返回值，而此方法需要<code class="docutils literal notranslate"><span class="pre">ImageProvider</span></code>子类去重写，这也就意味着不同的<code class="docutils literal notranslate"><span class="pre">ImageProvider</span></code>对key的定义逻辑会不同。其实也很好理解，比如对于<code class="docutils literal notranslate"><span class="pre">NetworkImage</span></code>，将图片的url作为key会很合适，而对于<code class="docutils literal notranslate"><span class="pre">AssetImage</span></code>，则应该将“包名+路径”作为唯一的key。下面我们以<code class="docutils literal notranslate"><span class="pre">NetworkImage</span></code>为例，看一下它的<code class="docutils literal notranslate"><span class="pre">obtainKey()</span></code>实现：</p>
+<div class="highlight-dart notranslate"><div class="highlight"><pre><span></span>@override
+Future&lt;NetworkImage&gt; obtainKey(image_provider.ImageConfiguration configuration) {
+  return SynchronousFuture&lt;NetworkImage&gt;(this);
+}
+</pre></div>
+</div>
+<p>代码很简单，创建了一个同步的future，然后直接将自身做为key返回。因为Map中在判断key（此时是<code class="docutils literal notranslate"><span class="pre">NetworkImage</span></code>对象）是否相等时会使用“==”运算符，那么定义key的逻辑就是<code class="docutils literal notranslate"><span class="pre">NetworkImage</span></code>的“==”运算符：</p>
+<div class="highlight-dart notranslate"><div class="highlight"><pre><span></span>@override
+bool operator ==(dynamic other) {
+  ... //省略无关代码
+  final NetworkImage typedOther = other;
+  return url == typedOther.url
+      &amp;&amp; scale == typedOther.scale;
+}
+</pre></div>
+</div>
+<p>很清晰，对于网络图片来说，会将其“url+缩放比例”作为缓存的key。也就是说<strong>如果两张图片的url或scale只要有一个不同，便会重新下载并分别缓存</strong>。</p>
+<p>另外，我们需要注意的是，图片缓存是在内存中，并没有进行本地文件持久化存储，这也是为什么网络图片在应用重启后需要重新联网下载的原因。</p>
+<p>同时也意味着在应用生命周期内，如果缓存没有超过上限，相同的图片只会被下载一次。</p>
+</div>
+<div class="section" id="id2">
+<h3>总结<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h3>
+<p>上面主要结合源码，探索了<code class="docutils literal notranslate"><span class="pre">ImageProvider</span></code>的主要功能和原理，如果要用一句话来总结<code class="docutils literal notranslate"><span class="pre">ImageProvider</span></code>功能，那么应该是：加载图片数据并进行缓存、解码。在此再次提醒读者，Flutter的源码是非常好的第一手资料，建议读者多多探索，另外，在阅读源码学习的同时一定要有总结，这样才不至于在源码中迷失。</p>
+</div>
+</div>
+<div class="section" id="image">
+<h2>14.5.2 Image组件原理<a class="headerlink" href="#image" title="Permalink to this headline">¶</a></h2>
+<p>前面章节中我们介绍过<code class="docutils literal notranslate"><span class="pre">Image</span></code>的基础用法，现在我们更深入一些，研究一下<code class="docutils literal notranslate"><span class="pre">Image</span></code>是如何和<code class="docutils literal notranslate"><span class="pre">ImageProvider</span></code>配合来获取最终解码后的数据，然后又如何将图片绘制到屏幕上的。</p>
+<p>本节换一个思路，我们先不去直接看<code class="docutils literal notranslate"><span class="pre">Image</span></code>的源码，而根据已经掌握的知识来实现一个简版的“<code class="docutils literal notranslate"><span class="pre">Image</span></code>组件” <code class="docutils literal notranslate"><span class="pre">MyImage</span></code>，代码大致如下：</p>
+<div class="highlight-dart notranslate"><div class="highlight"><pre><span></span>class MyImage extends StatefulWidget {
+  const MyImage({
+    Key key,
+    @required this.imageProvider,
+  })
+      : assert(imageProvider != null),
+        super(key: key);
+
+  final ImageProvider imageProvider;
+
+  @override
+  _MyImageState createState() =&gt; _MyImageState();
+}
+
+class _MyImageState extends State&lt;MyImage&gt; {
+  ImageStream _imageStream;
+  ImageInfo _imageInfo;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // 依赖改变时，图片的配置信息可能会发生改变
+    _getImage();
+  }
+
+  @override
+  void didUpdateWidget(MyImage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.imageProvider != oldWidget.imageProvider)
+      _getImage();
+  }
+
+  void _getImage() {
+    final ImageStream oldImageStream = _imageStream;
+    // 调用imageProvider.resolve方法，获得ImageStream。
+    _imageStream =
+        widget.imageProvider.resolve(createLocalImageConfiguration(context));
+    //判断新旧ImageStream是否相同，如果不同，则需要调整流的监听器
+    if (_imageStream.key != oldImageStream?.key) {
+      final ImageStreamListener listener = ImageStreamListener(_updateImage);
+      oldImageStream?.removeListener(listener);
+      _imageStream.addListener(listener);
+    }
+  }
+
+  void _updateImage(ImageInfo imageInfo, bool synchronousCall) {
+    setState(() {
+      // Trigger a build whenever the image changes.
+      _imageInfo = imageInfo;
+    });
+  }
+
+  @override
+  void dispose() {
+    _imageStream.removeListener(ImageStreamListener(_updateImage));
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return RawImage(
+      image: _imageInfo?.image, // this is a dart:ui Image object
+      scale: _imageInfo?.scale ?? 1.0,
+    );
+  }
+}
+</pre></div>
+</div>
+<p>上面代码流程如下：</p>
+<ol class="simple">
+<li><p>通过<code class="docutils literal notranslate"><span class="pre">imageProvider.resolve</span></code>方法可以得到一个<code class="docutils literal notranslate"><span class="pre">ImageStream</span></code>（图片数据流），然后监听<code class="docutils literal notranslate"><span class="pre">ImageStream</span></code>的变化。当图片数据源发生变化时，<code class="docutils literal notranslate"><span class="pre">ImageStream</span></code>会触发相应的事件，而本例中我们只设置了图片成功的监听器<code class="docutils literal notranslate"><span class="pre">_updateImage</span></code>，而<code class="docutils literal notranslate"><span class="pre">_updateImage</span></code>中只更新了<code class="docutils literal notranslate"><span class="pre">_imageInfo</span></code>。值得注意的是，如果是静态图，<code class="docutils literal notranslate"><span class="pre">ImageStream</span></code>只会触发一次时间，如果是动态图，则会触发多次事件，每一次都会有一个解码后的图片帧。</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">_imageInfo</span></code> 更新后会rebuild，此时会创建一个<code class="docutils literal notranslate"><span class="pre">RawImage</span></code> Widget。<code class="docutils literal notranslate"><span class="pre">RawImage</span></code>最终会通过<code class="docutils literal notranslate"><span class="pre">RenderImage</span></code>来将图片绘制在屏幕上。如果继续跟进<code class="docutils literal notranslate"><span class="pre">RenderImage</span></code>类，我们会发现<code class="docutils literal notranslate"><span class="pre">RenderImage</span></code>的<code class="docutils literal notranslate"><span class="pre">paint</span></code> 方法中调用了<code class="docutils literal notranslate"><span class="pre">paintImage</span></code>方法，而<code class="docutils literal notranslate"><span class="pre">paintImage</span></code>方法中通过<code class="docutils literal notranslate"><span class="pre">Canvas</span></code>的<code class="docutils literal notranslate"><span class="pre">drawImageRect(…)</span></code>、<code class="docutils literal notranslate"><span class="pre">drawImageNine(...)</span></code>等方法来完成最终的绘制。</p></li>
+<li><p>最终的绘制由<code class="docutils literal notranslate"><span class="pre">RawImage</span></code>来完成。</p></li>
+</ol>
+<p>下面测试一下<code class="docutils literal notranslate"><span class="pre">MyImage</span></code>：</p>
+<div class="highlight-dart notranslate"><div class="highlight"><pre><span></span>class ImageInternalTestRoute extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: &lt;Widget&gt;[
+        MyImage(
+          imageProvider: NetworkImage(
+            &quot;https://avatars2.githubusercontent.com/u/20411648?s=460&amp;v=4&quot;,
+          ),
+        )
+      ],
+    );
+  }
+}
+</pre></div>
+</div>
+<p>运行效果如图14-4所示：</p>
+<p><img alt="图14-4" src="../_images/14-4.png" /></p>
+<p>成功了！ 现在，想必<code class="docutils literal notranslate"><span class="pre">Image</span></code> Widget的源码已经没必要在花费篇章去介绍了，读者有兴趣可以自行去阅读。</p>
+</div>
+<div class="section" id="id3">
+<h2>总结<a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h2>
+<p>本节主要介绍了Flutter 图片的加载、缓存和绘制流程。其中<code class="docutils literal notranslate"><span class="pre">ImageProvider</span></code>主要负责图片数据的加载和缓存，而绘制部分逻辑主要是由<code class="docutils literal notranslate"><span class="pre">RawImage</span></code>来完成。 而<code class="docutils literal notranslate"><span class="pre">Image</span></code>正是连接起<code class="docutils literal notranslate"><span class="pre">ImageProvider</span></code>和<code class="docutils literal notranslate"><span class="pre">RawImage</span></code> 的桥梁。</p>
+</div>
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">flutter in action</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2021, mahongquan.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.5.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="../_sources/chapter14/image_and_cache.md.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

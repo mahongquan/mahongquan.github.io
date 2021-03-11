@@ -1,0 +1,227 @@
+
+<!DOCTYPE html>
+
+<html lang="zh-cn">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>10.2 组合现有组件 &#8212; flutter in action 1.0 documentation</title>
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="id1">
+<h1>10.2 组合现有组件<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h1>
+<p>在Flutter中页面UI通常都是由一些低阶别的组件组合而成，当我们需要封装一些通用组件时，应该首先考虑是否可以通过组合其它组件来实现，如果可以，则应优先使用组合，因为直接通过现有组件拼装会非常简单、灵活、高效。</p>
+<div class="section" id="id2">
+<h2>示例：自定义渐变按钮<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h2>
+<p>Flutter Material组件库中的按钮默认不支持渐变背景，为了实现渐变背景按钮，我们自定义一个<code class="docutils literal notranslate"><span class="pre">GradientButton</span> </code>组件，它需要支持一下功能：</p>
+<ol class="simple">
+<li><p>背景支持渐变色</p></li>
+<li><p>手指按下时有涟漪效果</p></li>
+<li><p>可以支持圆角</p></li>
+</ol>
+<p>我们先来看看最终要实现的效果（图10-1）：</p>
+<p><img alt="gradient-button" src="../_images/10-1.png" /></p>
+<p>我们<code class="docutils literal notranslate"><span class="pre">DecoratedBox</span></code>可以支持背景色渐变和圆角，<code class="docutils literal notranslate"><span class="pre">InkWell</span></code>在手指按下有涟漪效果，所以我们可以通过组合<code class="docutils literal notranslate"><span class="pre">DecoratedBox</span></code>和<code class="docutils literal notranslate"><span class="pre">InkWell</span></code>来实现<code class="docutils literal notranslate"><span class="pre">GradientButton</span></code>，代码如下：</p>
+<div class="highlight-dart notranslate"><div class="highlight"><pre><span></span>import &#39;package:flutter/material.dart&#39;;
+
+class GradientButton extends StatelessWidget {
+  GradientButton({
+    this.colors,
+    this.width,
+    this.height,
+    this.onPressed,
+    this.borderRadius,
+    @required this.child,
+  });
+
+  // 渐变色数组
+  final List&lt;Color&gt; colors;
+
+  // 按钮宽高
+  final double width;
+  final double height;
+
+  final Widget child;
+  final BorderRadius borderRadius;
+
+  //点击回调
+  final GestureTapCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    ThemeData theme = Theme.of(context);
+
+    //确保colors数组不空
+    List&lt;Color&gt; _colors = colors ??
+        [theme.primaryColor, theme.primaryColorDark ?? theme.primaryColor];
+
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(colors: _colors),
+        borderRadius: borderRadius,
+      ),
+      child: Material(
+        type: MaterialType.transparency,
+        child: InkWell(
+          splashColor: _colors.last,
+          highlightColor: Colors.transparent,
+          borderRadius: borderRadius,
+          onTap: onPressed,
+          child: ConstrainedBox(
+            constraints: BoxConstraints.tightFor(height: height, width: width),
+            child: Center(
+              child: Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: DefaultTextStyle(
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                  child: child,
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+</pre></div>
+</div>
+<p>可以看到<code class="docutils literal notranslate"><span class="pre">GradientButton</span></code>是由<code class="docutils literal notranslate"><span class="pre">DecoratedBox</span></code>、<code class="docutils literal notranslate"><span class="pre">Padding</span></code>、<code class="docutils literal notranslate"><span class="pre">Center</span></code>、<code class="docutils literal notranslate"><span class="pre">InkWell</span></code>等组件组合而成。当然上面的代码只是一个示例，作为一个按钮它还并不完整，比如没有禁用状态，读者可以根据实际需要来完善。</p>
+<div class="section" id="gradientbutton">
+<h3>使用GradientButton<a class="headerlink" href="#gradientbutton" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-dart notranslate"><div class="highlight"><pre><span></span>import &#39;package:flutter/material.dart&#39;;
+import &#39;../widgets/index.dart&#39;;
+
+class GradientButtonRoute extends StatefulWidget {
+  @override
+  _GradientButtonRouteState createState() =&gt; _GradientButtonRouteState();
+}
+
+class _GradientButtonRouteState extends State&lt;GradientButtonRoute&gt; {
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      child: Column(
+        children: &lt;Widget&gt;[
+          GradientButton(
+            colors: [Colors.orange, Colors.red],
+            height: 50.0,
+            child: Text(&quot;Submit&quot;),
+            onPressed: onTap,
+          ),
+          GradientButton(
+            height: 50.0,
+            colors: [Colors.lightGreen, Colors.green[700]],
+            child: Text(&quot;Submit&quot;),
+            onPressed: onTap,
+          ),
+          GradientButton(
+            height: 50.0,
+            colors: [Colors.lightBlue[300], Colors.blueAccent],
+            child: Text(&quot;Submit&quot;),
+            onPressed: onTap,
+          ),
+        ],
+      ),
+    );
+  }
+  onTap() {
+    print(&quot;button click&quot;);
+  }
+}
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="id3">
+<h2>总结<a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h2>
+<p>通过组合的方式定义组件和我们之前写界面并无差异，不过在抽离出单独的组件时我们要考虑代码规范性，如必要参数要用<code class="docutils literal notranslate"><span class="pre">&#64;required</span></code> 标注，对于可选参数在特定场景需要判空或设置默认值等。这是由于使用者大多时候可能不了解组件的内部细节，所以为了保证代码健壮性，我们需要在用户错误地使用组件时能够兼容或报错提示（使用<code class="docutils literal notranslate"><span class="pre">assert</span></code>断言函数）。</p>
+</div>
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">flutter in action</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2021, mahongquan.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.5.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="../_sources/chapter10/combine.md.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

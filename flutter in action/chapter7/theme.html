@@ -1,0 +1,318 @@
+
+<!DOCTYPE html>
+
+<html lang="zh-cn">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>7.4 颜色和主题 &#8212; flutter in action 1.0 documentation</title>
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="id1">
+<h1>7.4 颜色和主题<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="id2">
+<h2>7.4.1 颜色<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h2>
+<p>在介绍主题前我们先了解一些Flutter中的Color类。Color类中颜色以一个int值保存，我们知道显示器颜色是由红、绿、蓝三基色组成，每种颜色占8比特，存储结构如下：</p>
+<p>| Bit（位） | 颜色             |
+| ——— | —————- |
+| 0-7       | 蓝色             |
+| 8-15      | 绿色             |
+| 16-23     | 红色             |
+| 24-31     | Alpha (不透明度) |</p>
+<p>上面表格中的的字段在Color类中都有对应的属性，而Color中的众多方法也就是操作这些属性的，由于大多比较简单，读者可以查看类定义了解。在此我们主要讨论两点：色值转换和亮度。</p>
+<div class="section" id="color">
+<h3><strong>如何将颜色字符串转成Color对象</strong><a class="headerlink" href="#color" title="Permalink to this headline">¶</a></h3>
+<p>如Web开发中的色值通常是一个字符串如”#dc380d”，它是一个RGB值，我们可以通过下面这些方法将其转为Color类：</p>
+<div class="highlight-dart notranslate"><div class="highlight"><pre><span></span><span class="n">Color</span><span class="p">(</span><span class="mh">0xffdc380d</span><span class="p">);</span> <span class="c1">//如果颜色固定可以直接使用整数值</span>
+<span class="c1">//颜色是一个字符串变量</span>
+<span class="kd">var</span> <span class="n">c</span> <span class="o">=</span> <span class="s2">&quot;dc380d&quot;</span><span class="p">;</span>
+<span class="n">Color</span><span class="p">(</span><span class="kt">int</span><span class="p">.</span><span class="n">parse</span><span class="p">(</span><span class="n">c</span><span class="p">,</span><span class="nl">radix:</span><span class="m">16</span><span class="p">)</span><span class="o">|</span><span class="mh">0xFF000000</span><span class="p">)</span> <span class="c1">//通过位运算符将Alpha设置为FF</span>
+<span class="n">Color</span><span class="p">(</span><span class="kt">int</span><span class="p">.</span><span class="n">parse</span><span class="p">(</span><span class="n">c</span><span class="p">,</span><span class="nl">radix:</span><span class="m">16</span><span class="p">)).</span><span class="n">withAlpha</span><span class="p">(</span><span class="m">255</span><span class="p">)</span>  <span class="c1">//通过方法将Alpha设置为FF</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="id3">
+<h3>颜色亮度<a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h3>
+<p>假如，我们要实现一个背景颜色和Title可以自定义的导航栏，并且背景色为深色时我们应该让Title显示为浅色；背景色为浅色时，Title显示为深色。要实现这个功能，我们就需要来计算背景色的亮度，然后动态来确定Title的颜色。Color类中提供了一个<code class="docutils literal notranslate"><span class="pre">computeLuminance()</span></code>方法，它可以返回一个[0-1]的一个值，数字越大颜色就越浅，我们可以根据它来动态确定Title的颜色，下面是导航栏NavBar的简单实现：</p>
+<div class="highlight-dart notranslate"><div class="highlight"><pre><span></span>class NavBar extends StatelessWidget {
+  final String title;
+  final Color color; //背景颜色
+
+  NavBar({
+    Key key,
+    this.color,
+    this.title,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      constraints: BoxConstraints(
+        minHeight: 52,
+        minWidth: double.infinity,
+      ),
+      decoration: BoxDecoration(
+        color: color,
+        boxShadow: [
+          //阴影
+          BoxShadow(
+            color: Colors.black26,
+            offset: Offset(0, 3),
+            blurRadius: 3,
+          ),
+        ],
+      ),
+      child: Text(
+        title,
+        style: TextStyle(
+          fontWeight: FontWeight.bold,
+          //根据背景色亮度来确定Title颜色
+          color: color.computeLuminance() &lt; 0.5 ? Colors.white : Colors.black,
+        ),
+      ),
+      alignment: Alignment.center,
+    );
+  }
+}
+</pre></div>
+</div>
+<p>测试代码如下：</p>
+<div class="highlight-dart notranslate"><div class="highlight"><pre><span></span><span class="n">Column</span><span class="p">(</span>
+  <span class="nl">children:</span> <span class="o">&lt;</span><span class="n">Widget</span><span class="o">&gt;</span><span class="p">[</span>
+    <span class="c1">//背景为蓝色，则title自动为白色</span>
+    <span class="n">NavBar</span><span class="p">(</span><span class="nl">color:</span> <span class="n">Colors</span><span class="p">.</span><span class="n">blue</span><span class="p">,</span> <span class="nl">title:</span> <span class="s2">&quot;标题&quot;</span><span class="p">),</span> 
+    <span class="c1">//背景为白色，则title自动为黑色</span>
+    <span class="n">NavBar</span><span class="p">(</span><span class="nl">color:</span> <span class="n">Colors</span><span class="p">.</span><span class="n">white</span><span class="p">,</span> <span class="nl">title:</span> <span class="s2">&quot;标题&quot;</span><span class="p">),</span>
+  <span class="p">]</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p>运行效果如图7-4所示：</p>
+<p><img alt="NavBar" src="../_images/7-4.png" /></p>
+</div>
+<div class="section" id="materialcolor">
+<h3>MaterialColor<a class="headerlink" href="#materialcolor" title="Permalink to this headline">¶</a></h3>
+<p><code class="docutils literal notranslate"><span class="pre">MaterialColor</span></code>是实现Material Design中的颜色的类，它包含一种颜色的10个级别的渐变色。<code class="docutils literal notranslate"><span class="pre">MaterialColor</span></code>通过”[]”运算符的索引值来代表颜色的深度，有效的索引有：50，100，200，…，900，数字越大，颜色越深。<code class="docutils literal notranslate"><span class="pre">MaterialColor</span></code>的默认值为索引等于500的颜色。举个例子，<code class="docutils literal notranslate"><span class="pre">Colors.blue</span></code>是预定义的一个<code class="docutils literal notranslate"><span class="pre">MaterialColor</span></code>类对象，定义如下：</p>
+<div class="highlight-dart notranslate"><div class="highlight"><pre><span></span><span class="kd">static</span> <span class="kd">const</span> <span class="n">MaterialColor</span> <span class="n">blue</span> <span class="o">=</span> <span class="n">MaterialColor</span><span class="p">(</span>
+  <span class="n">_bluePrimaryValue</span><span class="p">,</span>
+  <span class="o">&lt;</span><span class="kt">int</span><span class="p">,</span> <span class="n">Color</span><span class="o">&gt;</span><span class="p">{</span>
+     <span class="m">50</span><span class="o">:</span> <span class="n">Color</span><span class="p">(</span><span class="mh">0xFFE3F2FD</span><span class="p">),</span>
+    <span class="m">100</span><span class="o">:</span> <span class="n">Color</span><span class="p">(</span><span class="mh">0xFFBBDEFB</span><span class="p">),</span>
+    <span class="m">200</span><span class="o">:</span> <span class="n">Color</span><span class="p">(</span><span class="mh">0xFF90CAF9</span><span class="p">),</span>
+    <span class="m">300</span><span class="o">:</span> <span class="n">Color</span><span class="p">(</span><span class="mh">0xFF64B5F6</span><span class="p">),</span>
+    <span class="m">400</span><span class="o">:</span> <span class="n">Color</span><span class="p">(</span><span class="mh">0xFF42A5F5</span><span class="p">),</span>
+    <span class="m">500</span><span class="o">:</span> <span class="n">Color</span><span class="p">(</span><span class="n">_bluePrimaryValue</span><span class="p">),</span>
+    <span class="m">600</span><span class="o">:</span> <span class="n">Color</span><span class="p">(</span><span class="mh">0xFF1E88E5</span><span class="p">),</span>
+    <span class="m">700</span><span class="o">:</span> <span class="n">Color</span><span class="p">(</span><span class="mh">0xFF1976D2</span><span class="p">),</span>
+    <span class="m">800</span><span class="o">:</span> <span class="n">Color</span><span class="p">(</span><span class="mh">0xFF1565C0</span><span class="p">),</span>
+    <span class="m">900</span><span class="o">:</span> <span class="n">Color</span><span class="p">(</span><span class="mh">0xFF0D47A1</span><span class="p">),</span>
+  <span class="p">},</span>
+<span class="p">);</span>
+<span class="kd">static</span> <span class="kd">const</span> <span class="kt">int</span> <span class="n">_bluePrimaryValue</span> <span class="o">=</span> <span class="mh">0xFF2196F3</span><span class="p">;</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">Colors.blue[50]</span></code>到<code class="docutils literal notranslate"><span class="pre">Colors.blue[900]</span></code>的色值从浅蓝到深蓝渐变，效果如图7-5所示：</p>
+<p><img alt="NavBar" src="../_images/7-5.jpeg" /></p>
+</div>
+</div>
+<div class="section" id="theme">
+<h2>7.4.2 Theme<a class="headerlink" href="#theme" title="Permalink to this headline">¶</a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">Theme</span></code>组件可以为Material APP定义主题数据（ThemeData）。Material组件库里很多组件都使用了主题数据，如导航栏颜色、标题字体、Icon样式等。<code class="docutils literal notranslate"><span class="pre">Theme</span></code>内会使用<code class="docutils literal notranslate"><span class="pre">InheritedWidget</span></code>来为其子树共享样式数据。</p>
+<div class="section" id="themedata">
+<h3>ThemeData<a class="headerlink" href="#themedata" title="Permalink to this headline">¶</a></h3>
+<p><code class="docutils literal notranslate"><span class="pre">ThemeData</span></code>用于保存是Material 组件库的主题数据，Material组件需要遵守相应的设计规范，而这些规范可自定义部分都定义在ThemeData中了，所以我们可以通过ThemeData来自定义应用主题。在子组件中，我们可以通过<code class="docutils literal notranslate"><span class="pre">Theme.of</span></code>方法来获取当前的<code class="docutils literal notranslate"><span class="pre">ThemeData</span></code>。</p>
+<blockquote>
+<div><p>注意：Material Design 设计规范中有些是不能自定义的，如导航栏高度，ThemeData只包含了可自定义部分。</p>
+</div></blockquote>
+<p>我们看看<code class="docutils literal notranslate"><span class="pre">ThemeData</span></code>部分数据定义：</p>
+<div class="highlight-dart notranslate"><div class="highlight"><pre><span></span><span class="n">ThemeData</span><span class="p">({</span>
+  <span class="n">Brightness</span> <span class="n">brightness</span><span class="p">,</span> <span class="c1">//深色还是浅色</span>
+  <span class="n">MaterialColor</span> <span class="n">primarySwatch</span><span class="p">,</span> <span class="c1">//主题颜色样本，见下面介绍</span>
+  <span class="n">Color</span> <span class="n">primaryColor</span><span class="p">,</span> <span class="c1">//主色，决定导航栏颜色</span>
+  <span class="n">Color</span> <span class="n">accentColor</span><span class="p">,</span> <span class="c1">//次级色，决定大多数Widget的颜色，如进度条、开关等。</span>
+  <span class="n">Color</span> <span class="n">cardColor</span><span class="p">,</span> <span class="c1">//卡片颜色</span>
+  <span class="n">Color</span> <span class="n">dividerColor</span><span class="p">,</span> <span class="c1">//分割线颜色</span>
+  <span class="n">ButtonThemeData</span> <span class="n">buttonTheme</span><span class="p">,</span> <span class="c1">//按钮主题</span>
+  <span class="n">Color</span> <span class="n">cursorColor</span><span class="p">,</span> <span class="c1">//输入框光标颜色</span>
+  <span class="n">Color</span> <span class="n">dialogBackgroundColor</span><span class="p">,</span><span class="c1">//对话框背景颜色</span>
+  <span class="kt">String</span> <span class="n">fontFamily</span><span class="p">,</span> <span class="c1">//文字字体</span>
+  <span class="n">TextTheme</span> <span class="n">textTheme</span><span class="p">,</span><span class="c1">// 字体主题，包括标题、body等文字样式</span>
+  <span class="n">IconThemeData</span> <span class="n">iconTheme</span><span class="p">,</span> <span class="c1">// Icon的默认样式</span>
+  <span class="n">TargetPlatform</span> <span class="n">platform</span><span class="p">,</span> <span class="c1">//指定平台，应用特定平台控件风格</span>
+  <span class="p">...</span>
+<span class="p">})</span>
+</pre></div>
+</div>
+<p>上面只是<code class="docutils literal notranslate"><span class="pre">ThemeData</span></code>的一小部分属性，完整的数据定义读者可以查看SDK。上面属性中需要说明的是<code class="docutils literal notranslate"><span class="pre">primarySwatch</span></code>，它是主题颜色的一个”样本色”，通过这个样本色可以在一些条件下生成一些其它的属性，例如，如果没有指定<code class="docutils literal notranslate"><span class="pre">primaryColor</span></code>，并且当前主题不是深色主题，那么<code class="docutils literal notranslate"><span class="pre">primaryColor</span></code>就会默认为<code class="docutils literal notranslate"><span class="pre">primarySwatch</span></code>指定的颜色，还有一些相似的属性如<code class="docutils literal notranslate"><span class="pre">accentColor</span></code> 、<code class="docutils literal notranslate"><span class="pre">indicatorColor</span></code>等也会受<code class="docutils literal notranslate"><span class="pre">primarySwatch</span></code>影响。</p>
+</div>
+<div class="section" id="id4">
+<h3>示例<a class="headerlink" href="#id4" title="Permalink to this headline">¶</a></h3>
+<p>我们实现一个路由换肤功能：</p>
+<div class="highlight-dart notranslate"><div class="highlight"><pre><span></span>
+class ThemeTestRoute extends StatefulWidget {
+  @override
+  _ThemeTestRouteState createState() =&gt; new _ThemeTestRouteState();
+}
+
+class _ThemeTestRouteState extends State&lt;ThemeTestRoute&gt; {
+  Color _themeColor = Colors.teal; //当前路由主题色
+
+  @override
+  Widget build(BuildContext context) {
+    ThemeData themeData = Theme.of(context);
+    return Theme(
+      data: ThemeData(
+          primarySwatch: _themeColor, //用于导航栏、FloatingActionButton的背景色等
+          iconTheme: IconThemeData(color: _themeColor) //用于Icon颜色
+      ),
+      child: Scaffold(
+        appBar: AppBar(title: Text(&quot;主题测试&quot;)),
+        body: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: &lt;Widget&gt;[
+            //第一行Icon使用主题中的iconTheme
+            Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: &lt;Widget&gt;[
+                  Icon(Icons.favorite),
+                  Icon(Icons.airport_shuttle),
+                  Text(&quot;  颜色跟随主题&quot;)
+                ]
+            ),
+            //为第二行Icon自定义颜色（固定为黑色)
+            Theme(
+              data: themeData.copyWith(
+                iconTheme: themeData.iconTheme.copyWith(
+                    color: Colors.black
+                ),
+              ),
+              child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: &lt;Widget&gt;[
+                    Icon(Icons.favorite),
+                    Icon(Icons.airport_shuttle),
+                    Text(&quot;  颜色固定黑色&quot;)
+                  ]
+              ),
+            ),
+          ],
+        ),
+        floatingActionButton: FloatingActionButton(
+            onPressed: () =&gt;  //切换主题
+                setState(() =&gt;
+                _themeColor =
+                _themeColor == Colors.teal ? Colors.blue : Colors.teal
+                ),
+            child: Icon(Icons.palette)
+        ),
+      ),
+    );
+  }
+}
+</pre></div>
+</div>
+<p>运行后点击右下角悬浮按钮则可以切换主题，如图7-6、7-7所示：</p>
+<p><img alt="图7-6" src="../_images/7-6.png" /><img alt="图7-7" src="../_images/7-7.png" /></p>
+<p>需要注意的有三点：</p>
+<ul>
+<li><p>可以通过局部主题覆盖全局主题，正如代码中通过Theme为第二行图标指定固定颜色（黑色）一样，这是一种常用的技巧，Flutter中会经常使用这种方法来自定义子树主题。那么为什么局部主题可以覆盖全局主题？这主要是因为widget中使用主题样式时是通过<code class="docutils literal notranslate"><span class="pre">Theme.of(BuildContext</span> <span class="pre">context)</span></code>来获取的，我们看看其简化后的代码：</p></li>
+<li><div class="highlight-dart notranslate"><div class="highlight"><pre><span></span><span class="kd">static</span> <span class="n">ThemeData</span> <span class="n">of</span><span class="p">(</span><span class="n">BuildContext</span> <span class="n">context</span><span class="p">,</span> <span class="p">{</span> <span class="kt">bool</span> <span class="n">shadowThemeOnly</span> <span class="o">=</span> <span class="kc">false</span> <span class="p">})</span> <span class="p">{</span>
+   <span class="c1">// 简化代码，并非源码  </span>
+   <span class="k">return</span> <span class="n">context</span><span class="p">.</span><span class="n">dependOnInheritedWidgetOfExactType</span><span class="o">&lt;</span><span class="n">_InheritedTheme</span><span class="o">&gt;</span><span class="p">().</span><span class="n">theme</span><span class="p">.</span><span class="n">data</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">context.dependOnInheritedWidgetOfExactType</span></code> 会在widget树中从当前位置向上查找第一个类型为<code class="docutils literal notranslate"><span class="pre">_InheritedTheme</span></code>的widget。所以当局部指定<code class="docutils literal notranslate"><span class="pre">Theme</span></code>后，其子树中通过<code class="docutils literal notranslate"><span class="pre">Theme.of()</span></code>向上查找到的第一个<code class="docutils literal notranslate"><span class="pre">_InheritedTheme</span></code>便是我们指定的<code class="docutils literal notranslate"><span class="pre">Theme</span></code>。</p>
+</li>
+<li><p>本示例是对单个路由换肤，如果想要对整个应用换肤，则可以去修改<code class="docutils literal notranslate"><span class="pre">MaterialApp</span></code>的<code class="docutils literal notranslate"><span class="pre">theme</span></code>属性。</p></li>
+</ul>
+</div>
+</div>
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">flutter in action</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2021, mahongquan.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.5.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="../_sources/chapter7/theme.md.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

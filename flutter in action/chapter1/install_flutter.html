@@ -1,0 +1,546 @@
+
+<!DOCTYPE html>
+
+<html lang="zh-cn">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>1.3 搭建Flutter开发环境 &#8212; flutter in action 1.0 documentation</title>
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="flutter">
+<h1>1.3 搭建Flutter开发环境<a class="headerlink" href="#flutter" title="Permalink to this headline">¶</a></h1>
+<p>工欲善其事必先利其器，本节首先会分别介绍一下在Windows和macOS下Flutter SDK的安装，然后再介绍一下配IDE和模拟器的使用。</p>
+<div class="section" id="id1">
+<h2>1.3.1 安装Flutter<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h2>
+<p>由于Flutter会同时构建Android和IOS两个平台的发布包，所以Flutter同时依赖Android SDK和iOS SDK，在安装Flutter时也需要安装相应平台的构建工具和SDK。下面我们分别介绍一下Windows和macOS下的环境搭建。</p>
+<blockquote>
+<div><p>注意：本节介绍的安装方式随着Flutter的升级可能会发生变化，如果下面介绍的内容在您安装Flutter时已经失效，请访问Flutter官网，按照官网最新的安装教程安装。</p>
+</div></blockquote>
+<div class="section" id="id2">
+<h3>使用镜像<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h3>
+<p>由于在国内访问Flutter有时可能会受到限制，Flutter官方为中国开发者搭建了临时镜像，大家可以将如下环境变量加入到用户环境变量中：</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">export</span> <span class="n">PUB_HOSTED_URL</span><span class="o">=</span><span class="n">https</span><span class="p">:</span><span class="o">//</span><span class="n">pub</span><span class="o">.</span><span class="n">flutter</span><span class="o">-</span><span class="n">io</span><span class="o">.</span><span class="n">cn</span>
+<span class="n">export</span> <span class="n">FLUTTER_STORAGE_BASE_URL</span><span class="o">=</span><span class="n">https</span><span class="p">:</span><span class="o">//</span><span class="n">storage</span><span class="o">.</span><span class="n">flutter</span><span class="o">-</span><span class="n">io</span><span class="o">.</span><span class="n">cn</span>
+</pre></div>
+</div>
+<p><strong>注意：</strong> 此镜像为临时镜像，并不能保证一直可用，读者可以参考https://flutter.io/community/china 以获得有关镜像服务器的最新动态。</p>
+</div>
+<div class="section" id="windowsflutter">
+<h3>在Windows上搭建Flutter开发环境<a class="headerlink" href="#windowsflutter" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="id3">
+<h4>系统要求<a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h4>
+<p>要安装并运行Flutter，您的开发环境必须满足以下最低要求:</p>
+<ul>
+<li><p>操作系统: Windows 7 或更高版本 (64-bit)</p></li>
+<li><p>磁盘空间: 400 MB (不包括Android Studio的磁盘空间).</p></li>
+<li><p>工具: Flutter 依赖下面这些命令行工具.</p>
+<ul class="simple">
+<li><p><a class="reference external" href="https://docs.microsoft.com/en-us/powershell/scripting/setup/installing-windows-powershell#upgrading-existing-windows-powershell">PowerShell 5.0</a> 或更新的版本</p></li>
+<li><p><a class="reference external" href="https://git-scm.com/download/win">Git for Windows</a>  (Git命令行工具)；</p></li>
+</ul>
+<p>如果已安装Git for Windows，请确保可以在命令提示符或PowerShell中运行 git 命令</p>
+</li>
+</ul>
+</div>
+<div class="section" id="flutter-sdk">
+<h4>获取Flutter SDK<a class="headerlink" href="#flutter-sdk" title="Permalink to this headline">¶</a></h4>
+<ol>
+<li><p>去flutter官网下载其最新可用的安装包，下载地址：https://flutter.dev/docs/development/tools/sdk/releases ，打开后如图1-2所示：</p>
+<p><img alt="图1-2" src="../_images/1-2.png" /></p>
+<p>注意，Flutter的渠道版本会不停变动，请以Flutter官网为准。另外，在中国大陆地区，要想正常获取安装包列表或下载安装包，可能需要翻墙，读者也可以去Flutter github项目下去下载安装包，地址：https://github.com/flutter/flutter/releases 。</p>
+</li>
+<li><p>将安装包zip解压到你想安装Flutter SDK的路径（如：<code class="docutils literal notranslate"><span class="pre">C:\src\flutter</span></code>；注意，<strong>不要</strong>将flutter安装到需要一些高权限的路径如<code class="docutils literal notranslate"><span class="pre">C:\Program</span> <span class="pre">Files\</span></code>）。</p></li>
+<li><p>在Flutter安装目录的<code class="docutils literal notranslate"><span class="pre">flutter</span></code>文件下找到<code class="docutils literal notranslate"><span class="pre">flutter_console.bat</span></code>，双击运行并启动<strong>flutter命令行</strong>，接下来，你就可以在Flutter命令行运行flutter命令了。</p></li>
+</ol>
+<div class="section" id="id4">
+<h5>更新环境变量<a class="headerlink" href="#id4" title="Permalink to this headline">¶</a></h5>
+<p>如果你想在Windows系统自带命令行运行flutter命令，需要添加以下环境变量到用户PATH：</p>
+<ul class="simple">
+<li><p>转到 “控制面板&gt;用户帐户&gt;用户帐户&gt;更改我的环境变量”</p></li>
+<li><p>在“用户变量”下检查是否有名为“Path”的条目:</p>
+<ul>
+<li><p>如果该条目存在， 追加 flutter\bin的全路径，使用 ; 作为分隔符.</p></li>
+<li><p>如果该条目不存在，创建一个新用户变量 Path ，然后将 <code class="docutils literal notranslate"><span class="pre">flutter\bin</span></code> 的全路径作为它的值.</p></li>
+</ul>
+</li>
+</ul>
+<p>重启Windows以应用此更改.</p>
+</div>
+<div class="section" id="flutter-doctor">
+<h5>运行 flutter doctor命令<a class="headerlink" href="#flutter-doctor" title="Permalink to this headline">¶</a></h5>
+<p>在Flutter命令行运行如下命令来查看是否还需要安装其它依赖，如果需要，安装它们：</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>flutter doctor
+</pre></div>
+</div>
+<p>该命令检查你的环境并在命令行窗口中显示报告。Dart SDK已经在打包在Flutter SDK里了，没有必要单独安装Dart。 仔细检查命令行输出以获取可能需要安装的其他软件或进一步需要执行的任务。</p>
+<p>例如：</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>[-] Android toolchain - develop for Android devices
+    • Android SDK at D:\Android\sdk
+    ✗ Android SDK is missing command line tools; download from https://goo.gl/XxQghQ
+    • Try re-installing or updating your Android SDK,
+      visit https://flutter.io/setup/#android-setup for detailed instructions.
+</pre></div>
+</div>
+<p>第一次运行flutter命令（如<code class="docutils literal notranslate"><span class="pre">flutter</span> <span class="pre">doctor</span></code>）时，它会下载它自己的依赖项并自行编译。以后再运行就会快得多。缺失的依赖需要安装一下，安装完成后再运行<code class="docutils literal notranslate"><span class="pre">flutter</span> <span class="pre">doctor</span></code>命令来验证是否安装成功。</p>
+</div>
+</div>
+<div class="section" id="android">
+<h4>Android设置<a class="headerlink" href="#android" title="Permalink to this headline">¶</a></h4>
+<p>Flutter依赖于Android Studio的全量安装。Android Studio不仅可以管理Android 平台依赖、SDK版本等，而且它也是Flutter开发推荐的IDE之一（当然，你也可以使用其它编辑器或IDE，我们将会在后面讨论）。</p>
+<div class="section" id="android-studio">
+<h5>安装Android Studio<a class="headerlink" href="#android-studio" title="Permalink to this headline">¶</a></h5>
+<ol class="simple">
+<li><p>下载并安装 Android Studio，下载地址：https://developer.android.com/studio/index.html 。</p></li>
+<li><p>启动Android Studio，然后执行“Android Studio安装向导”。这将安装最新的Android SDK、Android SDK平台工具和Android SDK构建工具，这些是用Flutter进行Android开发所需要的。</p></li>
+</ol>
+</div>
+</div>
+<div class="section" id="id5">
+<h4>安装遇到问题？<a class="headerlink" href="#id5" title="Permalink to this headline">¶</a></h4>
+<p>如果在安装过程中遇到问题，可以先去flutter官网查看一下安装方式是否发生变化，或者在网上搜索一下解决方案。</p>
+</div>
+</div>
+<div class="section" id="macosflutter">
+<h3>在macOS上搭建Flutter开发环境<a class="headerlink" href="#macosflutter" title="Permalink to this headline">¶</a></h3>
+<p>在masOS下可以同时进行Android和iOS设备的测试。</p>
+<div class="section" id="id6">
+<h4>系统要求<a class="headerlink" href="#id6" title="Permalink to this headline">¶</a></h4>
+<p>要安装并运行Flutter，您的开发环境必须满足以下最低要求:</p>
+<ul class="simple">
+<li><p>操作系统: macOS (64-bit)</p></li>
+<li><p>磁盘空间: 700 MB (不包括Xcode或Android Studio的磁盘空间）.</p></li>
+<li><p>工具: Flutter 依赖下面这些命令行工具.</p>
+<ul>
+<li><p><code class="docutils literal notranslate"><span class="pre">bash、mkdir、rm、git、curl、unzip、which</span></code></p></li>
+</ul>
+</li>
+</ul>
+</div>
+<div class="section" id="id7">
+<h4>获取Flutter SDK<a class="headerlink" href="#id7" title="Permalink to this headline">¶</a></h4>
+<ol>
+<li><p>去flutter官网下载其最新可用的安装包，官网地址：https://flutter.io/sdk-archive/#macos</p>
+<p>注意，Flutter的渠道版本会不停变动，请以Flutter官网为准。另外，在中国大陆地区，要想正常获取安装包列表或下载安装包，可能需要翻墙，读者也可以去Flutter github项目下去下载安装包，地址：https://github.com/flutter/flutter/releases 。</p>
+</li>
+<li><p>解压安装包到你想安装的目录，如：</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span> ~/development
+unzip ~/Downloads/flutter_macos_v0.5.1-beta.zip
+</pre></div>
+</div>
+</li>
+<li><p>添加<code class="docutils literal notranslate"><span class="pre">flutter</span></code>相关工具到path中：</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span><span class="nb">export</span> <span class="nv">PATH</span><span class="o">=</span><span class="sb">`</span><span class="nb">pwd</span><span class="sb">`</span>/flutter/bin:<span class="nv">$PATH</span>
+</pre></div>
+</div>
+<p>此代码只能暂时针对当前命令行窗口设置PATH环境变量，要想永久将Flutter添加到PATH中请参考下面<strong>更新环境变量</strong> 部分。</p>
+</li>
+</ol>
+<div class="section" id="id8">
+<h5>运行 flutter doctor命令<a class="headerlink" href="#id8" title="Permalink to this headline">¶</a></h5>
+<p>这一步和Windows下步骤一致，不再赘述。</p>
+</div>
+<div class="section" id="id9">
+<h5>更新环境变量<a class="headerlink" href="#id9" title="Permalink to this headline">¶</a></h5>
+<p>将Flutter添加到PATH中，可以在任何终端会话中运行<code class="docutils literal notranslate"><span class="pre">flutter</span></code>命令。</p>
+<p>对于所有终端会话永久修改此变量的步骤是和特定计算机系统相关的。通常，您会在打开新窗口时将设置环境变量的命令添加到执行的文件中。例如</p>
+<ol>
+<li><p>确定您Flutter SDK的目录记为“FLUTTER_INSTALL_PATH”，您将在步骤3中用到。</p></li>
+<li><p>打开(或创建) <code class="docutils literal notranslate"><span class="pre">$HOME/.bash_profile</span></code>。文件路径和文件名可能在你的电脑上不同.</p></li>
+<li><p>添加以下路径:</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span><span class="nb">export</span> <span class="nv">PATH</span><span class="o">=[</span>FLUTTER_INSTALL_PATH<span class="o">]</span>/flutter/bin:<span class="nv">$PATH</span>
+</pre></div>
+</div>
+<p>例如笔者Flutter 安装目录是“~/code/flutter_dir”，那么代码为：</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>export PATH=~/code/flutter_dir/flutter/bin:$PATH
+</pre></div>
+</div>
+</li>
+<li><p>运行 <code class="docutils literal notranslate"><span class="pre">source</span> <span class="pre">$HOME/.bash_profile</span></code> 刷新当前终端窗口。</p>
+<blockquote>
+<div><p><strong>注意:</strong> 如果你使用终端是zsh，终端启动时 <code class="docutils literal notranslate"><span class="pre">~/.bash_profile</span></code> 将不会被加载，解决办法就是修改 <code class="docutils literal notranslate"><span class="pre">～/.zshrc</span></code> ，在其中添加：source ～/.bash_profile</p>
+</div></blockquote>
+</li>
+<li><p>验证“flutter/bin”是否已在PATH中：</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>echo $PATH
+</pre></div>
+</div>
+</li>
+</ol>
+</div>
+</div>
+<div class="section" id="xcode">
+<h4>安装 Xcode<a class="headerlink" href="#xcode" title="Permalink to this headline">¶</a></h4>
+<p>要为iOS开发Flutter应用程序，您需要Xcode 9.0或更高版本:</p>
+<ol class="simple">
+<li><p>安装Xcode 9.0或更新版本(通过<a class="reference external" href="https://developer.apple.com/xcode/">链接下载</a>或<a class="reference external" href="https://itunes.apple.com/us/app/xcode/id497799835">苹果应用商店</a>).</p></li>
+<li><p>配置Xcode命令行工具以使用新安装的Xcode版本 <code class="docutils literal notranslate"><span class="pre">sudo</span> <span class="pre">xcode-select</span> <span class="pre">--switch</span> <span class="pre">/Applications/Xcode.app/Contents/Developer</span></code> 对于大多数情况，当您想要使用最新版本的Xcode时，这是正确的路径。如果您需要使用不同的版本，请指定相应路径。</p></li>
+<li><p>确保Xcode许可协议是通过打开一次Xcode或通过命令<code class="docutils literal notranslate"><span class="pre">sudo</span> <span class="pre">xcodebuild</span> <span class="pre">-license</span></code>同意过了.</p></li>
+</ol>
+<p>使用Xcode，您可以在iOS设备或模拟器上运行Flutter应用程序。</p>
+</div>
+<div class="section" id="id10">
+<h4>安装Android Studio<a class="headerlink" href="#id10" title="Permalink to this headline">¶</a></h4>
+<p>和Window一样，要在Android设备上构建并运行Flutter程序都需要先安装Android Studio，读者可以先自行下载并安装Android Studio，在此不再赘述。</p>
+</div>
+</div>
+<div class="section" id="id11">
+<h3>升级 Flutter<a class="headerlink" href="#id11" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="id12">
+<h4>Flutter SDK分支<a class="headerlink" href="#id12" title="Permalink to this headline">¶</a></h4>
+<p>Flutter SDK有多个分支，如beta、dev、master、stable，其中stable分支为稳定分支（日后有新的稳定版本发布后可能也会有新的稳定分支，如1.0.0），dev和master为开发分支，安装flutter后，你可以运行<code class="docutils literal notranslate"><span class="pre">flutter</span> <span class="pre">channel</span></code>查看所有分支，如笔者本地运行后，结果如下：</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">Flutter</span> <span class="n">channels</span><span class="p">:</span>
+  <span class="n">beta</span>
+  <span class="n">dev</span>
+<span class="o">*</span> <span class="n">master</span>
+</pre></div>
+</div>
+<p>带”*”号的分支即你本地的Flutter SDK 跟踪的分支，要切换分支，可以使用<code class="docutils literal notranslate"><span class="pre">flutter</span> <span class="pre">channel</span> <span class="pre">beta</span></code> 或 <code class="docutils literal notranslate"><span class="pre">flutter</span> <span class="pre">channel</span> <span class="pre">master</span></code>，Flutter官方建议跟踪稳定分支，但你也可以跟踪<code class="docutils literal notranslate"><span class="pre">master</span></code>分支，这样可以查看最新的变化，但这样稳定性要低的多。</p>
+</div>
+<div class="section" id="id13">
+<h4>升级Flutter SDK和依赖包<a class="headerlink" href="#id13" title="Permalink to this headline">¶</a></h4>
+<p>要升级flutter sdk，只需一句命令：</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>flutter upgrade
+</pre></div>
+</div>
+<p>该命令会同时更新Flutter SDK和你的flutter项目依赖包。如果你只想更新项目依赖包（不包括Flutter SDK），可以使用如下命令：</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">flutter</span> <span class="pre">packages</span> <span class="pre">get</span></code>获取项目所有的依赖包。</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">flutter</span> <span class="pre">packages</span> <span class="pre">upgrade</span></code> 获取项目所有依赖包的最新版本。</p></li>
+</ul>
+</div>
+<div class="section" id="id14">
+<h4><a class="headerlink" href="#id14" title="Permalink to this headline">¶</a></h4>
+</div>
+</div>
+</div>
+<div class="section" id="ide">
+<h2>1.3.2 IDE配置与使用<a class="headerlink" href="#ide" title="Permalink to this headline">¶</a></h2>
+<p>理论上可以使用任何文本编辑器与命令行工具来构建Flutter应用程序。 不过，Flutter官方建议使用Android Studio和VS Code之一以获得更好的开发体验。Flutter官方提供了这两款编辑器插件，通过IDE和插件可获得代码补全、语法高亮、widget编辑辅助、运行和调试支持等功能，可以帮助我们极大的提高开发效率。下面我们分别介绍一下Android Studio和VS Code的配置及使用（Android Studio和VS Code读者可以在其官网获得最新的安装，由于安装比较简单，故不再赘述）。</p>
+<div class="section" id="id15">
+<h3>Android Studio 配置与使用<a class="headerlink" href="#id15" title="Permalink to this headline">¶</a></h3>
+<p>由于Android Studio是基于IntelliJ IDEA开发的，所以读者也可以使用IntelliJ IDEA。</p>
+<div class="section" id="flutterdart">
+<h4>安装Flutter和Dart插件<a class="headerlink" href="#flutterdart" title="Permalink to this headline">¶</a></h4>
+<p>需要安装两个插件:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">Flutter</span></code>插件： 支持Flutter开发工作流 (运行、调试、热重载等)。</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">Dart</span></code>插件： 提供代码分析 (输入代码时进行验证、代码补全等)。</p></li>
+</ul>
+<p>安装步骤：</p>
+<ol class="simple">
+<li><p>启动Android Studio。</p></li>
+<li><p>打开插件首选项 (macOS：<strong>Preferences&gt;Plugins</strong>, Windows：<strong>File&gt;Settings&gt;Plugins</strong>)。</p></li>
+<li><p>选择 <strong>Browse repositories…</strong>，选择 flutter 插件并点击 <code class="docutils literal notranslate"><span class="pre">install</span></code>。</p></li>
+<li><p>重启Android Studio后插件生效。</p></li>
+</ol>
+<p>接下来，让我们用Android Studio创建一个Flutter项目，然后运行它，并体验“热重载”。</p>
+</div>
+<div class="section" id="id16">
+<h4>创建Flutter应用<a class="headerlink" href="#id16" title="Permalink to this headline">¶</a></h4>
+<ol class="simple">
+<li><p>选择 <strong>File&gt;New Flutter Project</strong> 。</p></li>
+<li><p>选择 <strong>Flutter application</strong> 作为 project 类型, 然后点击 Next。</p></li>
+<li><p>输入项目名称 (如 <code class="docutils literal notranslate"><span class="pre">myapp</span></code>)，然后点击 Next。</p></li>
+<li><p>点击 <strong>Finish</strong>。</p></li>
+<li><p>等待Android Studio安装SDK并创建项目。</p></li>
+</ol>
+<p>上述命令创建一个Flutter项目，项目名为myapp，其中包含一个使用<a class="reference external" href="https://material.io/guidelines/">Material 组件</a>的简单演示应用程序。</p>
+<p>在项目目录中，您应用程序的代码位于 <code class="docutils literal notranslate"><span class="pre">lib/main.dart</span></code>。</p>
+</div>
+<div class="section" id="id17">
+<h4>运行应用程序<a class="headerlink" href="#id17" title="Permalink to this headline">¶</a></h4>
+<ol>
+<li><p>定位到Android Studio工具栏，如图1-3所示：</p>
+<p><img alt="图1-3" src="../_images/1-3.png" /></p>
+</li>
+<li><p>在 <strong>target selector</strong> 中, 选择一个运行该应用的Android设备。如果没有列出可用，请选择 <strong>Tools&gt;Android&gt;AVD Manager</strong> 并在那里创建一个。</p></li>
+<li><p>在工具栏中点击 <strong>Run图标</strong>。</p></li>
+<li><p>如果一切正常, 您应该在您的设备或模拟器上会看到启动的应用程序：</p>
+<p><img alt="图1-4" src="../_images/1-4.png" /></p>
+</li>
+</ol>
+</div>
+<div class="section" id="id18">
+<h4>体验热重载<a class="headerlink" href="#id18" title="Permalink to this headline">¶</a></h4>
+<p>Flutter 可以通过 <em>热重载（hot reload）</em> 实现快速的开发周期，热重载就是无需重启应用程序就能实时加载修改后的代码，并且不会丢失状态。简单的对代码进行更改，然后告诉IDE或命令行工具你需要重新加载（点击reload按钮），你就会在你的设备或模拟器上看到更改。</p>
+<ol>
+<li><p>打开<code class="docutils literal notranslate"><span class="pre">lib/main.dart</span></code>文件</p></li>
+<li><p>将字符串
+<code class="docutils literal notranslate"><span class="pre">'You</span> <span class="pre">have</span> <span class="pre">pushed</span> <span class="pre">the</span> <span class="pre">button</span> <span class="pre">this</span> <span class="pre">many</span> <span class="pre">times:'</span></code> 更改为
+<code class="docutils literal notranslate"><span class="pre">'You</span> <span class="pre">have</span> <span class="pre">clicked</span> <span class="pre">the</span> <span class="pre">button</span> <span class="pre">this</span> <span class="pre">many</span> <span class="pre">times:'</span></code></p></li>
+<li><p>不要按“停止”按钮; 让您的应用继续运行.</p></li>
+<li><p>要查更改，请调用 <strong>Save</strong> (<code class="docutils literal notranslate"><span class="pre">cmd-s</span></code> / <code class="docutils literal notranslate"><span class="pre">ctrl-s</span></code>)，或者点击 <strong>热重载按钮</strong> (带有闪电⚡️图标的按钮)。</p>
+<p>你会立即在运行的应用程序中看到更新的字符串。</p>
+</li>
+</ol>
+</div>
+</div>
+<div class="section" id="vs-code">
+<h3>VS Code的配置与使用<a class="headerlink" href="#vs-code" title="Permalink to this headline">¶</a></h3>
+<p>VS Code是一个轻量级编辑器，支持Flutter运行和调试。</p>
+<div class="section" id="id19">
+<h4>安装flutter插件<a class="headerlink" href="#id19" title="Permalink to this headline">¶</a></h4>
+<ol class="simple">
+<li><p>启动 VS Code。</p></li>
+<li><p>调用 <strong>View&gt;Command Palette…</strong>。</p></li>
+<li><p>输入 ‘install’, 然后选择 <strong>Extensions: Install Extension</strong> action。</p></li>
+<li><p>在搜索框输入 <code class="docutils literal notranslate"><span class="pre">flutter</span></code> ，在搜索结果列表中选择 ‘Flutter’, 然后点击 <strong>Install</strong>。</p></li>
+<li><p>选择 ‘OK’ 重新启动 VS Code。</p></li>
+<li><p>验证配置</p>
+<ul class="simple">
+<li><p>调用 <strong>View&gt;Command Palette…</strong></p></li>
+<li><p>输入 ‘doctor’, 然后选择 <strong>‘Flutter: Run Flutter Doctor’</strong> action。</p></li>
+<li><p>查看“OUTPUT”窗口中的输出是否有问题</p></li>
+</ul>
+</li>
+</ol>
+</div>
+<div class="section" id="id20">
+<h4>创建Flutter应用<a class="headerlink" href="#id20" title="Permalink to this headline">¶</a></h4>
+<ol class="simple">
+<li><p>启动 VS Code</p></li>
+<li><p>调用 <strong>View&gt;Command Palette…</strong></p></li>
+<li><p>输入 ‘flutter’, 然后选择 <strong>‘Flutter: New Project’</strong> action</p></li>
+<li><p>输入 Project 名称 (如<code class="docutils literal notranslate"><span class="pre">myapp</span></code>), 然后按回车键</p></li>
+<li><p>指定放置项目的位置，然后按蓝色的确定按钮</p></li>
+<li><p>等待项目创建继续，并显示main.dart文件</p></li>
+</ol>
+</div>
+<div class="section" id="id21">
+<h4>体验热重载<a class="headerlink" href="#id21" title="Permalink to this headline">¶</a></h4>
+<ol class="simple">
+<li><p>打开<code class="docutils literal notranslate"><span class="pre">lib/main.dart</span></code>文件。</p></li>
+<li><p>将字符串
+<code class="docutils literal notranslate"><span class="pre">'You</span> <span class="pre">have</span> <span class="pre">pushed</span> <span class="pre">the</span> <span class="pre">button</span> <span class="pre">this</span> <span class="pre">many</span> <span class="pre">times:'</span></code> 更改为
+<code class="docutils literal notranslate"><span class="pre">'You</span> <span class="pre">have</span> <span class="pre">clicked</span> <span class="pre">the</span> <span class="pre">button</span> <span class="pre">this</span> <span class="pre">many</span> <span class="pre">times:'</span></code>。</p></li>
+<li><p>不要按“停止”按钮; 让您的应用继续运行。</p></li>
+<li><p>要查看您的更改，请调用 <strong>Save</strong> (<code class="docutils literal notranslate"><span class="pre">cmd-s</span></code> / <code class="docutils literal notranslate"><span class="pre">ctrl-s</span></code>), 或者点击 <strong>热重载按钮</strong> (绿色圆形箭头按钮)。</p></li>
+</ol>
+<p>你会立即在运行的应用程序中看到更新的字符串。</p>
+</div>
+</div>
+</div>
+<div class="section" id="id22">
+<h2>1.3.3 连接设备运行Flutter应用<a class="headerlink" href="#id22" title="Permalink to this headline">¶</a></h2>
+<p>Window下只支持为Android设备构建并运行Flutter应用，而macOS同时支持iOS和Android设备。下面分别介绍如何连接Android和iOS设备来运行flutter应用。</p>
+<div class="section" id="id23">
+<h3>连接Android模拟器<a class="headerlink" href="#id23" title="Permalink to this headline">¶</a></h3>
+<p>要准备在Android模拟器上运行并测试Flutter应用，请按照以下步骤操作：</p>
+<ol>
+<li><p>启动 <strong>Android Studio&gt;Tools&gt;Android&gt;AVD Manager</strong> 并选择 <strong>Create Virtual Device</strong>.</p></li>
+<li><p>选择一个设备并选择 <strong>Next</strong>。</p></li>
+<li><p>为要模拟的Android版本选择一个或多个系统印象，然后选择 <strong>Next</strong>. 建议使用 <em>x86</em> 或 <em>x86_64</em> image .</p></li>
+<li><p>在 “Emulated Performance”下, 选择 <strong>Hardware - GLES 2.0</strong> 以启用 <a class="reference external" href="https://developer.android.com/studio/run/emulator-acceleration.html">硬件加速</a>.</p></li>
+<li><p>验证AVD配置是否正确，然后选择 <strong>Finish</strong>。</p>
+<p>有关上述步骤的详细信息，请参阅 <a class="reference external" href="https://developer.android.com/studio/run/managing-avds.html">Managing AVDs</a>.</p>
+</li>
+<li><p>在“Android Virtual Device Manager”中，点击工具栏的 <strong>Run</strong>。模拟器启动并显示所选操作系统版本或设备的启动画面。</p></li>
+<li><p>运行 <code class="docutils literal notranslate"><span class="pre">flutter</span> <span class="pre">run</span></code> 启动您的设备。 连接的设备名是 <code class="docutils literal notranslate"><span class="pre">Android</span> <span class="pre">SDK</span> <span class="pre">built</span> <span class="pre">for</span> <span class="pre">&lt;platform&gt;</span></code>，其中 <em>platform</em> 是芯片系列，如 x86。</p></li>
+</ol>
+</div>
+<div class="section" id="id24">
+<h3>连接Android真机设备<a class="headerlink" href="#id24" title="Permalink to this headline">¶</a></h3>
+<p>要准备在Android设备上运行并测试Flutter应用，需要Android 4.1（API level 16）或更高版本的Android设备.</p>
+<ol class="simple">
+<li><p>在Android设备上启用 <strong>开发人员选项</strong> 和 <strong>USB调试</strong> 。详细说明可在<a class="reference external" href="https://developer.android.com/studio/debug/dev-options.html">Android文档</a>中找到。</p></li>
+<li><p>使用USB将手机插入电脑。如果设备出现调试授权提示，请授权你的电脑可以访问该设备。</p></li>
+<li><p>在命令行运行 <code class="docutils literal notranslate"><span class="pre">flutter</span> <span class="pre">devices</span></code> 命令以验证Flutter识别您连接的Android设备。</p></li>
+<li><p>运行启动你应用程序 <code class="docutils literal notranslate"><span class="pre">flutter</span> <span class="pre">run</span></code>。</p></li>
+</ol>
+<p>默认情况下，Flutter使用的Android SDK版本是基于你的 <code class="docutils literal notranslate"><span class="pre">adb</span></code> 工具版本。 如果想让Flutter使用不同版本的Android SDK，则必须将该 <code class="docutils literal notranslate"><span class="pre">ANDROID_HOME</span></code> 环境变量设置为相应的SDK安装目录。</p>
+</div>
+<div class="section" id="ios">
+<h3>连接iOS模拟器<a class="headerlink" href="#ios" title="Permalink to this headline">¶</a></h3>
+<p>要准备在iOS模拟器上运行并测试Flutter应用，请按以下步骤操作：</p>
+<ol>
+<li><p>在你的MAC上，通过 Spotlight 或以下命令找到模拟器：</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>open -a Simulator
+</pre></div>
+</div>
+</li>
+<li><p>通过检查模拟器 <strong>Hardware &gt; Device</strong> 菜单中的设置，确保模拟器正在使用64位设备（iPhone 5s或更高版本）。</p></li>
+<li><p>根据你电脑屏幕大小，模拟高清屏iOS设备可能会溢出屏幕。可以在模拟器的 <strong>Window&gt; Scale</strong> 菜单下设置设备比例。</p></li>
+<li><p>运行 <code class="docutils literal notranslate"><span class="pre">flutter</span> <span class="pre">run</span></code>启动flutter应用程序。</p></li>
+</ol>
+</div>
+<div class="section" id="id25">
+<h3>连接iOS真机设备<a class="headerlink" href="#id25" title="Permalink to this headline">¶</a></h3>
+<p>要将Flutter应用安装到iOS真机设备，需要一些额外的工具和一个Apple帐户，还需要在Xcode中进行一些设置。</p>
+<ol>
+<li><p>安装 <a class="reference external" href="http://brew.sh/">homebrew</a> （如果已经安装了brew,跳过此步骤）。</p></li>
+<li><p>打开终端并运行如下这些命令:</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>brew update
+brew install --HEAD libimobiledevice
+brew install ideviceinstaller ios-deploy cocoapods
+pod setup
+</pre></div>
+</div>
+<p>如果这些命令中的任何一个失败并出现错误，请运行brew doctor并按照说明解决问题.</p>
+</li>
+<li><p>遵循Xcode签名流程来配置您的项目:</p>
+<ul>
+<li><p>在你Flutter项目目录中通过 <code class="docutils literal notranslate"><span class="pre">open</span> <span class="pre">ios/Runner.xcworkspace</span></code> 打开默认的Xcode workspace.</p></li>
+<li><p>在Xcode中，选择导航面板左侧中的<code class="docutils literal notranslate"><span class="pre">Runner</span></code>项目。</p></li>
+<li><p>在<code class="docutils literal notranslate"><span class="pre">Runner</span></code> target设置页面中，确保在 <strong>General &gt; Signing &gt; Team</strong> 下选择了你的开发团队。当你选择一个团队时，Xcode会创建并下载开发证书，向你的设备注册你的帐户，并创建和下载配置文件（如果需要）。</p></li>
+<li><p>要开始您的第一个iOS开发项目，您可能需要使用您的Apple ID登录Xcode，如图1-5：</p>
+<p><img alt="图1-5" src="../_images/1-5.png" /></p>
+<p>任何Apple ID都支持开发和测试，但若想将应用分发到App Store，就必须注册Apple开发者计划，有关详情读者可以自行了解。</p>
+</li>
+</ul>
+<ol>
+<li><p>当您第一次attach真机设备进行iOS开发时，需要同时信任你的Mac和该设备上的开发证书。首次将iOS设备连接到Mac时，请在对话框中选择 <code class="docutils literal notranslate"><span class="pre">Trust</span></code>。</p>
+<p><img alt="添加信任" src="../_images/1-6.png" /></p>
+<p>然后，转到iOS设备上的<strong>设置</strong>菜单，选择 <strong>常规&gt;设备管理</strong> 并信任您的证书。</p>
+</li>
+<li><p>如果Xcode中的自动签名失败，请验证项目的 <strong>General &gt; Identity &gt; Bundle Identifier</strong> 值是否唯一，如图1-7所示：</p>
+<p><img alt="验证bundle id是否唯一" src="../_images/1-7.png" /></p>
+</li>
+<li><p>运行 <code class="docutils literal notranslate"><span class="pre">flutter</span> <span class="pre">run</span></code>启动flutter应用程序。</p></li>
+</ol>
+</li>
+</ol>
+</div>
+</div>
+<div class="section" id="id26">
+<h2>1.3.4 常见配置问题<a class="headerlink" href="#id26" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="id27">
+<h3>Android Studio问题<a class="headerlink" href="#id27" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="id28">
+<h4>缺少依赖库问题<a class="headerlink" href="#id28" title="Permalink to this headline">¶</a></h4>
+<p>上手安卓最常遇见的问题之一，错误如图1-8所示，此时点击超链接即可自动跳转到安装页面</p>
+<p><img alt="图1-8" src="../_images/1-8.png" /></p>
+<p>安装之后重新运行即可，如图1-9：</p>
+<p><img alt="install_request_components.png" src="../_images/1-9.png" /></p>
+</div>
+<div class="section" id="android-repository">
+<h4>连接不上Android Repository<a class="headerlink" href="#android-repository" title="Permalink to this headline">¶</a></h4>
+<p>这也是最常见的问题之一，当你发现自己无法下载部分依赖的时候，请优先考虑这种情况。进入 <code class="docutils literal notranslate"><span class="pre">File</span></code> -&gt; <code class="docutils literal notranslate"><span class="pre">Settings</span></code> -&gt; <code class="docutils literal notranslate"><span class="pre">Appearance</span> <span class="pre">&amp;</span> <span class="pre">Behavior</span></code> -&gt; <code class="docutils literal notranslate"><span class="pre">System</span> <span class="pre">Settings</span></code> -&gt; <code class="docutils literal notranslate"><span class="pre">Android</span> <span class="pre">SDK</span></code> -&gt; <code class="docutils literal notranslate"><span class="pre">SDK</span> <span class="pre">Update</span> <span class="pre">Sites</span></code> 列表，可以看到此时的 <code class="docutils literal notranslate"><span class="pre">Android</span> <span class="pre">Repository</span></code> 无法连接，如图1-10所示：</p>
+<p><img alt="下载依赖失败" src="../_images/1-10.png" /></p>
+<p>这是由于要去Google下载Android SDK，但在国内目前无法访问Google所致，因此，我们可以配置代理或使用vpn。</p>
+</div>
+<div class="section" id="id29">
+<h4>安卓包配置问题<a class="headerlink" href="#id29" title="Permalink to this headline">¶</a></h4>
+<p>一般格式为</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">Could</span> <span class="ow">not</span> <span class="n">HEAD</span> <span class="o">**</span>
+<span class="n">Could</span> <span class="ow">not</span> <span class="n">Get</span> <span class="o">**</span>
+</pre></div>
+</div>
+<p>如：<code class="docutils literal notranslate"><span class="pre">Android</span> <span class="pre">Studio</span> <span class="pre">Could</span> <span class="pre">not</span> <span class="pre">GET</span> <span class="pre">gradle-3.2.0.pom</span></code></p>
+<p>这一类问题是由于无法连接到 Maven 库造成的，解决方法如下：</p>
+<ol>
+<li><p>进入<code class="docutils literal notranslate"><span class="pre">当前所在项目名/android</span></code></p></li>
+<li><p>打开 <code class="docutils literal notranslate"><span class="pre">build.gradle</span></code></p></li>
+<li><p>找到下面这一部分，并加上 <code class="docutils literal notranslate"><span class="pre">maven</span> <span class="pre">{</span> <span class="pre">url</span> <span class="pre">'http://maven.aliyun.com/nexus/content/groups/public/'</span> <span class="pre">}</span></code></p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">allprojects</span> <span class="p">{</span>
+    <span class="n">repositories</span> <span class="p">{</span>
+      <span class="n">google</span><span class="p">()</span>
+      <span class="n">jcenter</span><span class="p">()</span>
+      <span class="n">maven</span> <span class="p">{</span> <span class="n">url</span> <span class="s1">&#39;http://maven.aliyun.com/nexus/content/groups/public/&#39;</span> <span class="p">}</span> <span class="o">//</span><span class="n">添加这一句</span>
+	<span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</li>
+<li><p>进入 File/ Settings/ Build, Execution, Deployment/ BuildTools/ Gradle/ Android Studio 中，勾选上 Enable embedded Maven repository ，重启 Android Studio 即可解决。</p>
+<blockquote>
+<div><p>**注意：**存在这样的一种情况，当你根据上述步骤设置了之后，依旧无法解决这个问题，并有类似于 <code class="docutils literal notranslate"><span class="pre">Could</span> <span class="pre">not</span> <span class="pre">HEAD</span> <span class="pre">maven.aliyun.com</span></code> 的报错信息，请检查 <code class="docutils literal notranslate"><span class="pre">C:\Users\{user_name}\.gradle\gradle.properties</span></code> 是否有设置代理。删除后问题即可解决。</p>
+</div></blockquote>
+</li>
+</ol>
+</div>
+<div class="section" id="hot-reload">
+<h4>Hot Reload 热重载失效问题<a class="headerlink" href="#hot-reload" title="Permalink to this headline">¶</a></h4>
+<p>在给 <code class="docutils literal notranslate"><span class="pre">Terminal</span></code> 之类的终端模拟器设置代理之后，会导致“Hot Reload”重载失效，此时调用 <strong>Save</strong> (<code class="docutils literal notranslate"><span class="pre">cmd-s</span></code> / <code class="docutils literal notranslate"><span class="pre">ctrl-s</span></code>)将不会进行热重载，<strong>热重载按钮</strong> (带有闪电⚡️图标的按钮)也不会显示，将代理移除即可解决。</p>
+<p>另外，有些情况下热重载是不生效的，比如修改了<code class="docutils literal notranslate"><span class="pre">main</span></code>函数、修改了全局静态方法等，读者可以认为“Hot Reload”只会重新构建整个widget树，如果变动不在构建widget树的过程中，“Hot Reload”就不会起作用。</p>
+</div>
+</div>
+</div>
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">flutter in action</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2021, mahongquan.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.5.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="../_sources/chapter1/install_flutter.md.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

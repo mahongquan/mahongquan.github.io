@@ -1,0 +1,147 @@
+
+<!DOCTYPE html>
+
+<html lang="zh-cn">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>7.1 导航返回拦截（WillPopScope） &#8212; flutter in action 1.0 documentation</title>
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="willpopscope">
+<h1>7.1 导航返回拦截（WillPopScope）<a class="headerlink" href="#willpopscope" title="Permalink to this headline">¶</a></h1>
+<p>为了避免用户误触返回按钮而导致APP退出，在很多APP中都拦截了用户点击返回键的按钮，然后进行一些防误触判断，比如当用户在某一个时间段内点击两次时，才会认为用户是要退出（而非误触）。Flutter中可以通过<code class="docutils literal notranslate"><span class="pre">WillPopScope</span></code>来实现返回按钮拦截，我们看看<code class="docutils literal notranslate"><span class="pre">WillPopScope</span></code>的默认构造函数：</p>
+<div class="highlight-dart notranslate"><div class="highlight"><pre><span></span>const WillPopScope({
+  ...
+  @required WillPopCallback onWillPop,
+  @required Widget child
+})
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">onWillPop</span></code>是一个回调函数，当用户点击返回按钮时被调用（包括导航返回按钮及Android物理返回按钮）。该回调需要返回一个<code class="docutils literal notranslate"><span class="pre">Future</span></code>对象，如果返回的<code class="docutils literal notranslate"><span class="pre">Future</span></code>最终值为<code class="docutils literal notranslate"><span class="pre">false</span></code>时，则当前路由不出栈(不会返回)；最终值为<code class="docutils literal notranslate"><span class="pre">true</span></code>时，当前路由出栈退出。我们需要提供这个回调来决定是否退出。</p>
+<div class="section" id="id1">
+<h2>示例<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h2>
+<p>为了防止用户误触返回键退出，我们拦截返回事件。当用户在1秒内点击两次返回按钮时，则退出；如果间隔超过1秒则不退出，并重新记时。代码如下：</p>
+<div class="highlight-dart notranslate"><div class="highlight"><pre><span></span>import &#39;package:flutter/material.dart&#39;;
+
+class WillPopScopeTestRoute extends StatefulWidget {
+  @override
+  WillPopScopeTestRouteState createState() {
+    return new WillPopScopeTestRouteState();
+  }
+}
+
+class WillPopScopeTestRouteState extends State&lt;WillPopScopeTestRoute&gt; {
+  DateTime _lastPressedAt; //上次点击时间
+
+  @override
+  Widget build(BuildContext context) {
+    return new WillPopScope(
+        onWillPop: () async {
+          if (_lastPressedAt == null ||
+              DateTime.now().difference(_lastPressedAt) &gt; Duration(seconds: 1)) {
+            //两次点击间隔超过1秒则重新计时
+            _lastPressedAt = DateTime.now();
+            return false;
+          }
+          return true;
+        },
+        child: Container(
+          alignment: Alignment.center,
+          child: Text(&quot;1秒内连续按两次返回键退出&quot;),
+        )
+    );
+  }
+}
+</pre></div>
+</div>
+<p>读者可以运行示例看看效果。</p>
+</div>
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">flutter in action</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2021, mahongquan.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.5.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="../_sources/chapter7/willpopscope.md.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

@@ -1,0 +1,268 @@
+
+<!DOCTYPE html>
+
+<html lang="zh-cn">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>4.2 线性布局（Row和Column） &#8212; flutter in action 1.0 documentation</title>
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="rowcolumn">
+<h1>4.2 线性布局（Row和Column）<a class="headerlink" href="#rowcolumn" title="Permalink to this headline">¶</a></h1>
+<p>所谓线性布局，即指沿水平或垂直方向排布子组件。Flutter中通过<code class="docutils literal notranslate"><span class="pre">Row</span></code>和<code class="docutils literal notranslate"><span class="pre">Column</span></code>来实现线性布局，类似于Android中的<code class="docutils literal notranslate"><span class="pre">LinearLayout</span></code>控件。<code class="docutils literal notranslate"><span class="pre">Row</span></code>和<code class="docutils literal notranslate"><span class="pre">Column</span></code>都继承自<code class="docutils literal notranslate"><span class="pre">Flex</span></code>，我们将在弹性布局一节中详细介绍<code class="docutils literal notranslate"><span class="pre">Flex</span></code>。</p>
+<div class="section" id="id1">
+<h2>主轴和纵轴<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h2>
+<p>对于线性布局，有主轴和纵轴之分，如果布局是沿水平方向，那么主轴就是指水平方向，而纵轴即垂直方向；如果布局沿垂直方向，那么主轴就是指垂直方向，而纵轴就是水平方向。在线性布局中，有两个定义对齐方式的枚举类<code class="docutils literal notranslate"><span class="pre">MainAxisAlignment</span></code>和<code class="docutils literal notranslate"><span class="pre">CrossAxisAlignment</span></code>，分别代表主轴对齐和纵轴对齐。</p>
+</div>
+<div class="section" id="row">
+<h2>Row<a class="headerlink" href="#row" title="Permalink to this headline">¶</a></h2>
+<p>Row可以在水平方向排列其子widget。定义如下：</p>
+<div class="highlight-dart notranslate"><div class="highlight"><pre><span></span><span class="n">Row</span><span class="p">({</span>
+  <span class="p">...</span>  
+  <span class="n">TextDirection</span> <span class="n">textDirection</span><span class="p">,</span>    
+  <span class="n">MainAxisSize</span> <span class="n">mainAxisSize</span> <span class="o">=</span> <span class="n">MainAxisSize</span><span class="p">.</span><span class="n">max</span><span class="p">,</span>    
+  <span class="n">MainAxisAlignment</span> <span class="n">mainAxisAlignment</span> <span class="o">=</span> <span class="n">MainAxisAlignment</span><span class="p">.</span><span class="n">start</span><span class="p">,</span>
+  <span class="n">VerticalDirection</span> <span class="n">verticalDirection</span> <span class="o">=</span> <span class="n">VerticalDirection</span><span class="p">.</span><span class="n">down</span><span class="p">,</span>  
+  <span class="n">CrossAxisAlignment</span> <span class="n">crossAxisAlignment</span> <span class="o">=</span> <span class="n">CrossAxisAlignment</span><span class="p">.</span><span class="n">center</span><span class="p">,</span>
+  <span class="n">List</span><span class="o">&lt;</span><span class="n">Widget</span><span class="o">&gt;</span> <span class="n">children</span> <span class="o">=</span> <span class="kd">const</span> <span class="o">&lt;</span><span class="n">Widget</span><span class="o">&gt;</span><span class="p">[],</span>
+<span class="p">})</span>
+</pre></div>
+</div>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">textDirection</span></code>：表示水平方向子组件的布局顺序(是从左往右还是从右往左)，默认为系统当前Locale环境的文本方向(如中文、英语都是从左往右，而阿拉伯语是从右往左)。</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">mainAxisSize</span></code>：表示<code class="docutils literal notranslate"><span class="pre">Row</span></code>在主轴(水平)方向占用的空间，默认是<code class="docutils literal notranslate"><span class="pre">MainAxisSize.max</span></code>，表示尽可能多的占用水平方向的空间，此时无论子widgets实际占用多少水平空间，<code class="docutils literal notranslate"><span class="pre">Row</span></code>的宽度始终等于水平方向的最大宽度；而<code class="docutils literal notranslate"><span class="pre">MainAxisSize.min</span></code>表示尽可能少的占用水平空间，当子组件没有占满水平剩余空间，则<code class="docutils literal notranslate"><span class="pre">Row</span></code>的实际宽度等于所有子组件占用的的水平空间；</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">mainAxisAlignment</span></code>：表示子组件在<code class="docutils literal notranslate"><span class="pre">Row</span></code>所占用的水平空间内对齐方式，如果<code class="docutils literal notranslate"><span class="pre">mainAxisSize</span></code>值为<code class="docutils literal notranslate"><span class="pre">MainAxisSize.min</span></code>，则此属性无意义，因为子组件的宽度等于<code class="docutils literal notranslate"><span class="pre">Row</span></code>的宽度。只有当<code class="docutils literal notranslate"><span class="pre">mainAxisSize</span></code>的值为<code class="docutils literal notranslate"><span class="pre">MainAxisSize.max</span></code>时，此属性才有意义，<code class="docutils literal notranslate"><span class="pre">MainAxisAlignment.start</span></code>表示沿<code class="docutils literal notranslate"><span class="pre">textDirection</span></code>的初始方向对齐，如<code class="docutils literal notranslate"><span class="pre">textDirection</span></code>取值为<code class="docutils literal notranslate"><span class="pre">TextDirection.ltr</span></code>时，则<code class="docutils literal notranslate"><span class="pre">MainAxisAlignment.start</span></code>表示左对齐，<code class="docutils literal notranslate"><span class="pre">textDirection</span></code>取值为<code class="docutils literal notranslate"><span class="pre">TextDirection.rtl</span></code>时表示从右对齐。而<code class="docutils literal notranslate"><span class="pre">MainAxisAlignment.end</span></code>和<code class="docutils literal notranslate"><span class="pre">MainAxisAlignment.start</span></code>正好相反；<code class="docutils literal notranslate"><span class="pre">MainAxisAlignment.center</span></code>表示居中对齐。读者可以这么理解：<code class="docutils literal notranslate"><span class="pre">textDirection</span></code>是<code class="docutils literal notranslate"><span class="pre">mainAxisAlignment</span></code>的参考系。</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">verticalDirection</span></code>：表示<code class="docutils literal notranslate"><span class="pre">Row</span></code>纵轴（垂直）的对齐方向，默认是<code class="docutils literal notranslate"><span class="pre">VerticalDirection.down</span></code>，表示从上到下。</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">crossAxisAlignment</span></code>：表示子组件在纵轴方向的对齐方式，<code class="docutils literal notranslate"><span class="pre">Row</span></code>的高度等于子组件中最高的子元素高度，它的取值和<code class="docutils literal notranslate"><span class="pre">MainAxisAlignment</span></code>一样(包含<code class="docutils literal notranslate"><span class="pre">start</span></code>、<code class="docutils literal notranslate"><span class="pre">end</span></code>、 <code class="docutils literal notranslate"><span class="pre">center</span></code>三个值)，不同的是<code class="docutils literal notranslate"><span class="pre">crossAxisAlignment</span></code>的参考系是<code class="docutils literal notranslate"><span class="pre">verticalDirection</span></code>，即<code class="docutils literal notranslate"><span class="pre">verticalDirection</span></code>值为<code class="docutils literal notranslate"><span class="pre">VerticalDirection.down</span></code>时<code class="docutils literal notranslate"><span class="pre">crossAxisAlignment.start</span></code>指顶部对齐，<code class="docutils literal notranslate"><span class="pre">verticalDirection</span></code>值为<code class="docutils literal notranslate"><span class="pre">VerticalDirection.up</span></code>时，<code class="docutils literal notranslate"><span class="pre">crossAxisAlignment.start</span></code>指底部对齐；而<code class="docutils literal notranslate"><span class="pre">crossAxisAlignment.end</span></code>和<code class="docutils literal notranslate"><span class="pre">crossAxisAlignment.start</span></code>正好相反；</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">children</span></code> ：子组件数组。</p></li>
+</ul>
+</div>
+<div class="section" id="id2">
+<h2>示例<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h2>
+<p>请阅读下面代码，先想象一下运行的结果：</p>
+<div class="highlight-dart notranslate"><div class="highlight"><pre><span></span><span class="n">Column</span><span class="p">(</span>
+  <span class="c1">//测试Row对齐方式，排除Column默认居中对齐的干扰</span>
+  <span class="nl">crossAxisAlignment:</span> <span class="n">CrossAxisAlignment</span><span class="p">.</span><span class="n">start</span><span class="p">,</span>
+  <span class="nl">children:</span> <span class="o">&lt;</span><span class="n">Widget</span><span class="o">&gt;</span><span class="p">[</span>
+    <span class="n">Row</span><span class="p">(</span>
+      <span class="nl">mainAxisAlignment:</span> <span class="n">MainAxisAlignment</span><span class="p">.</span><span class="n">center</span><span class="p">,</span>
+      <span class="nl">children:</span> <span class="o">&lt;</span><span class="n">Widget</span><span class="o">&gt;</span><span class="p">[</span>
+        <span class="n">Text</span><span class="p">(</span><span class="s2">&quot; hello world &quot;</span><span class="p">),</span>
+        <span class="n">Text</span><span class="p">(</span><span class="s2">&quot; I am Jack &quot;</span><span class="p">),</span>
+      <span class="p">],</span>
+    <span class="p">),</span>
+    <span class="n">Row</span><span class="p">(</span>
+      <span class="nl">mainAxisSize:</span> <span class="n">MainAxisSize</span><span class="p">.</span><span class="n">min</span><span class="p">,</span>
+      <span class="nl">mainAxisAlignment:</span> <span class="n">MainAxisAlignment</span><span class="p">.</span><span class="n">center</span><span class="p">,</span>
+      <span class="nl">children:</span> <span class="o">&lt;</span><span class="n">Widget</span><span class="o">&gt;</span><span class="p">[</span>
+        <span class="n">Text</span><span class="p">(</span><span class="s2">&quot; hello world &quot;</span><span class="p">),</span>
+        <span class="n">Text</span><span class="p">(</span><span class="s2">&quot; I am Jack &quot;</span><span class="p">),</span>
+      <span class="p">],</span>
+    <span class="p">),</span>
+    <span class="n">Row</span><span class="p">(</span>
+      <span class="nl">mainAxisAlignment:</span> <span class="n">MainAxisAlignment</span><span class="p">.</span><span class="n">end</span><span class="p">,</span>
+      <span class="nl">textDirection:</span> <span class="n">TextDirection</span><span class="p">.</span><span class="n">rtl</span><span class="p">,</span>
+      <span class="nl">children:</span> <span class="o">&lt;</span><span class="n">Widget</span><span class="o">&gt;</span><span class="p">[</span>
+        <span class="n">Text</span><span class="p">(</span><span class="s2">&quot; hello world &quot;</span><span class="p">),</span>
+        <span class="n">Text</span><span class="p">(</span><span class="s2">&quot; I am Jack &quot;</span><span class="p">),</span>
+      <span class="p">],</span>
+    <span class="p">),</span>
+    <span class="n">Row</span><span class="p">(</span>
+      <span class="nl">crossAxisAlignment:</span> <span class="n">CrossAxisAlignment</span><span class="p">.</span><span class="n">start</span><span class="p">,</span>  
+      <span class="nl">verticalDirection:</span> <span class="n">VerticalDirection</span><span class="p">.</span><span class="n">up</span><span class="p">,</span>
+      <span class="nl">children:</span> <span class="o">&lt;</span><span class="n">Widget</span><span class="o">&gt;</span><span class="p">[</span>
+        <span class="n">Text</span><span class="p">(</span><span class="s2">&quot; hello world &quot;</span><span class="p">,</span> <span class="nl">style:</span> <span class="n">TextStyle</span><span class="p">(</span><span class="nl">fontSize:</span> <span class="m">30.0</span><span class="p">),),</span>
+        <span class="n">Text</span><span class="p">(</span><span class="s2">&quot; I am Jack &quot;</span><span class="p">),</span>
+      <span class="p">],</span>
+    <span class="p">),</span>
+  <span class="p">],</span>
+<span class="p">);</span>
+</pre></div>
+</div>
+<p>实际运行结果如图4-1所示：</p>
+<p><img alt="图4-1" src="../_images/4-1.png" /></p>
+<p>解释：第一个<code class="docutils literal notranslate"><span class="pre">Row</span></code>很简单，默认为居中对齐；第二个<code class="docutils literal notranslate"><span class="pre">Row</span></code>，由于<code class="docutils literal notranslate"><span class="pre">mainAxisSize</span></code>值为<code class="docutils literal notranslate"><span class="pre">MainAxisSize.min</span></code>，<code class="docutils literal notranslate"><span class="pre">Row</span></code>的宽度等于两个<code class="docutils literal notranslate"><span class="pre">Text</span></code>的宽度和，所以对齐是无意义的，所以会从左往右显示；第三个<code class="docutils literal notranslate"><span class="pre">Row</span></code>设置<code class="docutils literal notranslate"><span class="pre">textDirection</span></code>值为<code class="docutils literal notranslate"><span class="pre">TextDirection.rtl</span></code>，所以子组件会从右向左的顺序排列，而此时<code class="docutils literal notranslate"><span class="pre">MainAxisAlignment.end</span></code>表示左对齐，所以最终显示结果就是图中第三行的样子；第四个Row测试的是纵轴的对齐方式，由于两个子Text字体不一样，所以其高度也不同，我们指定了<code class="docutils literal notranslate"><span class="pre">verticalDirection</span></code>值为<code class="docutils literal notranslate"><span class="pre">VerticalDirection.up</span></code>，即从低向顶排列，而此时<code class="docutils literal notranslate"><span class="pre">crossAxisAlignment</span></code>值为<code class="docutils literal notranslate"><span class="pre">CrossAxisAlignment.start</span></code>表示底对齐。</p>
+</div>
+<div class="section" id="column">
+<h2>Column<a class="headerlink" href="#column" title="Permalink to this headline">¶</a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">Column</span></code>可以在垂直方向排列其子组件。参数和<code class="docutils literal notranslate"><span class="pre">Row</span></code>一样，不同的是布局方向为垂直，主轴纵轴正好相反，读者可类比<code class="docutils literal notranslate"><span class="pre">Row</span></code>来理解，下面看一个例子：</p>
+<div class="highlight-dart notranslate"><div class="highlight"><pre><span></span>import &#39;package:flutter/material.dart&#39;;
+
+class CenterColumnRoute extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: &lt;Widget&gt;[
+        Text(&quot;hi&quot;),
+        Text(&quot;world&quot;),
+      ],
+    );
+  }
+}
+</pre></div>
+</div>
+<p>运行效果如图4-2所示：</p>
+<p><img alt="图4-2示例" src="../_images/4-2.png" /></p>
+<p>解释：</p>
+<ul class="simple">
+<li><p>由于我们没有指定<code class="docutils literal notranslate"><span class="pre">Column</span></code>的<code class="docutils literal notranslate"><span class="pre">mainAxisSize</span></code>，所以使用默认值<code class="docutils literal notranslate"><span class="pre">MainAxisSize.max</span></code>，则<code class="docutils literal notranslate"><span class="pre">Column</span></code>会在垂直方向占用尽可能多的空间，此例中为屏幕高度。</p></li>
+<li><p>由于我们指定了 <code class="docutils literal notranslate"><span class="pre">crossAxisAlignment</span></code> 属性为<code class="docutils literal notranslate"><span class="pre">CrossAxisAlignment.center</span></code>，那么子项在<code class="docutils literal notranslate"><span class="pre">Column</span></code>纵轴方向（此时为水平方向）会居中对齐。注意，在水平方向对齐是有边界的，总宽度为<code class="docutils literal notranslate"><span class="pre">Column</span></code>占用空间的实际宽度，而实际的宽度取决于子项中宽度最大的Widget。在本例中，<code class="docutils literal notranslate"><span class="pre">Column</span></code>有两个子Widget，而显示“world”的<code class="docutils literal notranslate"><span class="pre">Text</span></code>宽度最大，所以<code class="docutils literal notranslate"><span class="pre">Column</span></code>的实际宽度则为<code class="docutils literal notranslate"><span class="pre">Text(&quot;world&quot;)</span></code> 的宽度，所以居中对齐后<code class="docutils literal notranslate"><span class="pre">Text(&quot;hi&quot;)</span></code>会显示在<code class="docutils literal notranslate"><span class="pre">Text(&quot;world&quot;)</span></code>的中间部分。</p></li>
+</ul>
+<p><strong>实际上，<code class="docutils literal notranslate"><span class="pre">Row</span></code>和<code class="docutils literal notranslate"><span class="pre">Column</span></code>都只会在主轴方向占用尽可能大的空间，而纵轴的长度则取决于他们最大子元素的长度</strong>。如果我们想让本例中的两个文本控件在整个手机屏幕中间对齐，我们有两种方法：</p>
+<ul>
+<li><p>将<code class="docutils literal notranslate"><span class="pre">Column</span></code>的宽度指定为屏幕宽度；这很简单，我们可以通过<code class="docutils literal notranslate"><span class="pre">ConstrainedBox</span></code>或<code class="docutils literal notranslate"><span class="pre">SizedBox</span></code>（我们将在后面章节中专门介绍这两个Widget）来强制更改宽度限制，例如：</p>
+<div class="highlight-dart notranslate"><div class="highlight"><pre><span></span><span class="n">ConstrainedBox</span><span class="p">(</span>
+  <span class="nl">constraints:</span> <span class="n">BoxConstraints</span><span class="p">(</span><span class="nl">minWidth:</span> <span class="kt">double</span><span class="p">.</span><span class="n">infinity</span><span class="p">),</span> 
+  <span class="nl">child:</span> <span class="n">Column</span><span class="p">(</span>
+    <span class="nl">crossAxisAlignment:</span> <span class="n">CrossAxisAlignment</span><span class="p">.</span><span class="n">center</span><span class="p">,</span>
+    <span class="nl">children:</span> <span class="o">&lt;</span><span class="n">Widget</span><span class="o">&gt;</span><span class="p">[</span>
+      <span class="n">Text</span><span class="p">(</span><span class="s2">&quot;hi&quot;</span><span class="p">),</span>
+      <span class="n">Text</span><span class="p">(</span><span class="s2">&quot;world&quot;</span><span class="p">),</span>
+    <span class="p">],</span>
+  <span class="p">),</span>
+<span class="p">);</span>
+</pre></div>
+</div>
+<p>将<code class="docutils literal notranslate"><span class="pre">minWidth</span></code>设为<code class="docutils literal notranslate"><span class="pre">double.infinity</span></code>，可以使宽度占用尽可能多的空间。</p>
+</li>
+<li><p>使用<code class="docutils literal notranslate"><span class="pre">Center</span></code> Widget；我们将在后面章节中介绍。</p></li>
+</ul>
+</div>
+<div class="section" id="id3">
+<h2>特殊情况<a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h2>
+<p>如果<code class="docutils literal notranslate"><span class="pre">Row</span></code>里面嵌套<code class="docutils literal notranslate"><span class="pre">Row</span></code>，或者<code class="docutils literal notranslate"><span class="pre">Column</span></code>里面再嵌套<code class="docutils literal notranslate"><span class="pre">Column</span></code>，那么只有最外面的<code class="docutils literal notranslate"><span class="pre">Row</span></code>或<code class="docutils literal notranslate"><span class="pre">Column</span></code>会占用尽可能大的空间，里面<code class="docutils literal notranslate"><span class="pre">Row</span></code>或<code class="docutils literal notranslate"><span class="pre">Column</span></code>所占用的空间为实际大小，下面以<code class="docutils literal notranslate"><span class="pre">Column</span></code>为例说明：</p>
+<div class="highlight-dart notranslate"><div class="highlight"><pre><span></span><span class="n">Container</span><span class="p">(</span>
+  <span class="nl">color:</span> <span class="n">Colors</span><span class="p">.</span><span class="n">green</span><span class="p">,</span>
+  <span class="nl">child:</span> <span class="n">Padding</span><span class="p">(</span>
+    <span class="nl">padding:</span> <span class="kd">const</span> <span class="n">EdgeInsets</span><span class="p">.</span><span class="n">all</span><span class="p">(</span><span class="m">16.0</span><span class="p">),</span>
+    <span class="nl">child:</span> <span class="n">Column</span><span class="p">(</span>
+      <span class="nl">crossAxisAlignment:</span> <span class="n">CrossAxisAlignment</span><span class="p">.</span><span class="n">start</span><span class="p">,</span>
+      <span class="nl">mainAxisSize:</span> <span class="n">MainAxisSize</span><span class="p">.</span><span class="n">max</span><span class="p">,</span> <span class="c1">//有效，外层Colum高度为整个屏幕</span>
+      <span class="nl">children:</span> <span class="o">&lt;</span><span class="n">Widget</span><span class="o">&gt;</span><span class="p">[</span>
+        <span class="n">Container</span><span class="p">(</span>
+          <span class="nl">color:</span> <span class="n">Colors</span><span class="p">.</span><span class="n">red</span><span class="p">,</span>
+          <span class="nl">child:</span> <span class="n">Column</span><span class="p">(</span>
+            <span class="nl">mainAxisSize:</span> <span class="n">MainAxisSize</span><span class="p">.</span><span class="n">max</span><span class="p">,</span><span class="c1">//无效，内层Colum高度为实际高度  </span>
+            <span class="nl">children:</span> <span class="o">&lt;</span><span class="n">Widget</span><span class="o">&gt;</span><span class="p">[</span>
+              <span class="n">Text</span><span class="p">(</span><span class="s2">&quot;hello world &quot;</span><span class="p">),</span>
+              <span class="n">Text</span><span class="p">(</span><span class="s2">&quot;I am Jack &quot;</span><span class="p">),</span>
+            <span class="p">],</span>
+          <span class="p">),</span>
+        <span class="p">)</span>
+      <span class="p">],</span>
+    <span class="p">),</span>
+  <span class="p">),</span>
+<span class="p">);</span>
+</pre></div>
+</div>
+<p>运行效果如图4-3所示：</p>
+<p><img alt="图4-3" src="../_images/4-3.png" /></p>
+<p>如果要让里面的<code class="docutils literal notranslate"><span class="pre">Column</span></code>占满外部<code class="docutils literal notranslate"><span class="pre">Column</span></code>，可以使用<code class="docutils literal notranslate"><span class="pre">Expanded</span></code> 组件：</p>
+<div class="highlight-dart notranslate"><div class="highlight"><pre><span></span><span class="n">Expanded</span><span class="p">(</span> 
+  <span class="nl">child:</span> <span class="n">Container</span><span class="p">(</span>
+    <span class="nl">color:</span> <span class="n">Colors</span><span class="p">.</span><span class="n">red</span><span class="p">,</span>
+    <span class="nl">child:</span> <span class="n">Column</span><span class="p">(</span>
+      <span class="nl">mainAxisAlignment:</span> <span class="n">MainAxisAlignment</span><span class="p">.</span><span class="n">center</span><span class="p">,</span> <span class="c1">//垂直方向居中对齐</span>
+      <span class="nl">children:</span> <span class="o">&lt;</span><span class="n">Widget</span><span class="o">&gt;</span><span class="p">[</span>
+        <span class="n">Text</span><span class="p">(</span><span class="s2">&quot;hello world &quot;</span><span class="p">),</span>
+        <span class="n">Text</span><span class="p">(</span><span class="s2">&quot;I am Jack &quot;</span><span class="p">),</span>
+      <span class="p">],</span>
+    <span class="p">),</span>
+  <span class="p">),</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p>运行效果如图4-4所示：</p>
+<p><img alt="图4-4" src="../_images/4-4.png" /></p>
+<p>我们将在介绍弹性布局时详细介绍Expanded。</p>
+</div>
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">flutter in action</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2021, mahongquan.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.5.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="../_sources/chapter4/row_and_column.md.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

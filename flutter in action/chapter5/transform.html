@@ -1,0 +1,224 @@
+
+<!DOCTYPE html>
+
+<html lang="zh-cn">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>5.4 变换（Transform） &#8212; flutter in action 1.0 documentation</title>
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="transform">
+<h1>5.4 变换（Transform）<a class="headerlink" href="#transform" title="Permalink to this headline">¶</a></h1>
+<p><code class="docutils literal notranslate"><span class="pre">Transform</span></code>可以在其子组件绘制时对其应用一些矩阵变换来实现一些特效。<code class="docutils literal notranslate"><span class="pre">Matrix4</span></code>是一个4D矩阵，通过它我们可以实现各种矩阵操作，下面是一个例子：</p>
+<div class="highlight-dart notranslate"><div class="highlight"><pre><span></span><span class="n">Container</span><span class="p">(</span>
+  <span class="nl">color:</span> <span class="n">Colors</span><span class="p">.</span><span class="n">black</span><span class="p">,</span>
+  <span class="nl">child:</span> <span class="k">new</span> <span class="n">Transform</span><span class="p">(</span>
+    <span class="nl">alignment:</span> <span class="n">Alignment</span><span class="p">.</span><span class="n">topRight</span><span class="p">,</span> <span class="c1">//相对于坐标系原点的对齐方式</span>
+    <span class="nl">transform:</span> <span class="k">new</span> <span class="n">Matrix4</span><span class="p">.</span><span class="n">skewY</span><span class="p">(</span><span class="m">0.3</span><span class="p">),</span> <span class="c1">//沿Y轴倾斜0.3弧度</span>
+    <span class="nl">child:</span> <span class="k">new</span> <span class="n">Container</span><span class="p">(</span>
+      <span class="nl">padding:</span> <span class="kd">const</span> <span class="n">EdgeInsets</span><span class="p">.</span><span class="n">all</span><span class="p">(</span><span class="m">8.0</span><span class="p">),</span>
+      <span class="nl">color:</span> <span class="n">Colors</span><span class="p">.</span><span class="n">deepOrange</span><span class="p">,</span>
+      <span class="nl">child:</span> <span class="kd">const</span> <span class="n">Text</span><span class="p">(</span><span class="s1">&#39;Apartment for rent!&#39;</span><span class="p">),</span>
+    <span class="p">),</span>
+  <span class="p">),</span>
+<span class="p">);</span>
+</pre></div>
+</div>
+<p>运行效果如图5-10所示：</p>
+<p><img alt="图5-10" src="../_images/5-10.png" /></p>
+<blockquote>
+<div><p>关于矩阵变换的相关内容属于线性代数范畴，本书不做讨论，读者有兴趣可以自行了解。本书中，我们把焦点放在Flutter中一些常见的变换效果上。另外，由于矩阵变化时发生在绘制时，而无需重新布局和构建等过程，所以性能很好。</p>
+</div></blockquote>
+<div class="section" id="id1">
+<h2>平移<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">Transform.translate</span></code>接收一个<code class="docutils literal notranslate"><span class="pre">offset</span></code>参数，可以在绘制时沿<code class="docutils literal notranslate"><span class="pre">x</span></code>、<code class="docutils literal notranslate"><span class="pre">y</span></code>轴对子组件平移指定的距离。</p>
+<div class="highlight-dart notranslate"><div class="highlight"><pre><span></span><span class="n">DecoratedBox</span><span class="p">(</span>
+  <span class="nl">decoration:</span><span class="n">BoxDecoration</span><span class="p">(</span><span class="nl">color:</span> <span class="n">Colors</span><span class="p">.</span><span class="n">red</span><span class="p">),</span>
+  <span class="c1">//默认原点为左上角，左移20像素，向上平移5像素  </span>
+  <span class="nl">child:</span> <span class="n">Transform</span><span class="p">.</span><span class="n">translate</span><span class="p">(</span>
+    <span class="nl">offset:</span> <span class="n">Offset</span><span class="p">(</span><span class="o">-</span><span class="m">20.0</span><span class="p">,</span> <span class="o">-</span><span class="m">5.0</span><span class="p">),</span>
+    <span class="nl">child:</span> <span class="n">Text</span><span class="p">(</span><span class="s2">&quot;Hello world&quot;</span><span class="p">),</span>
+  <span class="p">),</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p>效果如图5-11所示：</p>
+<p><img alt="图5-11" src="../_images/5-11.png" /></p>
+</div>
+<div class="section" id="id2">
+<h2>旋转<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">Transform.rotate</span></code>可以对子组件进行旋转变换，如：</p>
+<div class="highlight-dart notranslate"><div class="highlight"><pre><span></span>DecoratedBox(
+  decoration:BoxDecoration(color: Colors.red),
+  child: Transform.rotate(
+    //旋转90度
+    angle:math.pi/2 ,
+    child: Text(&quot;Hello world&quot;),
+  ),
+)；
+</pre></div>
+</div>
+<blockquote>
+<div><p>注意：要使用<code class="docutils literal notranslate"><span class="pre">math.pi</span></code>需先进行如下导包。</p>
+</div></blockquote>
+<div class="highlight-dart notranslate"><div class="highlight"><pre><span></span><span class="k">import</span> <span class="s1">&#39;dart:math&#39;</span> <span class="k">as</span> <span class="n">math</span><span class="p">;</span>  
+</pre></div>
+</div>
+<p>效果如图5-12所示：</p>
+<p><img alt="图5-12" src="../_images/5-12.png" /></p>
+</div>
+<div class="section" id="id3">
+<h2>缩放<a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">Transform.scale</span></code>可以对子组件进行缩小或放大，如：</p>
+<div class="highlight-dart notranslate"><div class="highlight"><pre><span></span><span class="n">DecoratedBox</span><span class="p">(</span>
+  <span class="nl">decoration:</span><span class="n">BoxDecoration</span><span class="p">(</span><span class="nl">color:</span> <span class="n">Colors</span><span class="p">.</span><span class="n">red</span><span class="p">),</span>
+  <span class="nl">child:</span> <span class="n">Transform</span><span class="p">.</span><span class="n">scale</span><span class="p">(</span>
+      <span class="nl">scale:</span> <span class="m">1.5</span><span class="p">,</span> <span class="c1">//放大到1.5倍</span>
+      <span class="nl">child:</span> <span class="n">Text</span><span class="p">(</span><span class="s2">&quot;Hello world&quot;</span><span class="p">)</span>
+  <span class="p">)</span>
+<span class="p">);</span>
+</pre></div>
+</div>
+<p>效果如图5-13所示：</p>
+<p><img alt="图5-13" src="../_images/5-13.png" /></p>
+</div>
+<div class="section" id="id4">
+<h2>注意<a class="headerlink" href="#id4" title="Permalink to this headline">¶</a></h2>
+<ul>
+<li><p><code class="docutils literal notranslate"><span class="pre">Transform</span></code>的变换是应用在绘制阶段，而并不是应用在布局(layout)阶段，所以无论对子组件应用何种变化，其占用空间的大小和在屏幕上的位置都是固定不变的，因为这些是在布局阶段就确定的。下面我们具体说明：</p>
+<div class="highlight-dart notranslate"><div class="highlight"><pre><span></span> <span class="n">Row</span><span class="p">(</span>
+  <span class="nl">mainAxisAlignment:</span> <span class="n">MainAxisAlignment</span><span class="p">.</span><span class="n">center</span><span class="p">,</span>
+  <span class="nl">children:</span> <span class="o">&lt;</span><span class="n">Widget</span><span class="o">&gt;</span><span class="p">[</span>
+    <span class="n">DecoratedBox</span><span class="p">(</span>
+      <span class="nl">decoration:</span><span class="n">BoxDecoration</span><span class="p">(</span><span class="nl">color:</span> <span class="n">Colors</span><span class="p">.</span><span class="n">red</span><span class="p">),</span>
+      <span class="nl">child:</span> <span class="n">Transform</span><span class="p">.</span><span class="n">scale</span><span class="p">(</span><span class="nl">scale:</span> <span class="m">1.5</span><span class="p">,</span>
+          <span class="nl">child:</span> <span class="n">Text</span><span class="p">(</span><span class="s2">&quot;Hello world&quot;</span><span class="p">)</span>
+      <span class="p">)</span>
+    <span class="p">),</span>
+    <span class="n">Text</span><span class="p">(</span><span class="s2">&quot;你好&quot;</span><span class="p">,</span> <span class="nl">style:</span> <span class="n">TextStyle</span><span class="p">(</span><span class="nl">color:</span> <span class="n">Colors</span><span class="p">.</span><span class="n">green</span><span class="p">,</span> <span class="nl">fontSize:</span> <span class="m">18.0</span><span class="p">),)</span>
+  <span class="p">],</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p>运行效果如图5-14所示：</p>
+<p><img alt="图5-14" src="../_images/5-14.png" /></p>
+<p>由于第一个<code class="docutils literal notranslate"><span class="pre">Text</span></code>应用变换(放大)后，其在绘制时会放大，但其占用的空间依然为红色部分，所以第二个<code class="docutils literal notranslate"><span class="pre">Text</span></code>会紧挨着红色部分，最终就会出现文字重合。</p>
+</li>
+<li><p>由于矩阵变化只会作用在绘制阶段，所以在某些场景下，在UI需要变化时，可以直接通过矩阵变化来达到视觉上的UI改变，而不需要去重新触发build流程，这样会节省layout的开销，所以性能会比较好。如之前介绍的<code class="docutils literal notranslate"><span class="pre">Flow</span></code>组件，它内部就是用矩阵变换来更新UI，除此之外，Flutter的动画组件中也大量使用了<code class="docutils literal notranslate"><span class="pre">Transform</span></code>以提高性能。</p></li>
+</ul>
+<blockquote>
+<div><p>思考题：使用<code class="docutils literal notranslate"><span class="pre">Transform</span></code>对其子组件先进行平移然后再旋转和先旋转再平移，两者最终的效果一样吗？为什么？</p>
+</div></blockquote>
+</div>
+<div class="section" id="rotatedbox">
+<h2>RotatedBox<a class="headerlink" href="#rotatedbox" title="Permalink to this headline">¶</a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">RotatedBox</span></code>和<code class="docutils literal notranslate"><span class="pre">Transform.rotate</span></code>功能相似，它们都可以对子组件进行旋转变换，但是有一点不同：<code class="docutils literal notranslate"><span class="pre">RotatedBox</span></code>的变换是在layout阶段，会影响在子组件的位置和大小。我们将上面介绍<code class="docutils literal notranslate"><span class="pre">Transform.rotate</span></code>时的示例改一下：</p>
+<div class="highlight-dart notranslate"><div class="highlight"><pre><span></span><span class="n">Row</span><span class="p">(</span>
+  <span class="nl">mainAxisAlignment:</span> <span class="n">MainAxisAlignment</span><span class="p">.</span><span class="n">center</span><span class="p">,</span>
+  <span class="nl">children:</span> <span class="o">&lt;</span><span class="n">Widget</span><span class="o">&gt;</span><span class="p">[</span>
+    <span class="n">DecoratedBox</span><span class="p">(</span>
+      <span class="nl">decoration:</span> <span class="n">BoxDecoration</span><span class="p">(</span><span class="nl">color:</span> <span class="n">Colors</span><span class="p">.</span><span class="n">red</span><span class="p">),</span>
+      <span class="c1">//将Transform.rotate换成RotatedBox  </span>
+      <span class="nl">child:</span> <span class="n">RotatedBox</span><span class="p">(</span>
+        <span class="nl">quarterTurns:</span> <span class="m">1</span><span class="p">,</span> <span class="c1">//旋转90度(1/4圈)</span>
+        <span class="nl">child:</span> <span class="n">Text</span><span class="p">(</span><span class="s2">&quot;Hello world&quot;</span><span class="p">),</span>
+      <span class="p">),</span>
+    <span class="p">),</span>
+    <span class="n">Text</span><span class="p">(</span><span class="s2">&quot;你好&quot;</span><span class="p">,</span> <span class="nl">style:</span> <span class="n">TextStyle</span><span class="p">(</span><span class="nl">color:</span> <span class="n">Colors</span><span class="p">.</span><span class="n">green</span><span class="p">,</span> <span class="nl">fontSize:</span> <span class="m">18.0</span><span class="p">),)</span>
+  <span class="p">],</span>
+<span class="p">),</span>
+</pre></div>
+</div>
+<p>效果如图5-15所示：</p>
+<p><img alt="图5-15" src="../_images/5-15.png" /></p>
+<p>由于<code class="docutils literal notranslate"><span class="pre">RotatedBox</span></code>是作用于layout阶段，所以子组件会旋转90度（而不只是绘制的内容），<code class="docutils literal notranslate"><span class="pre">decoration</span></code>会作用到子组件所占用的实际空间上，所以最终就是上图的效果，读者可以和前面<code class="docutils literal notranslate"><span class="pre">Transform.rotate</span></code>示例对比理解。</p>
+</div>
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">flutter in action</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2021, mahongquan.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.5.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="../_sources/chapter5/transform.md.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>
