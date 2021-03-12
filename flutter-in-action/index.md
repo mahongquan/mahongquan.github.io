@@ -1,4 +1,5 @@
-﻿* [前言](intro)
+﻿[search](search)
+* [前言](intro)
 
 ## 入门篇
 
