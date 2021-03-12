@@ -1,0 +1,486 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>10.5 自绘实例：圆形背景渐变进度条 &#8212; Flutter in action  documentation</title>
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="id1">
+<h1>10.5 自绘实例：圆形背景渐变进度条<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h1>
+<p>本节我们实现一个圆形背景渐变进度条，它支持：</p>
+<ol class="simple">
+<li><p>支持多种背景渐变色。</p></li>
+<li><p>任意弧度；进度条可以不是整圆。</p></li>
+<li><p>可以自定义粗细、两端是否圆角等样式。</p></li>
+</ol>
+<p>可以发现要实现这样的一个进度条是无法通过现有组件组合而成的，所以我们通过自绘方式实现，代码如下：</p>
+<div class="highlight-dart notranslate"><div class="highlight"><pre><span></span><span class="k">import</span> <span class="s1">&#39;dart:math&#39;</span><span class="p">;</span>
+<span class="k">import</span> <span class="s1">&#39;package:flutter/material.dart&#39;</span><span class="p">;</span>
+
+<span class="kd">class</span> <span class="nc">GradientCircularProgressIndicator</span> <span class="kd">extends</span> <span class="n">StatelessWidget</span> <span class="p">{</span>
+  <span class="n">GradientCircularProgressIndicator</span><span class="p">({</span>
+    <span class="k">this</span><span class="p">.</span><span class="n">strokeWidth</span> <span class="o">=</span> <span class="m">2.0</span><span class="p">,</span>
+    <span class="nd">@required</span> <span class="k">this</span><span class="p">.</span><span class="n">radius</span><span class="p">,</span>
+    <span class="nd">@required</span> <span class="k">this</span><span class="p">.</span><span class="n">colors</span><span class="p">,</span>
+    <span class="k">this</span><span class="p">.</span><span class="n">stops</span><span class="p">,</span>
+    <span class="k">this</span><span class="p">.</span><span class="n">strokeCapRound</span> <span class="o">=</span> <span class="kc">false</span><span class="p">,</span>
+    <span class="k">this</span><span class="p">.</span><span class="n">backgroundColor</span> <span class="o">=</span> <span class="k">const</span> <span class="n">Color</span><span class="p">(</span><span class="mh">0xFFEEEEEE</span><span class="p">),</span>
+    <span class="k">this</span><span class="p">.</span><span class="n">totalAngle</span> <span class="o">=</span> <span class="m">2</span> <span class="o">*</span> <span class="n">pi</span><span class="p">,</span>
+    <span class="k">this</span><span class="p">.</span><span class="n">value</span>
+  <span class="p">});</span>
+
+  <span class="c1">///粗细</span>
+  <span class="kd">final</span> <span class="kt">double</span> <span class="n">strokeWidth</span><span class="p">;</span>
+
+  <span class="c1">/// 圆的半径</span>
+  <span class="kd">final</span> <span class="kt">double</span> <span class="n">radius</span><span class="p">;</span>
+
+  <span class="c1">///两端是否为圆角</span>
+  <span class="kd">final</span> <span class="kt">bool</span> <span class="n">strokeCapRound</span><span class="p">;</span>
+
+  <span class="c1">/// 当前进度，取值范围 [0.0-1.0]</span>
+  <span class="kd">final</span> <span class="kt">double</span> <span class="n">value</span><span class="p">;</span>
+
+  <span class="c1">/// 进度条背景色</span>
+  <span class="kd">final</span> <span class="n">Color</span> <span class="n">backgroundColor</span><span class="p">;</span>
+
+  <span class="c1">/// 进度条的总弧度，2*PI为整圆，小于2*PI则不是整圆</span>
+  <span class="kd">final</span> <span class="kt">double</span> <span class="n">totalAngle</span><span class="p">;</span>
+
+  <span class="c1">/// 渐变色数组</span>
+  <span class="kd">final</span> <span class="n">List</span><span class="o">&lt;</span><span class="n">Color</span><span class="o">&gt;</span> <span class="n">colors</span><span class="p">;</span>
+
+  <span class="c1">/// 渐变色的终止点，对应colors属性</span>
+  <span class="kd">final</span> <span class="n">List</span><span class="o">&lt;</span><span class="kt">double</span><span class="o">&gt;</span> <span class="n">stops</span><span class="p">;</span>
+
+  <span class="nd">@override</span>
+  <span class="n">Widget</span> <span class="n">build</span><span class="p">(</span><span class="n">BuildContext</span> <span class="n">context</span><span class="p">)</span> <span class="p">{</span>
+    <span class="kt">double</span> <span class="n">_offset</span> <span class="o">=</span> <span class="p">.</span><span class="m">0</span><span class="p">;</span>
+    <span class="c1">// 如果两端为圆角，则需要对起始位置进行调整，否则圆角部分会偏离起始位置</span>
+    <span class="c1">// 下面调整的角度的计算公式是通过数学几何知识得出，读者有兴趣可以研究一下为什么是这样  </span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">strokeCapRound</span><span class="p">)</span> <span class="p">{</span>
+      <span class="n">_offset</span> <span class="o">=</span> <span class="n">asin</span><span class="p">(</span><span class="n">strokeWidth</span> <span class="o">/</span> <span class="p">(</span><span class="n">radius</span> <span class="o">*</span> <span class="m">2</span> <span class="o">-</span> <span class="n">strokeWidth</span><span class="p">));</span>
+    <span class="p">}</span>
+    <span class="kd">var</span> <span class="n">_colors</span> <span class="o">=</span> <span class="n">colors</span><span class="p">;</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">_colors</span> <span class="o">==</span> <span class="kc">null</span><span class="p">)</span> <span class="p">{</span>
+      <span class="n">Color</span> <span class="n">color</span> <span class="o">=</span> <span class="n">Theme</span>
+          <span class="p">.</span><span class="n">of</span><span class="p">(</span><span class="n">context</span><span class="p">)</span>
+          <span class="p">.</span><span class="n">accentColor</span><span class="p">;</span>
+      <span class="n">_colors</span> <span class="o">=</span> <span class="p">[</span><span class="n">color</span><span class="p">,</span> <span class="n">color</span><span class="p">];</span>
+    <span class="p">}</span>
+    <span class="k">return</span> <span class="n">Transform</span><span class="p">.</span><span class="n">rotate</span><span class="p">(</span>
+      <span class="nl">angle:</span> <span class="o">-</span><span class="n">pi</span> <span class="o">/</span> <span class="m">2.0</span> <span class="o">-</span> <span class="n">_offset</span><span class="p">,</span> 
+      <span class="nl">child:</span> <span class="n">CustomPaint</span><span class="p">(</span>
+          <span class="nl">size:</span> <span class="n">Size</span><span class="p">.</span><span class="n">fromRadius</span><span class="p">(</span><span class="n">radius</span><span class="p">),</span>
+          <span class="nl">painter:</span> <span class="n">_GradientCircularProgressPainter</span><span class="p">(</span>
+            <span class="nl">strokeWidth:</span> <span class="n">strokeWidth</span><span class="p">,</span>
+            <span class="nl">strokeCapRound:</span> <span class="n">strokeCapRound</span><span class="p">,</span>
+            <span class="nl">backgroundColor:</span> <span class="n">backgroundColor</span><span class="p">,</span>
+            <span class="nl">value:</span> <span class="n">value</span><span class="p">,</span>
+            <span class="nl">total:</span> <span class="n">totalAngle</span><span class="p">,</span>
+            <span class="nl">radius:</span> <span class="n">radius</span><span class="p">,</span>
+            <span class="nl">colors:</span> <span class="n">_colors</span><span class="p">,</span>
+          <span class="p">)</span>
+      <span class="p">),</span>
+    <span class="p">);</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="c1">//实现画笔</span>
+<span class="kd">class</span> <span class="nc">_GradientCircularProgressPainter</span> <span class="kd">extends</span> <span class="n">CustomPainter</span> <span class="p">{</span>
+  <span class="n">_GradientCircularProgressPainter</span><span class="p">({</span>
+    <span class="k">this</span><span class="p">.</span><span class="nl">strokeWidth:</span> <span class="m">10.0</span><span class="p">,</span>
+    <span class="k">this</span><span class="p">.</span><span class="nl">strokeCapRound:</span> <span class="kc">false</span><span class="p">,</span>
+    <span class="k">this</span><span class="p">.</span><span class="n">backgroundColor</span> <span class="o">=</span> <span class="k">const</span> <span class="n">Color</span><span class="p">(</span><span class="mh">0xFFEEEEEE</span><span class="p">),</span>
+    <span class="k">this</span><span class="p">.</span><span class="n">radius</span><span class="p">,</span>
+    <span class="k">this</span><span class="p">.</span><span class="n">total</span> <span class="o">=</span> <span class="m">2</span> <span class="o">*</span> <span class="n">pi</span><span class="p">,</span>
+    <span class="nd">@required</span> <span class="k">this</span><span class="p">.</span><span class="n">colors</span><span class="p">,</span>
+    <span class="k">this</span><span class="p">.</span><span class="n">stops</span><span class="p">,</span>
+    <span class="k">this</span><span class="p">.</span><span class="n">value</span>
+  <span class="p">});</span>
+
+  <span class="kd">final</span> <span class="kt">double</span> <span class="n">strokeWidth</span><span class="p">;</span>
+  <span class="kd">final</span> <span class="kt">bool</span> <span class="n">strokeCapRound</span><span class="p">;</span>
+  <span class="kd">final</span> <span class="kt">double</span> <span class="n">value</span><span class="p">;</span>
+  <span class="kd">final</span> <span class="n">Color</span> <span class="n">backgroundColor</span><span class="p">;</span>
+  <span class="kd">final</span> <span class="n">List</span><span class="o">&lt;</span><span class="n">Color</span><span class="o">&gt;</span> <span class="n">colors</span><span class="p">;</span>
+  <span class="kd">final</span> <span class="kt">double</span> <span class="n">total</span><span class="p">;</span>
+  <span class="kd">final</span> <span class="kt">double</span> <span class="n">radius</span><span class="p">;</span>
+  <span class="kd">final</span> <span class="n">List</span><span class="o">&lt;</span><span class="kt">double</span><span class="o">&gt;</span> <span class="n">stops</span><span class="p">;</span>
+
+  <span class="nd">@override</span>
+  <span class="kt">void</span> <span class="n">paint</span><span class="p">(</span><span class="n">Canvas</span> <span class="n">canvas</span><span class="p">,</span> <span class="n">Size</span> <span class="n">size</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">radius</span> <span class="o">!=</span> <span class="kc">null</span><span class="p">)</span> <span class="p">{</span>
+      <span class="n">size</span> <span class="o">=</span> <span class="n">Size</span><span class="p">.</span><span class="n">fromRadius</span><span class="p">(</span><span class="n">radius</span><span class="p">);</span>
+    <span class="p">}</span>
+    <span class="kt">double</span> <span class="n">_offset</span> <span class="o">=</span> <span class="n">strokeWidth</span> <span class="o">/</span> <span class="m">2.0</span><span class="p">;</span>
+    <span class="kt">double</span> <span class="n">_value</span> <span class="o">=</span> <span class="p">(</span><span class="n">value</span> <span class="o">??</span> <span class="p">.</span><span class="m">0</span><span class="p">);</span>
+    <span class="n">_value</span> <span class="o">=</span> <span class="n">_value</span><span class="p">.</span><span class="n">clamp</span><span class="p">(.</span><span class="m">0</span><span class="p">,</span> <span class="m">1.0</span><span class="p">)</span> <span class="o">*</span> <span class="n">total</span><span class="p">;</span>
+    <span class="kt">double</span> <span class="n">_start</span> <span class="o">=</span> <span class="p">.</span><span class="m">0</span><span class="p">;</span>
+
+    <span class="k">if</span> <span class="p">(</span><span class="n">strokeCapRound</span><span class="p">)</span> <span class="p">{</span>
+      <span class="n">_start</span> <span class="o">=</span> <span class="n">asin</span><span class="p">(</span><span class="n">strokeWidth</span><span class="o">/</span> <span class="p">(</span><span class="n">size</span><span class="p">.</span><span class="n">width</span> <span class="o">-</span> <span class="n">strokeWidth</span><span class="p">));</span>
+    <span class="p">}</span>
+
+    <span class="n">Rect</span> <span class="n">rect</span> <span class="o">=</span> <span class="n">Offset</span><span class="p">(</span><span class="n">_offset</span><span class="p">,</span> <span class="n">_offset</span><span class="p">)</span> <span class="o">&amp;</span> <span class="n">Size</span><span class="p">(</span>
+        <span class="n">size</span><span class="p">.</span><span class="n">width</span> <span class="o">-</span> <span class="n">strokeWidth</span><span class="p">,</span>
+        <span class="n">size</span><span class="p">.</span><span class="n">height</span> <span class="o">-</span> <span class="n">strokeWidth</span>
+    <span class="p">);</span>
+
+    <span class="kd">var</span> <span class="n">paint</span> <span class="o">=</span> <span class="n">Paint</span><span class="p">()</span>
+      <span class="p">..</span><span class="n">strokeCap</span> <span class="o">=</span> <span class="n">strokeCapRound</span> <span class="o">?</span> <span class="n">StrokeCap</span><span class="p">.</span><span class="n">round</span> <span class="o">:</span> <span class="n">StrokeCap</span><span class="p">.</span><span class="n">butt</span>
+      <span class="p">..</span><span class="n">style</span> <span class="o">=</span> <span class="n">PaintingStyle</span><span class="p">.</span><span class="n">stroke</span>
+      <span class="p">..</span><span class="n">isAntiAlias</span> <span class="o">=</span> <span class="kc">true</span>
+      <span class="p">..</span><span class="n">strokeWidth</span> <span class="o">=</span> <span class="n">strokeWidth</span><span class="p">;</span>
+
+    <span class="c1">// 先画背景</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">backgroundColor</span> <span class="o">!=</span> <span class="n">Colors</span><span class="p">.</span><span class="n">transparent</span><span class="p">)</span> <span class="p">{</span>
+      <span class="n">paint</span><span class="p">.</span><span class="n">color</span> <span class="o">=</span> <span class="n">backgroundColor</span><span class="p">;</span>
+      <span class="n">canvas</span><span class="p">.</span><span class="n">drawArc</span><span class="p">(</span>
+          <span class="n">rect</span><span class="p">,</span>
+          <span class="n">_start</span><span class="p">,</span>
+          <span class="n">total</span><span class="p">,</span>
+          <span class="kc">false</span><span class="p">,</span>
+          <span class="n">paint</span>
+      <span class="p">);</span>
+    <span class="p">}</span>
+
+    <span class="c1">// 再画前景，应用渐变</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">_value</span> <span class="o">&gt;</span> <span class="m">0</span><span class="p">)</span> <span class="p">{</span>
+      <span class="n">paint</span><span class="p">.</span><span class="n">shader</span> <span class="o">=</span> <span class="n">SweepGradient</span><span class="p">(</span>
+        <span class="nl">startAngle:</span> <span class="m">0.0</span><span class="p">,</span>
+        <span class="nl">endAngle:</span> <span class="n">_value</span><span class="p">,</span>
+        <span class="nl">colors:</span> <span class="n">colors</span><span class="p">,</span>
+        <span class="nl">stops:</span> <span class="n">stops</span><span class="p">,</span>
+      <span class="p">).</span><span class="n">createShader</span><span class="p">(</span><span class="n">rect</span><span class="p">);</span>
+
+      <span class="n">canvas</span><span class="p">.</span><span class="n">drawArc</span><span class="p">(</span>
+          <span class="n">rect</span><span class="p">,</span>
+          <span class="n">_start</span><span class="p">,</span>
+          <span class="n">_value</span><span class="p">,</span>
+          <span class="kc">false</span><span class="p">,</span>
+          <span class="n">paint</span>
+      <span class="p">);</span>
+    <span class="p">}</span>
+  <span class="p">}</span>
+
+  <span class="nd">@override</span>
+  <span class="kt">bool</span> <span class="n">shouldRepaint</span><span class="p">(</span><span class="n">CustomPainter</span> <span class="n">oldDelegate</span><span class="p">)</span> <span class="o">=&gt;</span> <span class="kc">true</span><span class="p">;</span>
+
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>下面我们来测试一下，为了尽可能多的展示<code class="docutils literal notranslate"><span class="pre">GradientCircularProgressIndicator</span></code>的不同外观和用途，这个示例代码会比较长，并且添加了动画，建议读者将此示例运行起来观看实际效果，我们先看看其中的一帧动画的截图：</p>
+<p><img alt="gradient_circular_progress" src="../_images/gradient_circular_progress.png" /></p>
+<p>示例代码：</p>
+<div class="highlight-dart notranslate"><div class="highlight"><pre><span></span><span class="k">import</span> <span class="s1">&#39;dart:math&#39;</span><span class="p">;</span>
+<span class="k">import</span> <span class="s1">&#39;package:flutter/material.dart&#39;</span><span class="p">;</span>
+<span class="k">import</span> <span class="s1">&#39;../widgets/index.dart&#39;</span><span class="p">;</span>
+
+<span class="kd">class</span> <span class="nc">GradientCircularProgressRoute</span> <span class="kd">extends</span> <span class="n">StatefulWidget</span> <span class="p">{</span>
+  <span class="nd">@override</span>
+  <span class="n">GradientCircularProgressRouteState</span> <span class="n">createState</span><span class="p">()</span> <span class="p">{</span>
+    <span class="k">return</span> <span class="k">new</span> <span class="n">GradientCircularProgressRouteState</span><span class="p">();</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="kd">class</span> <span class="nc">GradientCircularProgressRouteState</span>
+    <span class="kd">extends</span> <span class="n">State</span><span class="o">&lt;</span><span class="n">GradientCircularProgressRoute</span><span class="o">&gt;</span> <span class="kd">with</span> <span class="n">TickerProviderStateMixin</span> <span class="p">{</span>
+  <span class="n">AnimationController</span> <span class="n">_animationController</span><span class="p">;</span>
+
+  <span class="nd">@override</span>
+  <span class="kt">void</span> <span class="n">initState</span><span class="p">()</span> <span class="p">{</span>
+    <span class="k">super</span><span class="p">.</span><span class="n">initState</span><span class="p">();</span>
+    <span class="n">_animationController</span> <span class="o">=</span>
+        <span class="k">new</span> <span class="n">AnimationController</span><span class="p">(</span><span class="nl">vsync:</span> <span class="k">this</span><span class="p">,</span> <span class="nl">duration:</span> <span class="n">Duration</span><span class="p">(</span><span class="nl">seconds:</span> <span class="m">3</span><span class="p">));</span>
+    <span class="kt">bool</span> <span class="n">isForward</span> <span class="o">=</span> <span class="kc">true</span><span class="p">;</span>
+    <span class="n">_animationController</span><span class="p">.</span><span class="n">addStatusListener</span><span class="p">((</span><span class="n">status</span><span class="p">)</span> <span class="p">{</span>
+      <span class="k">if</span> <span class="p">(</span><span class="n">status</span> <span class="o">==</span> <span class="n">AnimationStatus</span><span class="p">.</span><span class="n">forward</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">isForward</span> <span class="o">=</span> <span class="kc">true</span><span class="p">;</span>
+      <span class="p">}</span> <span class="k">else</span> <span class="k">if</span> <span class="p">(</span><span class="n">status</span> <span class="o">==</span> <span class="n">AnimationStatus</span><span class="p">.</span><span class="n">completed</span> <span class="o">||</span>
+          <span class="n">status</span> <span class="o">==</span> <span class="n">AnimationStatus</span><span class="p">.</span><span class="n">dismissed</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">isForward</span><span class="p">)</span> <span class="p">{</span>
+          <span class="n">_animationController</span><span class="p">.</span><span class="n">reverse</span><span class="p">();</span>
+        <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+          <span class="n">_animationController</span><span class="p">.</span><span class="n">forward</span><span class="p">();</span>
+        <span class="p">}</span>
+      <span class="p">}</span> <span class="k">else</span> <span class="k">if</span> <span class="p">(</span><span class="n">status</span> <span class="o">==</span> <span class="n">AnimationStatus</span><span class="p">.</span><span class="n">reverse</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">isForward</span> <span class="o">=</span> <span class="kc">false</span><span class="p">;</span>
+      <span class="p">}</span>
+    <span class="p">});</span>
+    <span class="n">_animationController</span><span class="p">.</span><span class="n">forward</span><span class="p">();</span>
+  <span class="p">}</span>
+
+  <span class="nd">@override</span>
+  <span class="kt">void</span> <span class="n">dispose</span><span class="p">()</span> <span class="p">{</span>
+    <span class="n">_animationController</span><span class="p">.</span><span class="n">dispose</span><span class="p">();</span>
+    <span class="k">super</span><span class="p">.</span><span class="n">dispose</span><span class="p">();</span>
+  <span class="p">}</span>
+
+  <span class="nd">@override</span>
+  <span class="n">Widget</span> <span class="n">build</span><span class="p">(</span><span class="n">BuildContext</span> <span class="n">context</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">return</span> <span class="n">SingleChildScrollView</span><span class="p">(</span>
+      <span class="nl">child:</span> <span class="n">Center</span><span class="p">(</span>
+        <span class="nl">child:</span> <span class="n">Column</span><span class="p">(</span>
+          <span class="nl">crossAxisAlignment:</span> <span class="n">CrossAxisAlignment</span><span class="p">.</span><span class="n">center</span><span class="p">,</span>
+          <span class="nl">children:</span> <span class="o">&lt;</span><span class="n">Widget</span><span class="o">&gt;</span><span class="p">[</span>
+            <span class="n">AnimatedBuilder</span><span class="p">(</span>
+              <span class="nl">animation:</span> <span class="n">_animationController</span><span class="p">,</span>
+              <span class="nl">builder:</span> <span class="p">(</span><span class="n">BuildContext</span> <span class="n">context</span><span class="p">,</span> <span class="n">Widget</span> <span class="n">child</span><span class="p">)</span> <span class="p">{</span>
+                <span class="k">return</span> <span class="n">Padding</span><span class="p">(</span>
+                  <span class="nl">padding:</span> <span class="k">const</span> <span class="n">EdgeInsets</span><span class="p">.</span><span class="n">symmetric</span><span class="p">(</span><span class="nl">vertical:</span> <span class="m">16.0</span><span class="p">),</span>
+                  <span class="nl">child:</span> <span class="n">Column</span><span class="p">(</span>
+                    <span class="nl">children:</span> <span class="o">&lt;</span><span class="n">Widget</span><span class="o">&gt;</span><span class="p">[</span>
+                      <span class="n">Wrap</span><span class="p">(</span>
+                        <span class="nl">spacing:</span> <span class="m">10.0</span><span class="p">,</span>
+                        <span class="nl">runSpacing:</span> <span class="m">16.0</span><span class="p">,</span>
+                        <span class="nl">children:</span> <span class="o">&lt;</span><span class="n">Widget</span><span class="o">&gt;</span><span class="p">[</span>
+                          <span class="n">GradientCircularProgressIndicator</span><span class="p">(</span>
+                            <span class="c1">// No gradient</span>
+                            <span class="nl">colors:</span> <span class="p">[</span><span class="n">Colors</span><span class="p">.</span><span class="n">blue</span><span class="p">,</span> <span class="n">Colors</span><span class="p">.</span><span class="n">blue</span><span class="p">],</span>
+                            <span class="nl">radius:</span> <span class="m">50.0</span><span class="p">,</span>
+                            <span class="nl">strokeWidth:</span> <span class="m">3.0</span><span class="p">,</span>
+                            <span class="nl">value:</span> <span class="n">_animationController</span><span class="p">.</span><span class="n">value</span><span class="p">,</span>
+                          <span class="p">),</span>
+                          <span class="n">GradientCircularProgressIndicator</span><span class="p">(</span>
+                            <span class="nl">colors:</span> <span class="p">[</span><span class="n">Colors</span><span class="p">.</span><span class="n">red</span><span class="p">,</span> <span class="n">Colors</span><span class="p">.</span><span class="n">orange</span><span class="p">],</span>
+                            <span class="nl">radius:</span> <span class="m">50.0</span><span class="p">,</span>
+                            <span class="nl">strokeWidth:</span> <span class="m">3.0</span><span class="p">,</span>
+                            <span class="nl">value:</span> <span class="n">_animationController</span><span class="p">.</span><span class="n">value</span><span class="p">,</span>
+                          <span class="p">),</span>
+                          <span class="n">GradientCircularProgressIndicator</span><span class="p">(</span>
+                            <span class="nl">colors:</span> <span class="p">[</span><span class="n">Colors</span><span class="p">.</span><span class="n">red</span><span class="p">,</span> <span class="n">Colors</span><span class="p">.</span><span class="n">orange</span><span class="p">,</span> <span class="n">Colors</span><span class="p">.</span><span class="n">red</span><span class="p">],</span>
+                            <span class="nl">radius:</span> <span class="m">50.0</span><span class="p">,</span>
+                            <span class="nl">strokeWidth:</span> <span class="m">5.0</span><span class="p">,</span>
+                            <span class="nl">value:</span> <span class="n">_animationController</span><span class="p">.</span><span class="n">value</span><span class="p">,</span>
+                          <span class="p">),</span>
+                          <span class="n">GradientCircularProgressIndicator</span><span class="p">(</span>
+                            <span class="nl">colors:</span> <span class="p">[</span><span class="n">Colors</span><span class="p">.</span><span class="n">teal</span><span class="p">,</span> <span class="n">Colors</span><span class="p">.</span><span class="n">cyan</span><span class="p">],</span>
+                            <span class="nl">radius:</span> <span class="m">50.0</span><span class="p">,</span>
+                            <span class="nl">strokeWidth:</span> <span class="m">5.0</span><span class="p">,</span>
+                            <span class="nl">strokeCapRound:</span> <span class="kc">true</span><span class="p">,</span>
+                            <span class="nl">value:</span> <span class="n">CurvedAnimation</span><span class="p">(</span>
+                                    <span class="nl">parent:</span> <span class="n">_animationController</span><span class="p">,</span>
+                                    <span class="nl">curve:</span> <span class="n">Curves</span><span class="p">.</span><span class="n">decelerate</span><span class="p">)</span>
+                                <span class="p">.</span><span class="n">value</span><span class="p">,</span>
+                          <span class="p">),</span>
+                          <span class="n">TurnBox</span><span class="p">(</span>
+                            <span class="nl">turns:</span> <span class="m">1</span> <span class="o">/</span> <span class="m">8</span><span class="p">,</span>
+                            <span class="nl">child:</span> <span class="n">GradientCircularProgressIndicator</span><span class="p">(</span>
+                                <span class="nl">colors:</span> <span class="p">[</span><span class="n">Colors</span><span class="p">.</span><span class="n">red</span><span class="p">,</span> <span class="n">Colors</span><span class="p">.</span><span class="n">orange</span><span class="p">,</span> <span class="n">Colors</span><span class="p">.</span><span class="n">red</span><span class="p">],</span>
+                                <span class="nl">radius:</span> <span class="m">50.0</span><span class="p">,</span>
+                                <span class="nl">strokeWidth:</span> <span class="m">5.0</span><span class="p">,</span>
+                                <span class="nl">strokeCapRound:</span> <span class="kc">true</span><span class="p">,</span>
+                                <span class="nl">backgroundColor:</span> <span class="n">Colors</span><span class="p">.</span><span class="n">red</span><span class="p">[</span><span class="m">50</span><span class="p">],</span>
+                                <span class="nl">totalAngle:</span> <span class="m">1.5</span> <span class="o">*</span> <span class="n">pi</span><span class="p">,</span>
+                                <span class="nl">value:</span> <span class="n">CurvedAnimation</span><span class="p">(</span>
+                                        <span class="nl">parent:</span> <span class="n">_animationController</span><span class="p">,</span>
+                                        <span class="nl">curve:</span> <span class="n">Curves</span><span class="p">.</span><span class="n">ease</span><span class="p">)</span>
+                                    <span class="p">.</span><span class="n">value</span><span class="p">),</span>
+                          <span class="p">),</span>
+                          <span class="n">RotatedBox</span><span class="p">(</span>
+                            <span class="nl">quarterTurns:</span> <span class="m">1</span><span class="p">,</span>
+                            <span class="nl">child:</span> <span class="n">GradientCircularProgressIndicator</span><span class="p">(</span>
+                                <span class="nl">colors:</span> <span class="p">[</span><span class="n">Colors</span><span class="p">.</span><span class="n">blue</span><span class="p">[</span><span class="m">700</span><span class="p">],</span> <span class="n">Colors</span><span class="p">.</span><span class="n">blue</span><span class="p">[</span><span class="m">200</span><span class="p">]],</span>
+                                <span class="nl">radius:</span> <span class="m">50.0</span><span class="p">,</span>
+                                <span class="nl">strokeWidth:</span> <span class="m">3.0</span><span class="p">,</span>
+                                <span class="nl">strokeCapRound:</span> <span class="kc">true</span><span class="p">,</span>
+                                <span class="nl">backgroundColor:</span> <span class="n">Colors</span><span class="p">.</span><span class="n">transparent</span><span class="p">,</span>
+                                <span class="nl">value:</span> <span class="n">_animationController</span><span class="p">.</span><span class="n">value</span><span class="p">),</span>
+                          <span class="p">),</span>
+                          <span class="n">GradientCircularProgressIndicator</span><span class="p">(</span>
+                            <span class="nl">colors:</span> <span class="p">[</span>
+                              <span class="n">Colors</span><span class="p">.</span><span class="n">red</span><span class="p">,</span>
+                              <span class="n">Colors</span><span class="p">.</span><span class="n">amber</span><span class="p">,</span>
+                              <span class="n">Colors</span><span class="p">.</span><span class="n">cyan</span><span class="p">,</span>
+                              <span class="n">Colors</span><span class="p">.</span><span class="n">green</span><span class="p">[</span><span class="m">200</span><span class="p">],</span>
+                              <span class="n">Colors</span><span class="p">.</span><span class="n">blue</span><span class="p">,</span>
+                              <span class="n">Colors</span><span class="p">.</span><span class="n">red</span>
+                            <span class="p">],</span>
+                            <span class="nl">radius:</span> <span class="m">50.0</span><span class="p">,</span>
+                            <span class="nl">strokeWidth:</span> <span class="m">5.0</span><span class="p">,</span>
+                            <span class="nl">strokeCapRound:</span> <span class="kc">true</span><span class="p">,</span>
+                            <span class="nl">value:</span> <span class="n">_animationController</span><span class="p">.</span><span class="n">value</span><span class="p">,</span>
+                          <span class="p">),</span>
+                        <span class="p">],</span>
+                      <span class="p">),</span>
+                      <span class="n">GradientCircularProgressIndicator</span><span class="p">(</span>
+                        <span class="nl">colors:</span> <span class="p">[</span><span class="n">Colors</span><span class="p">.</span><span class="n">blue</span><span class="p">[</span><span class="m">700</span><span class="p">],</span> <span class="n">Colors</span><span class="p">.</span><span class="n">blue</span><span class="p">[</span><span class="m">200</span><span class="p">]],</span>
+                        <span class="nl">radius:</span> <span class="m">100.0</span><span class="p">,</span>
+                        <span class="nl">strokeWidth:</span> <span class="m">20.0</span><span class="p">,</span>
+                        <span class="nl">value:</span> <span class="n">_animationController</span><span class="p">.</span><span class="n">value</span><span class="p">,</span>
+                      <span class="p">),</span>
+
+                      <span class="n">Padding</span><span class="p">(</span>
+                        <span class="nl">padding:</span> <span class="k">const</span> <span class="n">EdgeInsets</span><span class="p">.</span><span class="n">symmetric</span><span class="p">(</span><span class="nl">vertical:</span> <span class="m">16.0</span><span class="p">),</span>
+                        <span class="nl">child:</span> <span class="n">GradientCircularProgressIndicator</span><span class="p">(</span>
+                          <span class="nl">colors:</span> <span class="p">[</span><span class="n">Colors</span><span class="p">.</span><span class="n">blue</span><span class="p">[</span><span class="m">700</span><span class="p">],</span> <span class="n">Colors</span><span class="p">.</span><span class="n">blue</span><span class="p">[</span><span class="m">300</span><span class="p">]],</span>
+                          <span class="nl">radius:</span> <span class="m">100.0</span><span class="p">,</span>
+                          <span class="nl">strokeWidth:</span> <span class="m">20.0</span><span class="p">,</span>
+                          <span class="nl">value:</span> <span class="n">_animationController</span><span class="p">.</span><span class="n">value</span><span class="p">,</span>
+                          <span class="nl">strokeCapRound:</span> <span class="kc">true</span><span class="p">,</span>
+                        <span class="p">),</span>
+                      <span class="p">),</span>
+                      <span class="c1">//剪裁半圆</span>
+                      <span class="n">ClipRect</span><span class="p">(</span>
+                        <span class="nl">child:</span> <span class="n">Align</span><span class="p">(</span>
+                          <span class="nl">alignment:</span> <span class="n">Alignment</span><span class="p">.</span><span class="n">topCenter</span><span class="p">,</span>
+                          <span class="nl">heightFactor:</span> <span class="p">.</span><span class="m">5</span><span class="p">,</span>
+                          <span class="nl">child:</span> <span class="n">Padding</span><span class="p">(</span>
+                            <span class="nl">padding:</span> <span class="k">const</span> <span class="n">EdgeInsets</span><span class="p">.</span><span class="n">only</span><span class="p">(</span><span class="nl">bottom:</span> <span class="m">8.0</span><span class="p">),</span>
+                            <span class="nl">child:</span> <span class="n">SizedBox</span><span class="p">(</span>
+                              <span class="c1">//width: 100.0,</span>
+                              <span class="nl">child:</span> <span class="n">TurnBox</span><span class="p">(</span>
+                                <span class="nl">turns:</span> <span class="p">.</span><span class="m">75</span><span class="p">,</span>
+                                <span class="nl">child:</span> <span class="n">GradientCircularProgressIndicator</span><span class="p">(</span>
+                                  <span class="nl">colors:</span> <span class="p">[</span><span class="n">Colors</span><span class="p">.</span><span class="n">teal</span><span class="p">,</span> <span class="n">Colors</span><span class="p">.</span><span class="n">cyan</span><span class="p">[</span><span class="m">500</span><span class="p">]],</span>
+                                  <span class="nl">radius:</span> <span class="m">100.0</span><span class="p">,</span>
+                                  <span class="nl">strokeWidth:</span> <span class="m">8.0</span><span class="p">,</span>
+                                  <span class="nl">value:</span> <span class="n">_animationController</span><span class="p">.</span><span class="n">value</span><span class="p">,</span>
+                                  <span class="nl">totalAngle:</span> <span class="n">pi</span><span class="p">,</span>
+                                  <span class="nl">strokeCapRound:</span> <span class="kc">true</span><span class="p">,</span>
+                                <span class="p">),</span>
+                              <span class="p">),</span>
+                            <span class="p">),</span>
+                          <span class="p">),</span>
+                        <span class="p">),</span>
+                      <span class="p">),</span>
+                      <span class="n">SizedBox</span><span class="p">(</span>
+                        <span class="nl">height:</span> <span class="m">104.0</span><span class="p">,</span>
+                        <span class="nl">width:</span> <span class="m">200.0</span><span class="p">,</span>
+                        <span class="nl">child:</span> <span class="n">Stack</span><span class="p">(</span>
+                          <span class="nl">alignment:</span> <span class="n">Alignment</span><span class="p">.</span><span class="n">center</span><span class="p">,</span>
+                          <span class="nl">children:</span> <span class="o">&lt;</span><span class="n">Widget</span><span class="o">&gt;</span><span class="p">[</span>
+                            <span class="n">Positioned</span><span class="p">(</span>
+                              <span class="nl">height:</span> <span class="m">200.0</span><span class="p">,</span>
+                              <span class="nl">top:</span> <span class="p">.</span><span class="m">0</span><span class="p">,</span>
+                              <span class="nl">child:</span> <span class="n">TurnBox</span><span class="p">(</span>
+                                <span class="nl">turns:</span> <span class="p">.</span><span class="m">75</span><span class="p">,</span>
+                                <span class="nl">child:</span> <span class="n">GradientCircularProgressIndicator</span><span class="p">(</span>
+                                  <span class="nl">colors:</span> <span class="p">[</span><span class="n">Colors</span><span class="p">.</span><span class="n">teal</span><span class="p">,</span> <span class="n">Colors</span><span class="p">.</span><span class="n">cyan</span><span class="p">[</span><span class="m">500</span><span class="p">]],</span>
+                                  <span class="nl">radius:</span> <span class="m">100.0</span><span class="p">,</span>
+                                  <span class="nl">strokeWidth:</span> <span class="m">8.0</span><span class="p">,</span>
+                                  <span class="nl">value:</span> <span class="n">_animationController</span><span class="p">.</span><span class="n">value</span><span class="p">,</span>
+                                  <span class="nl">totalAngle:</span> <span class="n">pi</span><span class="p">,</span>
+                                  <span class="nl">strokeCapRound:</span> <span class="kc">true</span><span class="p">,</span>
+                                <span class="p">),</span>
+                              <span class="p">),</span>
+                            <span class="p">),</span>
+                            <span class="n">Padding</span><span class="p">(</span>
+                              <span class="nl">padding:</span> <span class="k">const</span> <span class="n">EdgeInsets</span><span class="p">.</span><span class="n">only</span><span class="p">(</span><span class="nl">top:</span> <span class="m">10.0</span><span class="p">),</span>
+                              <span class="nl">child:</span> <span class="n">Text</span><span class="p">(</span>
+                                <span class="s2">&quot;</span><span class="si">${</span><span class="p">(</span><span class="n">_animationController</span><span class="p">.</span><span class="n">value</span> <span class="o">*</span> <span class="m">100</span><span class="p">).</span><span class="n">toInt</span><span class="p">()</span><span class="si">}</span><span class="s2">%&quot;</span><span class="p">,</span>
+                                <span class="nl">style:</span> <span class="n">TextStyle</span><span class="p">(</span>
+                                  <span class="nl">fontSize:</span> <span class="m">25.0</span><span class="p">,</span>
+                                  <span class="nl">color:</span> <span class="n">Colors</span><span class="p">.</span><span class="n">blueGrey</span><span class="p">,</span>
+                                <span class="p">),</span>
+                              <span class="p">),</span>
+                            <span class="p">)</span>
+                          <span class="p">],</span>
+                        <span class="p">),</span>
+                      <span class="p">),</span>
+                    <span class="p">],</span>
+                  <span class="p">),</span>
+                <span class="p">);</span>
+              <span class="p">},</span>
+            <span class="p">),</span>
+          <span class="p">],</span>
+        <span class="p">),</span>
+      <span class="p">),</span>
+    <span class="p">);</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>怎么样，很炫酷吧！<code class="docutils literal notranslate"><span class="pre">GradientCircularProgressIndicator</span></code>已经被添加进了笔者维护的flukit组件库中了，读者如果有需要，可以直接依赖flukit包。</p>
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">Flutter in action</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2014, Miguel Grinberg.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.5.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="../_sources/chapter10/gradient_circular_progress_demo.md.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

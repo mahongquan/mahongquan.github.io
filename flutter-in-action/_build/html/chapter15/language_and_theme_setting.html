@@ -1,0 +1,183 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>15.8 多语言和多主题 &#8212; Flutter in action  documentation</title>
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="id1">
+<h1>15.8 多语言和多主题<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h1>
+<p>本实例APP中语言和主题都是可以设置的，而两者都是通过<code class="docutils literal notranslate"><span class="pre">ChangeNotifierProvider</span></code>来实现的：我们在<code class="docutils literal notranslate"><span class="pre">main</span></code>函数中使用了<code class="docutils literal notranslate"><span class="pre">Consumer2</span></code>，依赖了<code class="docutils literal notranslate"><span class="pre">ThemeModel</span></code>和<code class="docutils literal notranslate"><span class="pre">LocaleModel</span></code>，因此，当我们在语言和主题设置页更该当前的配置后，<code class="docutils literal notranslate"><span class="pre">Consumer2</span></code>的<code class="docutils literal notranslate"><span class="pre">builder</span></code>都会重新执行，构建一个新的<code class="docutils literal notranslate"><span class="pre">MaterialApp</span></code>，所以修改会立即生效。下面看一下语言和主题设置页的实现。</p>
+<div class="section" id="id2">
+<h2>15.8.1 语言选择页<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h2>
+<p>APP语言选择页提供三个选项：中文简体、美国英语、跟随系统。我们将当前APP使用的语言高亮显示，并且在后面添加一个“对号”图标，实现如下：</p>
+<div class="highlight-dart notranslate"><div class="highlight"><pre><span></span><span class="kd">class</span> <span class="nc">LanguageRoute</span> <span class="kd">extends</span> <span class="n">StatelessWidget</span> <span class="p">{</span>
+  <span class="nd">@override</span>
+  <span class="n">Widget</span> <span class="n">build</span><span class="p">(</span><span class="n">BuildContext</span> <span class="n">context</span><span class="p">)</span> <span class="p">{</span>
+    <span class="kd">var</span> <span class="n">color</span> <span class="o">=</span> <span class="n">Theme</span><span class="p">.</span><span class="n">of</span><span class="p">(</span><span class="n">context</span><span class="p">).</span><span class="n">primaryColor</span><span class="p">;</span>
+    <span class="kd">var</span> <span class="n">localeModel</span> <span class="o">=</span> <span class="n">Provider</span><span class="p">.</span><span class="n">of</span><span class="o">&lt;</span><span class="n">LocaleModel</span><span class="o">&gt;</span><span class="p">(</span><span class="n">context</span><span class="p">);</span>
+    <span class="kd">var</span> <span class="n">gm</span> <span class="o">=</span> <span class="n">GmLocalizations</span><span class="p">.</span><span class="n">of</span><span class="p">(</span><span class="n">context</span><span class="p">);</span>
+    <span class="c1">//构建语言选择项</span>
+    <span class="n">Widget</span> <span class="n">_buildLanguageItem</span><span class="p">(</span><span class="kt">String</span> <span class="n">lan</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span> <span class="p">{</span>
+      <span class="k">return</span> <span class="n">ListTile</span><span class="p">(</span>
+        <span class="nl">title:</span> <span class="n">Text</span><span class="p">(</span>
+          <span class="n">lan</span><span class="p">,</span>
+          <span class="c1">// 对APP当前语言进行高亮显示</span>
+          <span class="nl">style:</span> <span class="n">TextStyle</span><span class="p">(</span><span class="nl">color:</span> <span class="n">localeModel</span><span class="p">.</span><span class="n">locale</span> <span class="o">==</span> <span class="n">value</span> <span class="o">?</span> <span class="n">color</span> <span class="o">:</span> <span class="kc">null</span><span class="p">),</span>
+        <span class="p">),</span>
+        <span class="nl">trailing:</span>
+            <span class="n">localeModel</span><span class="p">.</span><span class="n">locale</span> <span class="o">==</span> <span class="n">value</span> <span class="o">?</span> <span class="n">Icon</span><span class="p">(</span><span class="n">Icons</span><span class="p">.</span><span class="n">done</span><span class="p">,</span> <span class="nl">color:</span> <span class="n">color</span><span class="p">)</span> <span class="o">:</span> <span class="kc">null</span><span class="p">,</span>
+        <span class="nl">onTap:</span> <span class="p">()</span> <span class="p">{</span>
+          <span class="c1">// 更新locale后MaterialApp会重新build</span>
+          <span class="n">localeModel</span><span class="p">.</span><span class="n">locale</span> <span class="o">=</span> <span class="n">value</span><span class="p">;</span>
+        <span class="p">},</span>
+      <span class="p">);</span>
+    <span class="p">}</span>
+
+    <span class="k">return</span> <span class="n">Scaffold</span><span class="p">(</span>
+      <span class="nl">appBar:</span> <span class="n">AppBar</span><span class="p">(</span>
+        <span class="nl">title:</span> <span class="n">Text</span><span class="p">(</span><span class="n">gm</span><span class="p">.</span><span class="n">language</span><span class="p">),</span>
+      <span class="p">),</span>
+      <span class="nl">body:</span> <span class="n">ListView</span><span class="p">(</span>
+        <span class="nl">children:</span> <span class="o">&lt;</span><span class="n">Widget</span><span class="o">&gt;</span><span class="p">[</span>
+          <span class="n">_buildLanguageItem</span><span class="p">(</span><span class="s2">&quot;中文简体&quot;</span><span class="p">,</span> <span class="s2">&quot;zh_CN&quot;</span><span class="p">),</span>
+          <span class="n">_buildLanguageItem</span><span class="p">(</span><span class="s2">&quot;English&quot;</span><span class="p">,</span> <span class="s2">&quot;en_US&quot;</span><span class="p">),</span>
+          <span class="n">_buildLanguageItem</span><span class="p">(</span><span class="n">gm</span><span class="p">.</span><span class="n">auto</span><span class="p">,</span> <span class="kc">null</span><span class="p">),</span>
+        <span class="p">],</span>
+      <span class="p">),</span>
+    <span class="p">);</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>上面代码逻辑很简单，唯一需要注意的是我们在<code class="docutils literal notranslate"><span class="pre">build(…)</span></code>方法里面定义了<code class="docutils literal notranslate"><span class="pre">_buildLanguageItem(…)</span></code>方法，它和在<code class="docutils literal notranslate"><span class="pre">LanguageRoute</span></code>类中定义该方法的区别就在于：在<code class="docutils literal notranslate"><span class="pre">build(…)</span></code>内定义的方法可以共享<code class="docutils literal notranslate"><span class="pre">build(...)</span></code>方法上下文中的变量，本例中是共享了<code class="docutils literal notranslate"><span class="pre">localeModel</span></code>。当然，如果<code class="docutils literal notranslate"><span class="pre">_buildLanguageItem(…)</span></code>的实现复杂一些的话不建议这样做，此时最好是将其作为<code class="docutils literal notranslate"><span class="pre">LanguageRoute</span></code>类的方法。该页面运行效果如图15-6、15-7所示：</p>
+<p><img alt="15-6" src="../_images/15-6.png" /><img alt="15-7" src="../_images/15-7.png" /></p>
+<p>切换语言后立即生效。</p>
+</div>
+<div class="section" id="id3">
+<h2>15.8.2 主题选择页<a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h2>
+<p>一个完整的主题<code class="docutils literal notranslate"><span class="pre">Theme</span></code>包括很多选项，这些选项在<code class="docutils literal notranslate"><span class="pre">ThemeData</span></code>中定义。本实例为了简单起见，我们只配置主题颜色。我们提供几种默认预定义的主题色供用户选择，用户点击一种色块后则更新主题。主题选择页的实现代码如下：</p>
+<div class="highlight-dart notranslate"><div class="highlight"><pre><span></span><span class="kd">class</span> <span class="nc">ThemeChangeRoute</span> <span class="kd">extends</span> <span class="n">StatelessWidget</span><span class="p">{</span>
+  <span class="nd">@override</span>
+  <span class="n">Widget</span> <span class="n">build</span><span class="p">(</span><span class="n">BuildContext</span> <span class="n">context</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">return</span> <span class="n">Scaffold</span><span class="p">(</span>
+      <span class="nl">appBar:</span> <span class="n">AppBar</span><span class="p">(</span>
+        <span class="nl">title:</span> <span class="n">Text</span><span class="p">(</span><span class="n">GmLocalizations</span><span class="p">.</span><span class="n">of</span><span class="p">(</span><span class="n">context</span><span class="p">).</span><span class="n">theme</span><span class="p">),</span>
+      <span class="p">),</span>
+      <span class="nl">body:</span> <span class="n">ListView</span><span class="p">(</span> <span class="c1">//显示主题色块</span>
+        <span class="nl">children:</span> <span class="n">Global</span><span class="p">.</span><span class="n">themes</span><span class="p">.</span><span class="n">map</span><span class="o">&lt;</span><span class="n">Widget</span><span class="o">&gt;</span><span class="p">((</span><span class="n">e</span><span class="p">)</span> <span class="p">{</span>
+          <span class="k">return</span> <span class="n">GestureDetector</span><span class="p">(</span>
+            <span class="nl">child:</span> <span class="n">Padding</span><span class="p">(</span>
+              <span class="nl">padding:</span> <span class="k">const</span> <span class="n">EdgeInsets</span><span class="p">.</span><span class="n">symmetric</span><span class="p">(</span><span class="nl">vertical:</span> <span class="m">5</span><span class="p">,</span> <span class="nl">horizontal:</span> <span class="m">16</span><span class="p">),</span>
+              <span class="nl">child:</span> <span class="n">Container</span><span class="p">(</span>
+                <span class="nl">color:</span> <span class="n">e</span><span class="p">,</span>
+                <span class="nl">height:</span> <span class="m">40</span><span class="p">,</span>
+              <span class="p">),</span>
+            <span class="p">),</span>
+            <span class="nl">onTap:</span> <span class="p">()</span> <span class="p">{</span>
+              <span class="c1">//主题更新后，MaterialApp会重新build</span>
+              <span class="n">Provider</span><span class="p">.</span><span class="n">of</span><span class="o">&lt;</span><span class="n">ThemeModel</span><span class="o">&gt;</span><span class="p">(</span><span class="n">context</span><span class="p">).</span><span class="n">theme</span> <span class="o">=</span> <span class="n">e</span><span class="p">;</span>
+            <span class="p">},</span>
+          <span class="p">);</span>
+        <span class="p">}).</span><span class="n">toList</span><span class="p">(),</span>
+      <span class="p">),</span>
+    <span class="p">);</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>运行效果如图15-8所示：</p>
+<p><img alt="15-8" src="../_images/15-8.png" /></p>
+<p>点击其它主题色块后，APP主题色立马切换生效。</p>
+</div>
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">Flutter in action</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2014, Miguel Grinberg.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.5.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="../_sources/chapter15/language_and_theme_setting.md.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

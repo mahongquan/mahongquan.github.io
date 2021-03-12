@@ -1,0 +1,228 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>15.7 登录页 &#8212; Flutter in action  documentation</title>
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="id1">
+<h1>15.7 登录页<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h1>
+<p>我们说过Github有多种登录方式，为了简单起见，我们只实现通过用户名和密码登录。在实现登录页时有四点需要注意：</p>
+<ol class="simple">
+<li><p>可以自动填充上次登录的用户名（如果有）。</p></li>
+<li><p>为了防止密码输入错误，密码框应该有开关可以看明文。</p></li>
+<li><p>用户名或密码字段在调用登录接口前有本地合法性校验（比如不能为空）。</p></li>
+<li><p>登录成功后需更新用户信息。</p></li>
+</ol>
+<p>实现代码如下：</p>
+<div class="highlight-dart notranslate"><div class="highlight"><pre><span></span><span class="k">import</span> <span class="s1">&#39;../index.dart&#39;</span><span class="p">;</span>
+
+<span class="kd">class</span> <span class="nc">LoginRoute</span> <span class="kd">extends</span> <span class="n">StatefulWidget</span> <span class="p">{</span>
+  <span class="nd">@override</span>
+  <span class="n">_LoginRouteState</span> <span class="n">createState</span><span class="p">()</span> <span class="o">=&gt;</span> <span class="n">_LoginRouteState</span><span class="p">();</span>
+<span class="p">}</span>
+
+<span class="kd">class</span> <span class="nc">_LoginRouteState</span> <span class="kd">extends</span> <span class="n">State</span><span class="o">&lt;</span><span class="n">LoginRoute</span><span class="o">&gt;</span> <span class="p">{</span>
+  <span class="n">TextEditingController</span> <span class="n">_unameController</span> <span class="o">=</span> <span class="k">new</span> <span class="n">TextEditingController</span><span class="p">();</span>
+  <span class="n">TextEditingController</span> <span class="n">_pwdController</span> <span class="o">=</span> <span class="k">new</span> <span class="n">TextEditingController</span><span class="p">();</span>
+  <span class="kt">bool</span> <span class="n">pwdShow</span> <span class="o">=</span> <span class="kc">false</span><span class="p">;</span> <span class="c1">//密码是否显示明文</span>
+  <span class="n">GlobalKey</span> <span class="n">_formKey</span> <span class="o">=</span> <span class="k">new</span> <span class="n">GlobalKey</span><span class="o">&lt;</span><span class="n">FormState</span><span class="o">&gt;</span><span class="p">();</span>
+  <span class="kt">bool</span> <span class="n">_nameAutoFocus</span> <span class="o">=</span> <span class="kc">true</span><span class="p">;</span>
+
+  <span class="nd">@override</span>
+  <span class="kt">void</span> <span class="n">initState</span><span class="p">()</span> <span class="p">{</span>
+    <span class="c1">// 自动填充上次登录的用户名，填充后将焦点定位到密码输入框</span>
+    <span class="n">_unameController</span><span class="p">.</span><span class="n">text</span> <span class="o">=</span> <span class="n">Global</span><span class="p">.</span><span class="n">profile</span><span class="p">.</span><span class="n">lastLogin</span><span class="p">;</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">_unameController</span><span class="p">.</span><span class="n">text</span> <span class="o">!=</span> <span class="kc">null</span><span class="p">)</span> <span class="p">{</span>
+      <span class="n">_nameAutoFocus</span> <span class="o">=</span> <span class="kc">false</span><span class="p">;</span>
+    <span class="p">}</span>
+    <span class="k">super</span><span class="p">.</span><span class="n">initState</span><span class="p">();</span>
+  <span class="p">}</span>
+
+  <span class="nd">@override</span>
+  <span class="n">Widget</span> <span class="n">build</span><span class="p">(</span><span class="n">BuildContext</span> <span class="n">context</span><span class="p">)</span> <span class="p">{</span>
+    <span class="kd">var</span> <span class="n">gm</span> <span class="o">=</span> <span class="n">GmLocalizations</span><span class="p">.</span><span class="n">of</span><span class="p">(</span><span class="n">context</span><span class="p">);</span>
+    <span class="k">return</span> <span class="n">Scaffold</span><span class="p">(</span>
+      <span class="nl">appBar:</span> <span class="n">AppBar</span><span class="p">(</span><span class="nl">title:</span> <span class="n">Text</span><span class="p">(</span><span class="n">gm</span><span class="p">.</span><span class="n">login</span><span class="p">)),</span>
+      <span class="nl">body:</span> <span class="n">Padding</span><span class="p">(</span>
+        <span class="nl">padding:</span> <span class="k">const</span> <span class="n">EdgeInsets</span><span class="p">.</span><span class="n">all</span><span class="p">(</span><span class="m">16.0</span><span class="p">),</span>
+        <span class="nl">child:</span> <span class="n">Form</span><span class="p">(</span>
+          <span class="nl">key:</span> <span class="n">_formKey</span><span class="p">,</span>
+          <span class="nl">autovalidate:</span> <span class="kc">true</span><span class="p">,</span>
+          <span class="nl">child:</span> <span class="n">Column</span><span class="p">(</span>
+            <span class="nl">children:</span> <span class="o">&lt;</span><span class="n">Widget</span><span class="o">&gt;</span><span class="p">[</span>
+              <span class="n">TextFormField</span><span class="p">(</span>
+                  <span class="nl">autofocus:</span> <span class="n">_nameAutoFocus</span><span class="p">,</span>
+                  <span class="nl">controller:</span> <span class="n">_unameController</span><span class="p">,</span>
+                  <span class="nl">decoration:</span> <span class="n">InputDecoration</span><span class="p">(</span>
+                    <span class="nl">labelText:</span> <span class="n">gm</span><span class="p">.</span><span class="n">userName</span><span class="p">,</span>
+                    <span class="nl">hintText:</span> <span class="n">gm</span><span class="p">.</span><span class="n">userNameOrEmail</span><span class="p">,</span>
+                    <span class="nl">prefixIcon:</span> <span class="n">Icon</span><span class="p">(</span><span class="n">Icons</span><span class="p">.</span><span class="n">person</span><span class="p">),</span>
+                  <span class="p">),</span>
+                  <span class="c1">// 校验用户名（不能为空）</span>
+                  <span class="nl">validator:</span> <span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="p">{</span>
+                    <span class="k">return</span> <span class="n">v</span><span class="p">.</span><span class="n">trim</span><span class="p">().</span><span class="n">isNotEmpty</span> <span class="o">?</span> <span class="kc">null</span> <span class="o">:</span> <span class="n">gm</span><span class="p">.</span><span class="n">userNameRequired</span><span class="p">;</span>
+                  <span class="p">}),</span>
+              <span class="n">TextFormField</span><span class="p">(</span>
+                <span class="nl">controller:</span> <span class="n">_pwdController</span><span class="p">,</span>
+                <span class="nl">autofocus:</span> <span class="o">!</span><span class="n">_nameAutoFocus</span><span class="p">,</span>
+                <span class="nl">decoration:</span> <span class="n">InputDecoration</span><span class="p">(</span>
+                    <span class="nl">labelText:</span> <span class="n">gm</span><span class="p">.</span><span class="n">password</span><span class="p">,</span>
+                    <span class="nl">hintText:</span> <span class="n">gm</span><span class="p">.</span><span class="n">password</span><span class="p">,</span>
+                    <span class="nl">prefixIcon:</span> <span class="n">Icon</span><span class="p">(</span><span class="n">Icons</span><span class="p">.</span><span class="n">lock</span><span class="p">),</span>
+                    <span class="nl">suffixIcon:</span> <span class="n">IconButton</span><span class="p">(</span>
+                      <span class="nl">icon:</span> <span class="n">Icon</span><span class="p">(</span>
+                          <span class="n">pwdShow</span> <span class="o">?</span> <span class="n">Icons</span><span class="p">.</span><span class="n">visibility_off</span> <span class="o">:</span> <span class="n">Icons</span><span class="p">.</span><span class="n">visibility</span><span class="p">),</span>
+                      <span class="nl">onPressed:</span> <span class="p">()</span> <span class="p">{</span>
+                        <span class="n">setState</span><span class="p">(()</span> <span class="p">{</span>
+                          <span class="n">pwdShow</span> <span class="o">=</span> <span class="o">!</span><span class="n">pwdShow</span><span class="p">;</span>
+                        <span class="p">});</span>
+                      <span class="p">},</span>
+                    <span class="p">)),</span>
+                <span class="nl">obscureText:</span> <span class="o">!</span><span class="n">pwdShow</span><span class="p">,</span>
+                <span class="c1">//校验密码（不能为空）</span>
+                <span class="nl">validator:</span> <span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="p">{</span>
+                  <span class="k">return</span> <span class="n">v</span><span class="p">.</span><span class="n">trim</span><span class="p">().</span><span class="n">isNotEmpty</span> <span class="o">?</span> <span class="kc">null</span> <span class="o">:</span> <span class="n">gm</span><span class="p">.</span><span class="n">passwordRequired</span><span class="p">;</span>
+                <span class="p">},</span>
+              <span class="p">),</span>
+              <span class="n">Padding</span><span class="p">(</span>
+                <span class="nl">padding:</span> <span class="k">const</span> <span class="n">EdgeInsets</span><span class="p">.</span><span class="n">only</span><span class="p">(</span><span class="nl">top:</span> <span class="m">25</span><span class="p">),</span>
+                <span class="nl">child:</span> <span class="n">ConstrainedBox</span><span class="p">(</span>
+                  <span class="nl">constraints:</span> <span class="n">BoxConstraints</span><span class="p">.</span><span class="n">expand</span><span class="p">(</span><span class="nl">height:</span> <span class="m">55.0</span><span class="p">),</span>
+                  <span class="nl">child:</span> <span class="n">RaisedButton</span><span class="p">(</span>
+                    <span class="nl">color:</span> <span class="n">Theme</span><span class="p">.</span><span class="n">of</span><span class="p">(</span><span class="n">context</span><span class="p">).</span><span class="n">primaryColor</span><span class="p">,</span>
+                    <span class="nl">onPressed:</span> <span class="n">_onLogin</span><span class="p">,</span>
+                    <span class="nl">textColor:</span> <span class="n">Colors</span><span class="p">.</span><span class="n">white</span><span class="p">,</span>
+                    <span class="nl">child:</span> <span class="n">Text</span><span class="p">(</span><span class="n">gm</span><span class="p">.</span><span class="n">login</span><span class="p">),</span>
+                  <span class="p">),</span>
+                <span class="p">),</span>
+              <span class="p">),</span>
+            <span class="p">],</span>
+          <span class="p">),</span>
+        <span class="p">),</span>
+      <span class="p">),</span>
+    <span class="p">);</span>
+  <span class="p">}</span>
+
+  <span class="kt">void</span> <span class="n">_onLogin</span><span class="p">()</span> <span class="kd">async</span> <span class="p">{</span>
+    <span class="c1">// 提交前，先验证各个表单字段是否合法</span>
+    <span class="k">if</span> <span class="p">((</span><span class="n">_formKey</span><span class="p">.</span><span class="n">currentState</span> <span class="k">as</span> <span class="n">FormState</span><span class="p">).</span><span class="n">validate</span><span class="p">())</span> <span class="p">{</span>
+      <span class="n">showLoading</span><span class="p">(</span><span class="n">context</span><span class="p">);</span>
+      <span class="n">User</span> <span class="n">user</span><span class="p">;</span>
+      <span class="k">try</span> <span class="p">{</span>
+        <span class="n">user</span> <span class="o">=</span> <span class="kd">await</span> <span class="n">Git</span><span class="p">(</span><span class="n">context</span><span class="p">).</span><span class="n">login</span><span class="p">(</span><span class="n">_unameController</span><span class="p">.</span><span class="n">text</span><span class="p">,</span> <span class="n">_pwdController</span><span class="p">.</span><span class="n">text</span><span class="p">);</span>
+        <span class="c1">// 因为登录页返回后，首页会build，所以我们传false，更新user后不触发更新</span>
+        <span class="n">Provider</span><span class="p">.</span><span class="n">of</span><span class="o">&lt;</span><span class="n">UserModel</span><span class="o">&gt;</span><span class="p">(</span><span class="n">context</span><span class="p">,</span> <span class="nl">listen:</span> <span class="kc">false</span><span class="p">).</span><span class="n">user</span> <span class="o">=</span> <span class="n">user</span><span class="p">;</span>
+      <span class="p">}</span> <span class="k">catch</span> <span class="p">(</span><span class="n">e</span><span class="p">)</span> <span class="p">{</span>
+        <span class="c1">//登录失败则提示</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">e</span><span class="p">.</span><span class="n">response</span><span class="o">?</span><span class="p">.</span><span class="n">statusCode</span> <span class="o">==</span> <span class="m">401</span><span class="p">)</span> <span class="p">{</span>
+          <span class="n">showToast</span><span class="p">(</span><span class="n">GmLocalizations</span><span class="p">.</span><span class="n">of</span><span class="p">(</span><span class="n">context</span><span class="p">).</span><span class="n">userNameOrPasswordWrong</span><span class="p">);</span>
+        <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+          <span class="n">showToast</span><span class="p">(</span><span class="n">e</span><span class="p">.</span><span class="n">toString</span><span class="p">());</span>
+        <span class="p">}</span>
+      <span class="p">}</span> <span class="k">finally</span> <span class="p">{</span>
+        <span class="c1">// 隐藏loading框</span>
+        <span class="n">Navigator</span><span class="p">.</span><span class="n">of</span><span class="p">(</span><span class="n">context</span><span class="p">).</span><span class="n">pop</span><span class="p">();</span>
+      <span class="p">}</span>
+      <span class="k">if</span> <span class="p">(</span><span class="n">user</span> <span class="o">!=</span> <span class="kc">null</span><span class="p">)</span> <span class="p">{</span>
+        <span class="c1">// 返回</span>
+        <span class="n">Navigator</span><span class="p">.</span><span class="n">of</span><span class="p">(</span><span class="n">context</span><span class="p">).</span><span class="n">pop</span><span class="p">();</span>
+      <span class="p">}</span>
+    <span class="p">}</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>代码很简单，关键地方都有注释，不再赘述，下面我们看一下运行效果，如图15-5所示。</p>
+<p><img alt="图15-5" src="../_images/15-5.png" /></p>
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">Flutter in action</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2014, Miguel Grinberg.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.5.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="../_sources/chapter15/login_page.md.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

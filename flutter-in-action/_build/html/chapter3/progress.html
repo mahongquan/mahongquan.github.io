@@ -1,0 +1,270 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>3.8 进度指示器 &#8212; Flutter in action  documentation</title>
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="id1">
+<h1>3.8 进度指示器<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h1>
+<p>Material 组件库中提供了两种进度指示器：<code class="docutils literal notranslate"><span class="pre">LinearProgressIndicator</span></code>和<code class="docutils literal notranslate"><span class="pre">CircularProgressIndicator</span></code>，它们都可以同时用于精确的进度指示和模糊的进度指示。精确进度通常用于任务进度可以计算和预估的情况，比如文件下载；而模糊进度则用户任务进度无法准确获得的情况，如下拉刷新，数据提交等。</p>
+<div class="section" id="linearprogressindicator">
+<h2>LinearProgressIndicator<a class="headerlink" href="#linearprogressindicator" title="Permalink to this headline">¶</a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">LinearProgressIndicator</span></code>是一个线性、条状的进度条，定义如下：</p>
+<div class="highlight-dart notranslate"><div class="highlight"><pre><span></span><span class="n">LinearProgressIndicator</span><span class="p">({</span>
+  <span class="kt">double</span> <span class="n">value</span><span class="p">,</span>
+  <span class="n">Color</span> <span class="n">backgroundColor</span><span class="p">,</span>
+  <span class="n">Animation</span><span class="o">&lt;</span><span class="n">Color</span><span class="o">&gt;</span> <span class="n">valueColor</span><span class="p">,</span>
+  <span class="p">...</span>
+<span class="p">})</span>
+</pre></div>
+</div>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">value</span></code>：<code class="docutils literal notranslate"><span class="pre">value</span></code>表示当前的进度，取值范围为[0,1]；如果<code class="docutils literal notranslate"><span class="pre">value</span></code>为<code class="docutils literal notranslate"><span class="pre">null</span></code>时则指示器会执行一个循环动画（模糊进度）；当<code class="docutils literal notranslate"><span class="pre">value</span></code>不为<code class="docutils literal notranslate"><span class="pre">null</span></code>时，指示器为一个具体进度的进度条。</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">backgroundColor</span></code>：指示器的背景色。</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">valueColor</span></code>: 指示器的进度条颜色；值得注意的是，该值类型是<code class="docutils literal notranslate"><span class="pre">Animation&lt;Color&gt;</span> </code>，这允许我们对进度条的颜色也可以指定动画。如果我们不需要对进度条颜色执行动画，换言之，我们想对进度条应用一种固定的颜色，此时我们可以通过<code class="docutils literal notranslate"><span class="pre">AlwaysStoppedAnimation</span></code>来指定。</p></li>
+</ul>
+</div>
+<div class="section" id="id2">
+<h2>示例<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-dart notranslate"><div class="highlight"><pre><span></span><span class="c1">// 模糊进度条(会执行一个动画)</span>
+<span class="n">LinearProgressIndicator</span><span class="p">(</span>
+  <span class="nl">backgroundColor:</span> <span class="n">Colors</span><span class="p">.</span><span class="n">grey</span><span class="p">[</span><span class="m">200</span><span class="p">],</span>
+  <span class="nl">valueColor:</span> <span class="n">AlwaysStoppedAnimation</span><span class="p">(</span><span class="n">Colors</span><span class="p">.</span><span class="n">blue</span><span class="p">),</span>
+<span class="p">),</span>
+<span class="c1">//进度条显示50%</span>
+<span class="n">LinearProgressIndicator</span><span class="p">(</span>
+  <span class="nl">backgroundColor:</span> <span class="n">Colors</span><span class="p">.</span><span class="n">grey</span><span class="p">[</span><span class="m">200</span><span class="p">],</span>
+  <span class="nl">valueColor:</span> <span class="n">AlwaysStoppedAnimation</span><span class="p">(</span><span class="n">Colors</span><span class="p">.</span><span class="n">blue</span><span class="p">),</span>
+  <span class="nl">value:</span> <span class="p">.</span><span class="m">5</span><span class="p">,</span> 
+<span class="p">)</span>
+</pre></div>
+</div>
+<p>运行效果如图3-30所示：</p>
+<p><img alt="图3-30" src="../_images/3-30.png" /></p>
+<p>第一个进度条在执行循环动画：蓝色条一直在移动，而第二个进度条是静止的，停在50%的位置。</p>
+</div>
+<div class="section" id="circularprogressindicator">
+<h2>CircularProgressIndicator<a class="headerlink" href="#circularprogressindicator" title="Permalink to this headline">¶</a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">CircularProgressIndicator</span></code>是一个圆形进度条，定义如下：</p>
+<div class="highlight-dart notranslate"><div class="highlight"><pre><span></span> <span class="n">CircularProgressIndicator</span><span class="p">({</span>
+  <span class="kt">double</span> <span class="n">value</span><span class="p">,</span>
+  <span class="n">Color</span> <span class="n">backgroundColor</span><span class="p">,</span>
+  <span class="n">Animation</span><span class="o">&lt;</span><span class="n">Color</span><span class="o">&gt;</span> <span class="n">valueColor</span><span class="p">,</span>
+  <span class="k">this</span><span class="p">.</span><span class="n">strokeWidth</span> <span class="o">=</span> <span class="m">4.0</span><span class="p">,</span>
+  <span class="p">...</span>   
+<span class="p">})</span> 
+</pre></div>
+</div>
+<p>前三个参数和<code class="docutils literal notranslate"><span class="pre">LinearProgressIndicator</span></code>相同，不再赘述。<code class="docutils literal notranslate"><span class="pre">strokeWidth</span></code> 表示圆形进度条的粗细。示例如下：</p>
+<div class="highlight-dart notranslate"><div class="highlight"><pre><span></span><span class="c1">// 模糊进度条(会执行一个旋转动画)</span>
+<span class="n">CircularProgressIndicator</span><span class="p">(</span>
+  <span class="nl">backgroundColor:</span> <span class="n">Colors</span><span class="p">.</span><span class="n">grey</span><span class="p">[</span><span class="m">200</span><span class="p">],</span>
+  <span class="nl">valueColor:</span> <span class="n">AlwaysStoppedAnimation</span><span class="p">(</span><span class="n">Colors</span><span class="p">.</span><span class="n">blue</span><span class="p">),</span>
+<span class="p">),</span>
+<span class="c1">//进度条显示50%，会显示一个半圆</span>
+<span class="n">CircularProgressIndicator</span><span class="p">(</span>
+  <span class="nl">backgroundColor:</span> <span class="n">Colors</span><span class="p">.</span><span class="n">grey</span><span class="p">[</span><span class="m">200</span><span class="p">],</span>
+  <span class="nl">valueColor:</span> <span class="n">AlwaysStoppedAnimation</span><span class="p">(</span><span class="n">Colors</span><span class="p">.</span><span class="n">blue</span><span class="p">),</span>
+  <span class="nl">value:</span> <span class="p">.</span><span class="m">5</span><span class="p">,</span>
+<span class="p">),</span>
+</pre></div>
+</div>
+<p>运行效果如图3-31所示：</p>
+<p><img alt="图3-31" src="../_images/3-31.png" /></p>
+<p>第一个进度条会执行旋转动画，而第二个进度条是静止的，它停在50%的位置。</p>
+</div>
+<div class="section" id="id3">
+<h2>自定义尺寸<a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h2>
+<p>我们可以发现<code class="docutils literal notranslate"><span class="pre">LinearProgressIndicator</span></code>和<code class="docutils literal notranslate"><span class="pre">CircularProgressIndicator</span></code>，并没有提供设置圆形进度条尺寸的参数；如果我们希望<code class="docutils literal notranslate"><span class="pre">LinearProgressIndicator</span></code>的线细一些，或者希望<code class="docutils literal notranslate"><span class="pre">CircularProgressIndicator</span></code>的圆大一些该怎么做？</p>
+<p>其实<code class="docutils literal notranslate"><span class="pre">LinearProgressIndicator</span></code>和<code class="docutils literal notranslate"><span class="pre">CircularProgressIndicator</span></code>都是取父容器的尺寸作为绘制的边界的。知道了这点，我们便可以通过尺寸限制类Widget，如<code class="docutils literal notranslate"><span class="pre">ConstrainedBox</span></code>、<code class="docutils literal notranslate"><span class="pre">SizedBox</span></code> （我们将在后面容器类组件一章中介绍）来指定尺寸，如：</p>
+<div class="highlight-dart notranslate"><div class="highlight"><pre><span></span><span class="c1">// 线性进度条高度指定为3</span>
+<span class="n">SizedBox</span><span class="p">(</span>
+  <span class="nl">height:</span> <span class="m">3</span><span class="p">,</span>
+  <span class="nl">child:</span> <span class="n">LinearProgressIndicator</span><span class="p">(</span>
+    <span class="nl">backgroundColor:</span> <span class="n">Colors</span><span class="p">.</span><span class="n">grey</span><span class="p">[</span><span class="m">200</span><span class="p">],</span>
+    <span class="nl">valueColor:</span> <span class="n">AlwaysStoppedAnimation</span><span class="p">(</span><span class="n">Colors</span><span class="p">.</span><span class="n">blue</span><span class="p">),</span>
+    <span class="nl">value:</span> <span class="p">.</span><span class="m">5</span><span class="p">,</span>
+  <span class="p">),</span>
+<span class="p">),</span>
+<span class="c1">// 圆形进度条直径指定为100</span>
+<span class="n">SizedBox</span><span class="p">(</span>
+  <span class="nl">height:</span> <span class="m">100</span><span class="p">,</span>
+  <span class="nl">width:</span> <span class="m">100</span><span class="p">,</span>
+  <span class="nl">child:</span> <span class="n">CircularProgressIndicator</span><span class="p">(</span>
+    <span class="nl">backgroundColor:</span> <span class="n">Colors</span><span class="p">.</span><span class="n">grey</span><span class="p">[</span><span class="m">200</span><span class="p">],</span>
+    <span class="nl">valueColor:</span> <span class="n">AlwaysStoppedAnimation</span><span class="p">(</span><span class="n">Colors</span><span class="p">.</span><span class="n">blue</span><span class="p">),</span>
+    <span class="nl">value:</span> <span class="p">.</span><span class="m">7</span><span class="p">,</span>
+  <span class="p">),</span>
+<span class="p">),</span>
+</pre></div>
+</div>
+<p>运行效果如图3-32所示：</p>
+<p><img alt="图3-32" src="../_images/3-32.png" /></p>
+<p>注意，如果<code class="docutils literal notranslate"><span class="pre">CircularProgressIndicator</span></code>显示空间的宽高不同，则会显示为椭圆。如：</p>
+<div class="highlight-dart notranslate"><div class="highlight"><pre><span></span><span class="c1">// 宽高不等</span>
+<span class="n">SizedBox</span><span class="p">(</span>
+  <span class="nl">height:</span> <span class="m">100</span><span class="p">,</span>
+  <span class="nl">width:</span> <span class="m">130</span><span class="p">,</span>
+  <span class="nl">child:</span> <span class="n">CircularProgressIndicator</span><span class="p">(</span>
+    <span class="nl">backgroundColor:</span> <span class="n">Colors</span><span class="p">.</span><span class="n">grey</span><span class="p">[</span><span class="m">200</span><span class="p">],</span>
+    <span class="nl">valueColor:</span> <span class="n">AlwaysStoppedAnimation</span><span class="p">(</span><span class="n">Colors</span><span class="p">.</span><span class="n">blue</span><span class="p">),</span>
+    <span class="nl">value:</span> <span class="p">.</span><span class="m">7</span><span class="p">,</span>
+  <span class="p">),</span>
+<span class="p">),</span>
+</pre></div>
+</div>
+<p>运行效果如图3-33所示：</p>
+<p><img alt="progress_oval" src="../_images/progress_oval.png" /></p>
+</div>
+<div class="section" id="id4">
+<h2>进度色动画<a class="headerlink" href="#id4" title="Permalink to this headline">¶</a></h2>
+<p>前面说过可以通过<code class="docutils literal notranslate"><span class="pre">valueColor</span></code>对进度条颜色做动画，关于动画我们将在后面专门的章节详细介绍，这里先给出一个例子，读者在了解了Flutter动画一章后再回过头来看。</p>
+<p>我们实现一个进度条在3秒内从灰色变成蓝色的动画：</p>
+<div class="highlight-dart notranslate"><div class="highlight"><pre><span></span><span class="k">import</span> <span class="s1">&#39;package:flutter/material.dart&#39;</span><span class="p">;</span>
+
+<span class="kd">class</span> <span class="nc">ProgressRoute</span> <span class="kd">extends</span> <span class="n">StatefulWidget</span> <span class="p">{</span>
+  <span class="nd">@override</span>
+  <span class="n">_ProgressRouteState</span> <span class="n">createState</span><span class="p">()</span> <span class="o">=&gt;</span> <span class="n">_ProgressRouteState</span><span class="p">();</span>
+<span class="p">}</span>
+
+<span class="kd">class</span> <span class="nc">_ProgressRouteState</span> <span class="kd">extends</span> <span class="n">State</span><span class="o">&lt;</span><span class="n">ProgressRoute</span><span class="o">&gt;</span>
+    <span class="kd">with</span> <span class="n">SingleTickerProviderStateMixin</span> <span class="p">{</span>
+  <span class="n">AnimationController</span> <span class="n">_animationController</span><span class="p">;</span>
+
+  <span class="nd">@override</span>
+  <span class="kt">void</span> <span class="n">initState</span><span class="p">()</span> <span class="p">{</span>
+    <span class="c1">//动画执行时间3秒  </span>
+    <span class="n">_animationController</span> <span class="o">=</span>
+        <span class="k">new</span> <span class="n">AnimationController</span><span class="p">(</span><span class="nl">vsync:</span> <span class="k">this</span><span class="p">,</span> <span class="nl">duration:</span> <span class="n">Duration</span><span class="p">(</span><span class="nl">seconds:</span> <span class="m">3</span><span class="p">));</span>
+    <span class="n">_animationController</span><span class="p">.</span><span class="n">forward</span><span class="p">();</span>
+    <span class="n">_animationController</span><span class="p">.</span><span class="n">addListener</span><span class="p">(()</span> <span class="o">=&gt;</span> <span class="n">setState</span><span class="p">(()</span> <span class="o">=&gt;</span> <span class="p">{}));</span>
+    <span class="k">super</span><span class="p">.</span><span class="n">initState</span><span class="p">();</span>
+  <span class="p">}</span>
+
+  <span class="nd">@override</span>
+  <span class="kt">void</span> <span class="n">dispose</span><span class="p">()</span> <span class="p">{</span>
+    <span class="n">_animationController</span><span class="p">.</span><span class="n">dispose</span><span class="p">();</span>
+    <span class="k">super</span><span class="p">.</span><span class="n">dispose</span><span class="p">();</span>
+  <span class="p">}</span>
+
+  <span class="nd">@override</span>
+  <span class="n">Widget</span> <span class="n">build</span><span class="p">(</span><span class="n">BuildContext</span> <span class="n">context</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">return</span> <span class="n">SingleChildScrollView</span><span class="p">(</span>
+      <span class="nl">child:</span> <span class="n">Column</span><span class="p">(</span>
+        <span class="nl">children:</span> <span class="o">&lt;</span><span class="n">Widget</span><span class="o">&gt;</span><span class="p">[</span>
+            <span class="n">Padding</span><span class="p">(</span>
+            <span class="nl">padding:</span> <span class="n">EdgeInsets</span><span class="p">.</span><span class="n">all</span><span class="p">(</span><span class="m">16</span><span class="p">),</span>
+            <span class="nl">child:</span> <span class="n">LinearProgressIndicator</span><span class="p">(</span>
+              <span class="nl">backgroundColor:</span> <span class="n">Colors</span><span class="p">.</span><span class="n">grey</span><span class="p">[</span><span class="m">200</span><span class="p">],</span>
+              <span class="nl">valueColor:</span> <span class="n">ColorTween</span><span class="p">(</span><span class="nl">begin:</span> <span class="n">Colors</span><span class="p">.</span><span class="n">grey</span><span class="p">,</span> <span class="nl">end:</span> <span class="n">Colors</span><span class="p">.</span><span class="n">blue</span><span class="p">)</span>
+                <span class="p">.</span><span class="n">animate</span><span class="p">(</span><span class="n">_animationController</span><span class="p">),</span> <span class="c1">// 从灰色变成蓝色</span>
+              <span class="nl">value:</span> <span class="n">_animationController</span><span class="p">.</span><span class="n">value</span><span class="p">,</span>
+            <span class="p">),</span>
+          <span class="p">);</span>
+        <span class="p">],</span>
+      <span class="p">),</span>
+    <span class="p">);</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="id5">
+<h2>自定义进度指示器样式<a class="headerlink" href="#id5" title="Permalink to this headline">¶</a></h2>
+<p>定制进度指示器风格样式，可以通过<code class="docutils literal notranslate"><span class="pre">CustomPainter</span></code> Widget 来自定义绘制逻辑，实际上<code class="docutils literal notranslate"><span class="pre">LinearProgressIndicator</span></code>和<code class="docutils literal notranslate"><span class="pre">CircularProgressIndicator</span></code>也正是通过<code class="docutils literal notranslate"><span class="pre">CustomPainter</span></code>来实现外观绘制的。关于<code class="docutils literal notranslate"><span class="pre">CustomPainter</span></code>，我们将在后面“自定义Widget”一章中详细介绍。</p>
+<blockquote>
+<div><p><a class="reference external" href="https://pub.flutter-io.cn/packages/flutter_spinkit">flutter_spinkit</a> 包提供了多种风格的模糊进度指示器，读者若是感兴趣，可以参考。</p>
+</div></blockquote>
+</div>
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">Flutter in action</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2014, Miguel Grinberg.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.5.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="../_sources/chapter3/progress.md.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

@@ -1,0 +1,248 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>9.5 交织动画 &#8212; Flutter in action  documentation</title>
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="id1">
+<h1>9.5 交织动画<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h1>
+<p>有些时候我们可能会需要一些复杂的动画，这些动画可能由一个动画序列或重叠的动画组成，比如：有一个柱状图，需要在高度增长的同时改变颜色，等到增长到最大高度后，我们需要在X轴上平移一段距离。可以发现上述场景在不同阶段包含了多种动画，要实现这种效果，使用交织动画（Stagger Animation）会非常简单。交织动画需要注意以下几点：</p>
+<ol class="simple">
+<li><p>要创建交织动画，需要使用多个动画对象（<code class="docutils literal notranslate"><span class="pre">Animation</span></code>）。</p></li>
+<li><p>一个<code class="docutils literal notranslate"><span class="pre">AnimationController</span></code>控制所有的动画对象。</p></li>
+<li><p>给每一个动画对象指定时间间隔（Interval）</p></li>
+</ol>
+<p>所有动画都由同一个<a class="reference external" href="https://docs.flutter.io/flutter/animation/AnimationController-class.html">AnimationController</a>驱动，无论动画需要持续多长时间，控制器的值必须在0.0到1.0之间，而每个动画的间隔（Interval）也必须介于0.0和1.0之间。对于在间隔中设置动画的每个属性，需要分别创建一个<a class="reference external" href="https://docs.flutter.io/flutter/animation/Tween-class.html">Tween</a> 用于指定该属性的开始值和结束值。也就是说0.0到1.0代表整个动画过程，我们可以给不同动画指定不同的起始点和终止点来决定它们的开始时间和终止时间。</p>
+<div class="section" id="id2">
+<h2>示例<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h2>
+<p>下面我们看一个例子，实现一个柱状图增长的动画：</p>
+<ol class="simple">
+<li><p>开始时高度从0增长到300像素，同时颜色由绿色渐变为红色；这个过程占据整个动画时间的60%。</p></li>
+<li><p>高度增长到300后，开始沿X轴向右平移100像素；这个过程占用整个动画时间的40%。</p></li>
+</ol>
+<p>我们将执行动画的Widget分离出来：</p>
+<div class="highlight-dart notranslate"><div class="highlight"><pre><span></span><span class="kd">class</span> <span class="nc">StaggerAnimation</span> <span class="kd">extends</span> <span class="n">StatelessWidget</span> <span class="p">{</span>
+  <span class="n">StaggerAnimation</span><span class="p">({</span> <span class="n">Key</span> <span class="n">key</span><span class="p">,</span> <span class="k">this</span><span class="p">.</span><span class="n">controller</span> <span class="p">})</span><span class="o">:</span> <span class="k">super</span><span class="p">(</span><span class="nl">key:</span> <span class="n">key</span><span class="p">){</span>
+    <span class="c1">//高度动画</span>
+    <span class="n">height</span> <span class="o">=</span> <span class="n">Tween</span><span class="o">&lt;</span><span class="kt">double</span><span class="o">&gt;</span><span class="p">(</span>
+      <span class="nl">begin:</span><span class="p">.</span><span class="m">0</span> <span class="p">,</span>
+      <span class="nl">end:</span> <span class="m">300.0</span><span class="p">,</span>
+    <span class="p">).</span><span class="n">animate</span><span class="p">(</span>
+      <span class="n">CurvedAnimation</span><span class="p">(</span>
+        <span class="nl">parent:</span> <span class="n">controller</span><span class="p">,</span>
+        <span class="nl">curve:</span> <span class="n">Interval</span><span class="p">(</span>
+          <span class="m">0.0</span><span class="p">,</span> <span class="m">0.6</span><span class="p">,</span> <span class="c1">//间隔，前60%的动画时间</span>
+          <span class="nl">curve:</span> <span class="n">Curves</span><span class="p">.</span><span class="n">ease</span><span class="p">,</span>
+        <span class="p">),</span>
+      <span class="p">),</span>
+    <span class="p">);</span>
+
+    <span class="n">color</span> <span class="o">=</span> <span class="n">ColorTween</span><span class="p">(</span>
+      <span class="nl">begin:</span><span class="n">Colors</span><span class="p">.</span><span class="n">green</span> <span class="p">,</span>
+      <span class="nl">end:</span><span class="n">Colors</span><span class="p">.</span><span class="n">red</span><span class="p">,</span>
+    <span class="p">).</span><span class="n">animate</span><span class="p">(</span>
+      <span class="n">CurvedAnimation</span><span class="p">(</span>
+        <span class="nl">parent:</span> <span class="n">controller</span><span class="p">,</span>
+        <span class="nl">curve:</span> <span class="n">Interval</span><span class="p">(</span>
+          <span class="m">0.0</span><span class="p">,</span> <span class="m">0.6</span><span class="p">,</span><span class="c1">//间隔，前60%的动画时间</span>
+          <span class="nl">curve:</span> <span class="n">Curves</span><span class="p">.</span><span class="n">ease</span><span class="p">,</span>
+        <span class="p">),</span>
+      <span class="p">),</span>
+    <span class="p">);</span>
+
+    <span class="n">padding</span> <span class="o">=</span> <span class="n">Tween</span><span class="o">&lt;</span><span class="n">EdgeInsets</span><span class="o">&gt;</span><span class="p">(</span>
+      <span class="nl">begin:</span><span class="n">EdgeInsets</span><span class="p">.</span><span class="n">only</span><span class="p">(</span><span class="nl">left:</span> <span class="p">.</span><span class="m">0</span><span class="p">),</span>
+      <span class="nl">end:</span><span class="n">EdgeInsets</span><span class="p">.</span><span class="n">only</span><span class="p">(</span><span class="nl">left:</span> <span class="m">100.0</span><span class="p">),</span>
+    <span class="p">).</span><span class="n">animate</span><span class="p">(</span>
+      <span class="n">CurvedAnimation</span><span class="p">(</span>
+        <span class="nl">parent:</span> <span class="n">controller</span><span class="p">,</span>
+        <span class="nl">curve:</span> <span class="n">Interval</span><span class="p">(</span>
+          <span class="m">0.6</span><span class="p">,</span> <span class="m">1.0</span><span class="p">,</span> <span class="c1">//间隔，后40%的动画时间</span>
+          <span class="nl">curve:</span> <span class="n">Curves</span><span class="p">.</span><span class="n">ease</span><span class="p">,</span>
+        <span class="p">),</span>
+      <span class="p">),</span>
+    <span class="p">);</span>
+  <span class="p">}</span>
+
+
+  <span class="kd">final</span> <span class="n">Animation</span><span class="o">&lt;</span><span class="kt">double</span><span class="o">&gt;</span> <span class="n">controller</span><span class="p">;</span>
+  <span class="n">Animation</span><span class="o">&lt;</span><span class="kt">double</span><span class="o">&gt;</span> <span class="n">height</span><span class="p">;</span>
+  <span class="n">Animation</span><span class="o">&lt;</span><span class="n">EdgeInsets</span><span class="o">&gt;</span> <span class="n">padding</span><span class="p">;</span>
+  <span class="n">Animation</span><span class="o">&lt;</span><span class="n">Color</span><span class="o">&gt;</span> <span class="n">color</span><span class="p">;</span>
+
+  <span class="n">Widget</span> <span class="n">_buildAnimation</span><span class="p">(</span><span class="n">BuildContext</span> <span class="n">context</span><span class="p">,</span> <span class="n">Widget</span> <span class="n">child</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">return</span> <span class="n">Container</span><span class="p">(</span>
+      <span class="nl">alignment:</span> <span class="n">Alignment</span><span class="p">.</span><span class="n">bottomCenter</span><span class="p">,</span>
+      <span class="nl">padding:</span><span class="n">padding</span><span class="p">.</span><span class="n">value</span> <span class="p">,</span>
+      <span class="nl">child:</span> <span class="n">Container</span><span class="p">(</span>
+        <span class="nl">color:</span> <span class="n">color</span><span class="p">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="nl">width:</span> <span class="m">50.0</span><span class="p">,</span>
+        <span class="nl">height:</span> <span class="n">height</span><span class="p">.</span><span class="n">value</span><span class="p">,</span>
+      <span class="p">),</span>
+    <span class="p">);</span>
+  <span class="p">}</span>
+
+  <span class="nd">@override</span>
+  <span class="n">Widget</span> <span class="n">build</span><span class="p">(</span><span class="n">BuildContext</span> <span class="n">context</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">return</span> <span class="n">AnimatedBuilder</span><span class="p">(</span>
+      <span class="nl">builder:</span> <span class="n">_buildAnimation</span><span class="p">,</span>
+      <span class="nl">animation:</span> <span class="n">controller</span><span class="p">,</span>
+    <span class="p">);</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">StaggerAnimation</span></code>中定义了三个动画，分别是对<code class="docutils literal notranslate"><span class="pre">Container</span></code>的<code class="docutils literal notranslate"><span class="pre">height</span></code>、<code class="docutils literal notranslate"><span class="pre">color</span></code>、<code class="docutils literal notranslate"><span class="pre">padding</span></code>属性设置的动画，然后通过<code class="docutils literal notranslate"><span class="pre">Interval</span></code>来为每个动画指定在整个动画过程中的起始点和终点。下面我们来实现启动动画的路由：</p>
+<div class="highlight-dart notranslate"><div class="highlight"><pre><span></span><span class="kd">class</span> <span class="nc">StaggerRoute</span> <span class="kd">extends</span> <span class="n">StatefulWidget</span> <span class="p">{</span>
+  <span class="nd">@override</span>
+  <span class="n">_StaggerRouteState</span> <span class="n">createState</span><span class="p">()</span> <span class="o">=&gt;</span> <span class="n">_StaggerRouteState</span><span class="p">();</span>
+<span class="p">}</span>
+
+<span class="kd">class</span> <span class="nc">_StaggerRouteState</span> <span class="kd">extends</span> <span class="n">State</span><span class="o">&lt;</span><span class="n">StaggerRoute</span><span class="o">&gt;</span> <span class="kd">with</span> <span class="n">TickerProviderStateMixin</span> <span class="p">{</span>
+  <span class="n">AnimationController</span> <span class="n">_controller</span><span class="p">;</span>
+
+  <span class="nd">@override</span>
+  <span class="kt">void</span> <span class="n">initState</span><span class="p">()</span> <span class="p">{</span>
+    <span class="k">super</span><span class="p">.</span><span class="n">initState</span><span class="p">();</span>
+
+    <span class="n">_controller</span> <span class="o">=</span> <span class="n">AnimationController</span><span class="p">(</span>
+        <span class="nl">duration:</span> <span class="k">const</span> <span class="n">Duration</span><span class="p">(</span><span class="nl">milliseconds:</span> <span class="m">2000</span><span class="p">),</span>
+        <span class="nl">vsync:</span> <span class="k">this</span>
+    <span class="p">);</span>
+  <span class="p">}</span>
+
+
+  <span class="n">Future</span><span class="o">&lt;</span><span class="kt">Null</span><span class="o">&gt;</span> <span class="n">_playAnimation</span><span class="p">()</span> <span class="kd">async</span> <span class="p">{</span>
+    <span class="k">try</span> <span class="p">{</span>
+      <span class="c1">//先正向执行动画</span>
+      <span class="kd">await</span> <span class="n">_controller</span><span class="p">.</span><span class="n">forward</span><span class="p">().</span><span class="n">orCancel</span><span class="p">;</span>
+      <span class="c1">//再反向执行动画</span>
+      <span class="kd">await</span> <span class="n">_controller</span><span class="p">.</span><span class="n">reverse</span><span class="p">().</span><span class="n">orCancel</span><span class="p">;</span>
+    <span class="p">}</span> <span class="kd">on</span> <span class="n">TickerCanceled</span> <span class="p">{</span>
+      <span class="c1">// the animation got canceled, probably because we were disposed</span>
+    <span class="p">}</span>
+  <span class="p">}</span>
+
+  <span class="nd">@override</span>
+  <span class="n">Widget</span> <span class="n">build</span><span class="p">(</span><span class="n">BuildContext</span> <span class="n">context</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">return</span>  <span class="n">GestureDetector</span><span class="p">(</span>
+      <span class="nl">behavior:</span> <span class="n">HitTestBehavior</span><span class="p">.</span><span class="n">opaque</span><span class="p">,</span>
+      <span class="nl">onTap:</span> <span class="p">()</span> <span class="p">{</span>
+        <span class="n">_playAnimation</span><span class="p">();</span>
+      <span class="p">},</span>
+      <span class="nl">child:</span> <span class="n">Center</span><span class="p">(</span>
+        <span class="nl">child:</span> <span class="n">Container</span><span class="p">(</span>
+          <span class="nl">width:</span> <span class="m">300.0</span><span class="p">,</span>
+          <span class="nl">height:</span> <span class="m">300.0</span><span class="p">,</span>
+          <span class="nl">decoration:</span> <span class="n">BoxDecoration</span><span class="p">(</span>
+            <span class="nl">color:</span> <span class="n">Colors</span><span class="p">.</span><span class="n">black</span><span class="p">.</span><span class="n">withOpacity</span><span class="p">(</span><span class="m">0.1</span><span class="p">),</span>
+            <span class="nl">border:</span> <span class="n">Border</span><span class="p">.</span><span class="n">all</span><span class="p">(</span>
+              <span class="nl">color:</span>  <span class="n">Colors</span><span class="p">.</span><span class="n">black</span><span class="p">.</span><span class="n">withOpacity</span><span class="p">(</span><span class="m">0.5</span><span class="p">),</span>
+            <span class="p">),</span>
+          <span class="p">),</span>
+          <span class="c1">//调用我们定义的交织动画Widget</span>
+          <span class="nl">child:</span> <span class="n">StaggerAnimation</span><span class="p">(</span>
+              <span class="nl">controller:</span> <span class="n">_controller</span>
+          <span class="p">),</span>
+        <span class="p">),</span>
+      <span class="p">),</span>
+    <span class="p">);</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>执行效果如图，点击图9-3灰色矩形，就可以看到整个动画效果，图9-4是动画执行过程中的一帧。</p>
+<p><img alt="图9-3" src="../_images/9-3.png" /><img alt="图9-4" src="../_images/9-4.png" /></p>
+</div>
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">Flutter in action</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2014, Miguel Grinberg.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.5.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="../_sources/chapter9/stagger_animation.md.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

@@ -1,0 +1,410 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>3.5 图片及ICON &#8212; Flutter in action  documentation</title>
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="icon">
+<h1>3.5 图片及ICON<a class="headerlink" href="#icon" title="Permalink to this headline">¶</a></h1>
+</div>
+<div class="section" id="id1">
+<h1>3.5.1 图片<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h1>
+<p>Flutter中，我们可以通过<code class="docutils literal notranslate"><span class="pre">Image</span></code>组件来加载并显示图片，<code class="docutils literal notranslate"><span class="pre">Image</span></code>的数据源可以是asset、文件、内存以及网络。</p>
+<div class="section" id="imageprovider">
+<h2>ImageProvider<a class="headerlink" href="#imageprovider" title="Permalink to this headline">¶</a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">ImageProvider</span></code> 是一个抽象类，主要定义了图片数据获取的接口<code class="docutils literal notranslate"><span class="pre">load()</span></code>，从不同的数据源获取图片需要实现不同的<code class="docutils literal notranslate"><span class="pre">ImageProvider</span></code> ，如<code class="docutils literal notranslate"><span class="pre">AssetImage</span></code>是实现了从Asset中加载图片的ImageProvider，而<code class="docutils literal notranslate"><span class="pre">NetworkImage</span></code>实现了从网络加载图片的ImageProvider。</p>
+</div>
+<div class="section" id="image">
+<h2>Image<a class="headerlink" href="#image" title="Permalink to this headline">¶</a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">Image</span></code> widget有一个必选的<code class="docutils literal notranslate"><span class="pre">image</span></code>参数，它对应一个ImageProvider。下面我们分别演示一下如何从asset和网络加载图片。</p>
+<div class="section" id="asset">
+<h3>从asset中加载图片<a class="headerlink" href="#asset" title="Permalink to this headline">¶</a></h3>
+<ol>
+<li><p>在工程根目录下创建一个<code class="docutils literal notranslate"><span class="pre">images目录</span></code>，并将图片avatar.png拷贝到该目录。</p></li>
+<li><p>在<code class="docutils literal notranslate"><span class="pre">pubspec.yaml</span></code>中的<code class="docutils literal notranslate"><span class="pre">flutter</span></code>部分添加如下内容：</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span>  <span class="nt">assets</span><span class="p">:</span>
+    <span class="p p-Indicator">-</span> <span class="l l-Scalar l-Scalar-Plain">images/avatar.png</span>
+</pre></div>
+</div>
+</li>
+</ol>
+<blockquote>
+<div><p>注意: 由于 yaml 文件对缩进严格，所以必须严格按照每一层两个空格的方式进行缩进，此处assets前面应有两个空格。</p>
+</div></blockquote>
+<ol>
+<li><p>加载该图片</p>
+<div class="highlight-dart notranslate"><div class="highlight"><pre><span></span><span class="n">Image</span><span class="p">(</span>
+  <span class="nl">image:</span> <span class="n">AssetImage</span><span class="p">(</span><span class="s2">&quot;images/avatar.png&quot;</span><span class="p">),</span>
+  <span class="nl">width:</span> <span class="m">100.0</span>
+<span class="p">);</span>
+</pre></div>
+</div>
+<p>Image也提供了一个快捷的构造函数<code class="docutils literal notranslate"><span class="pre">Image.asset</span></code>用于从asset中加载、显示图片：</p>
+<div class="highlight-dart notranslate"><div class="highlight"><pre><span></span><span class="n">Image</span><span class="p">.</span><span class="n">asset</span><span class="p">(</span><span class="s2">&quot;images/avatar.png&quot;</span><span class="p">,</span>
+  <span class="nl">width:</span> <span class="m">100.0</span><span class="p">,</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</li>
+</ol>
+</div>
+<div class="section" id="id2">
+<h3>从网络加载图片<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-dart notranslate"><div class="highlight"><pre><span></span><span class="n">Image</span><span class="p">(</span>
+  <span class="nl">image:</span> <span class="n">NetworkImage</span><span class="p">(</span>
+      <span class="s2">&quot;https://avatars2.githubusercontent.com/u/20411648?s=460&amp;v=4&quot;</span><span class="p">),</span>
+  <span class="nl">width:</span> <span class="m">100.0</span><span class="p">,</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p>Image也提供了一个快捷的构造函数<code class="docutils literal notranslate"><span class="pre">Image.network</span></code>用于从网络加载、显示图片：</p>
+<div class="highlight-dart notranslate"><div class="highlight"><pre><span></span><span class="n">Image</span><span class="p">.</span><span class="n">network</span><span class="p">(</span>
+  <span class="s2">&quot;https://avatars2.githubusercontent.com/u/20411648?s=460&amp;v=4&quot;</span><span class="p">,</span>
+  <span class="nl">width:</span> <span class="m">100.0</span><span class="p">,</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p>运行上面两个示例，图片加载成功后如图3-17所示：</p>
+<p><img alt="图3-17" src="../_images/3-17.png" /></p>
+</div>
+<div class="section" id="id3">
+<h3>参数<a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h3>
+<p><code class="docutils literal notranslate"><span class="pre">Image</span></code>在显示图片时定义了一系列参数，通过这些参数我们可以控制图片的显示外观、大小、混合效果等。我们看一下Image的主要参数：</p>
+<div class="highlight-dart notranslate"><div class="highlight"><pre><span></span><span class="k">const</span> <span class="n">Image</span><span class="p">({</span>
+  <span class="p">...</span>
+  <span class="k">this</span><span class="p">.</span><span class="n">width</span><span class="p">,</span> <span class="c1">//图片的宽</span>
+  <span class="k">this</span><span class="p">.</span><span class="n">height</span><span class="p">,</span> <span class="c1">//图片高度</span>
+  <span class="k">this</span><span class="p">.</span><span class="n">color</span><span class="p">,</span> <span class="c1">//图片的混合色值</span>
+  <span class="k">this</span><span class="p">.</span><span class="n">colorBlendMode</span><span class="p">,</span> <span class="c1">//混合模式</span>
+  <span class="k">this</span><span class="p">.</span><span class="n">fit</span><span class="p">,</span><span class="c1">//缩放模式</span>
+  <span class="k">this</span><span class="p">.</span><span class="n">alignment</span> <span class="o">=</span> <span class="n">Alignment</span><span class="p">.</span><span class="n">center</span><span class="p">,</span> <span class="c1">//对齐方式</span>
+  <span class="k">this</span><span class="p">.</span><span class="n">repeat</span> <span class="o">=</span> <span class="n">ImageRepeat</span><span class="p">.</span><span class="n">noRepeat</span><span class="p">,</span> <span class="c1">//重复方式</span>
+  <span class="p">...</span>
+<span class="p">})</span>
+</pre></div>
+</div>
+<ul>
+<li><p><code class="docutils literal notranslate"><span class="pre">width</span></code>、<code class="docutils literal notranslate"><span class="pre">height</span></code>：用于设置图片的宽、高，当不指定宽高时，图片会根据当前父容器的限制，尽可能的显示其原始大小，如果只设置<code class="docutils literal notranslate"><span class="pre">width</span></code>、<code class="docutils literal notranslate"><span class="pre">height</span></code>的其中一个，那么另一个属性默认会按比例缩放，但可以通过下面介绍的<code class="docutils literal notranslate"><span class="pre">fit</span></code>属性来指定适应规则。</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">fit</span></code>：该属性用于在图片的显示空间和图片本身大小不同时指定图片的适应模式。适应模式是在<code class="docutils literal notranslate"><span class="pre">BoxFit</span></code>中定义，它是一个枚举类型，有如下值：</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">fill</span></code>：会拉伸填充满显示空间，图片本身长宽比会发生变化，图片会变形。</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">cover</span></code>：会按图片的长宽比放大后居中填满显示空间，图片不会变形，超出显示空间部分会被剪裁。</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">contain</span></code>：这是图片的默认适应规则，图片会在保证图片本身长宽比不变的情况下缩放以适应当前显示空间，图片不会变形。</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">fitWidth</span></code>：图片的宽度会缩放到显示空间的宽度，高度会按比例缩放，然后居中显示，图片不会变形，超出显示空间部分会被剪裁。</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">fitHeight</span></code>：图片的高度会缩放到显示空间的高度，宽度会按比例缩放，然后居中显示，图片不会变形，超出显示空间部分会被剪裁。</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">none</span></code>：图片没有适应策略，会在显示空间内显示图片，如果图片比显示空间大，则显示空间只会显示图片中间部分。</p></li>
+</ul>
+<p>一图胜万言！ 我们对一个宽高相同的头像图片应用不同的<code class="docutils literal notranslate"><span class="pre">fit</span></code>值，效果如图3-18所示：</p>
+<p><img alt="图3-18" src="../_images/3-18.png" /></p>
+</li>
+<li><p><code class="docutils literal notranslate"><span class="pre">color</span></code>和 <code class="docutils literal notranslate"><span class="pre">colorBlendMode</span></code>：在图片绘制时可以对每一个像素进行颜色混合处理，<code class="docutils literal notranslate"><span class="pre">color</span></code>指定混合色，而<code class="docutils literal notranslate"><span class="pre">colorBlendMode</span></code>指定混合模式，下面是一个简单的示例：</p>
+<div class="highlight-dart notranslate"><div class="highlight"><pre><span></span><span class="n">Image</span><span class="p">(</span>
+  <span class="nl">image:</span> <span class="n">AssetImage</span><span class="p">(</span><span class="s2">&quot;images/avatar.png&quot;</span><span class="p">),</span>
+  <span class="nl">width:</span> <span class="m">100.0</span><span class="p">,</span>
+  <span class="nl">color:</span> <span class="n">Colors</span><span class="p">.</span><span class="n">blue</span><span class="p">,</span>
+  <span class="nl">colorBlendMode:</span> <span class="n">BlendMode</span><span class="p">.</span><span class="n">difference</span><span class="p">,</span>
+<span class="p">);</span>
+</pre></div>
+</div>
+</li>
+</ul>
+<p>运行效果如图3-19所示（彩色）:</p>
+<p><img alt="图3-19" src="../_images/3-19.png" /></p>
+<ul>
+<li><p><code class="docutils literal notranslate"><span class="pre">repeat</span></code>：当图片本身大小小于显示空间时，指定图片的重复规则。简单示例如下：</p>
+<div class="highlight-dart notranslate"><div class="highlight"><pre><span></span><span class="n">Image</span><span class="p">(</span>
+  <span class="nl">image:</span> <span class="n">AssetImage</span><span class="p">(</span><span class="s2">&quot;images/avatar.png&quot;</span><span class="p">),</span>
+  <span class="nl">width:</span> <span class="m">100.0</span><span class="p">,</span>
+  <span class="nl">height:</span> <span class="m">200.0</span><span class="p">,</span>
+  <span class="nl">repeat:</span> <span class="n">ImageRepeat</span><span class="p">.</span><span class="n">repeatY</span> <span class="p">,</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p>运行后效果如图3-20所示：</p>
+<p><img alt="图3-20" src="../_images/3-20.png" /></p>
+</li>
+</ul>
+<p>完整的示例代码如下：</p>
+<div class="highlight-dart notranslate"><div class="highlight"><pre><span></span><span class="k">import</span> <span class="s1">&#39;package:flutter/material.dart&#39;</span><span class="p">;</span>
+
+<span class="kd">class</span> <span class="nc">ImageAndIconRoute</span> <span class="kd">extends</span> <span class="n">StatelessWidget</span> <span class="p">{</span>
+  <span class="nd">@override</span>
+  <span class="n">Widget</span> <span class="n">build</span><span class="p">(</span><span class="n">BuildContext</span> <span class="n">context</span><span class="p">)</span> <span class="p">{</span>
+    <span class="kd">var</span> <span class="n">img</span><span class="o">=</span><span class="n">AssetImage</span><span class="p">(</span><span class="s2">&quot;imgs/avatar.png&quot;</span><span class="p">);</span>
+    <span class="k">return</span> <span class="n">SingleChildScrollView</span><span class="p">(</span>
+      <span class="nl">child:</span> <span class="n">Column</span><span class="p">(</span>
+        <span class="nl">children:</span> <span class="o">&lt;</span><span class="n">Image</span><span class="o">&gt;</span><span class="p">[</span>
+          <span class="n">Image</span><span class="p">(</span>
+            <span class="nl">image:</span> <span class="n">img</span><span class="p">,</span>
+            <span class="nl">height:</span> <span class="m">50.0</span><span class="p">,</span>
+            <span class="nl">width:</span> <span class="m">100.0</span><span class="p">,</span>
+            <span class="nl">fit:</span> <span class="n">BoxFit</span><span class="p">.</span><span class="n">fill</span><span class="p">,</span>
+          <span class="p">),</span>
+          <span class="n">Image</span><span class="p">(</span>
+            <span class="nl">image:</span> <span class="n">img</span><span class="p">,</span>
+            <span class="nl">height:</span> <span class="m">50</span><span class="p">,</span>
+            <span class="nl">width:</span> <span class="m">50.0</span><span class="p">,</span>
+            <span class="nl">fit:</span> <span class="n">BoxFit</span><span class="p">.</span><span class="n">contain</span><span class="p">,</span>
+          <span class="p">),</span>
+          <span class="n">Image</span><span class="p">(</span>
+            <span class="nl">image:</span> <span class="n">img</span><span class="p">,</span>
+            <span class="nl">width:</span> <span class="m">100.0</span><span class="p">,</span>
+            <span class="nl">height:</span> <span class="m">50.0</span><span class="p">,</span>
+            <span class="nl">fit:</span> <span class="n">BoxFit</span><span class="p">.</span><span class="n">cover</span><span class="p">,</span>
+          <span class="p">),</span>
+          <span class="n">Image</span><span class="p">(</span>
+            <span class="nl">image:</span> <span class="n">img</span><span class="p">,</span>
+            <span class="nl">width:</span> <span class="m">100.0</span><span class="p">,</span>
+            <span class="nl">height:</span> <span class="m">50.0</span><span class="p">,</span>
+            <span class="nl">fit:</span> <span class="n">BoxFit</span><span class="p">.</span><span class="n">fitWidth</span><span class="p">,</span>
+          <span class="p">),</span>
+          <span class="n">Image</span><span class="p">(</span>
+            <span class="nl">image:</span> <span class="n">img</span><span class="p">,</span>
+            <span class="nl">width:</span> <span class="m">100.0</span><span class="p">,</span>
+            <span class="nl">height:</span> <span class="m">50.0</span><span class="p">,</span>
+            <span class="nl">fit:</span> <span class="n">BoxFit</span><span class="p">.</span><span class="n">fitHeight</span><span class="p">,</span>
+          <span class="p">),</span>
+          <span class="n">Image</span><span class="p">(</span>
+            <span class="nl">image:</span> <span class="n">img</span><span class="p">,</span>
+            <span class="nl">width:</span> <span class="m">100.0</span><span class="p">,</span>
+            <span class="nl">height:</span> <span class="m">50.0</span><span class="p">,</span>
+            <span class="nl">fit:</span> <span class="n">BoxFit</span><span class="p">.</span><span class="n">scaleDown</span><span class="p">,</span>
+          <span class="p">),</span>
+          <span class="n">Image</span><span class="p">(</span>
+            <span class="nl">image:</span> <span class="n">img</span><span class="p">,</span>
+            <span class="nl">height:</span> <span class="m">50.0</span><span class="p">,</span>
+            <span class="nl">width:</span> <span class="m">100.0</span><span class="p">,</span>
+            <span class="nl">fit:</span> <span class="n">BoxFit</span><span class="p">.</span><span class="n">none</span><span class="p">,</span>
+          <span class="p">),</span>
+          <span class="n">Image</span><span class="p">(</span>
+            <span class="nl">image:</span> <span class="n">img</span><span class="p">,</span>
+            <span class="nl">width:</span> <span class="m">100.0</span><span class="p">,</span>
+            <span class="nl">color:</span> <span class="n">Colors</span><span class="p">.</span><span class="n">blue</span><span class="p">,</span>
+            <span class="nl">colorBlendMode:</span> <span class="n">BlendMode</span><span class="p">.</span><span class="n">difference</span><span class="p">,</span>
+            <span class="nl">fit:</span> <span class="n">BoxFit</span><span class="p">.</span><span class="n">fill</span><span class="p">,</span>
+          <span class="p">),</span>
+          <span class="n">Image</span><span class="p">(</span>
+            <span class="nl">image:</span> <span class="n">img</span><span class="p">,</span>
+            <span class="nl">width:</span> <span class="m">100.0</span><span class="p">,</span>
+            <span class="nl">height:</span> <span class="m">200.0</span><span class="p">,</span>
+            <span class="nl">repeat:</span> <span class="n">ImageRepeat</span><span class="p">.</span><span class="n">repeatY</span> <span class="p">,</span>
+          <span class="p">)</span>
+        <span class="p">].</span><span class="n">map</span><span class="p">((</span><span class="n">e</span><span class="p">){</span>
+          <span class="k">return</span> <span class="n">Row</span><span class="p">(</span>
+            <span class="nl">children:</span> <span class="o">&lt;</span><span class="n">Widget</span><span class="o">&gt;</span><span class="p">[</span>
+              <span class="n">Padding</span><span class="p">(</span>
+                <span class="nl">padding:</span> <span class="n">EdgeInsets</span><span class="p">.</span><span class="n">all</span><span class="p">(</span><span class="m">16.0</span><span class="p">),</span>
+                <span class="nl">child:</span> <span class="n">SizedBox</span><span class="p">(</span>
+                  <span class="nl">width:</span> <span class="m">100</span><span class="p">,</span>
+                  <span class="nl">child:</span> <span class="n">e</span><span class="p">,</span>
+                <span class="p">),</span>
+              <span class="p">),</span>
+              <span class="n">Text</span><span class="p">(</span><span class="n">e</span><span class="p">.</span><span class="n">fit</span><span class="p">.</span><span class="n">toString</span><span class="p">())</span>
+            <span class="p">],</span>
+          <span class="p">);</span>
+        <span class="p">}).</span><span class="n">toList</span><span class="p">()</span>
+      <span class="p">),</span>
+    <span class="p">);</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="id4">
+<h2>Image缓存<a class="headerlink" href="#id4" title="Permalink to this headline">¶</a></h2>
+<p>Flutter框架对加载过的图片是有缓存的（内存），默认最大缓存数量是1000，最大缓存空间为100M。关于Image的详细内容及原理我们将会在后面进阶部分深入介绍。</p>
+</div>
+</div>
+<div class="section" id="id5">
+<h1>3.5.2 ICON<a class="headerlink" href="#id5" title="Permalink to this headline">¶</a></h1>
+<p>Flutter中，可以像Web开发一样使用iconfont，iconfont即“字体图标”，它是将图标做成字体文件，然后通过指定不同的字符而显示不同的图片。</p>
+<blockquote>
+<div><p>在字体文件中，每一个字符都对应一个位码，而每一个位码对应一个显示字形，不同的字体就是指字形不同，即字符对应的字形是不同的。而在iconfont中，只是将位码对应的字形做成了图标，所以不同的字符最终就会渲染成不同的图标。</p>
+</div></blockquote>
+<p>在Flutter开发中，iconfont和图片相比有如下优势：</p>
+<ol class="simple">
+<li><p>体积小：可以减小安装包大小。</p></li>
+<li><p>矢量的：iconfont都是矢量图标，放大不会影响其清晰度。</p></li>
+<li><p>可以应用文本样式：可以像文本一样改变字体图标的颜色、大小对齐等。</p></li>
+<li><p>可以通过TextSpan和文本混用。</p></li>
+</ol>
+<div class="section" id="material-design">
+<h2>使用Material Design字体图标<a class="headerlink" href="#material-design" title="Permalink to this headline">¶</a></h2>
+<p>Flutter默认包含了一套Material Design的字体图标，在<code class="docutils literal notranslate"><span class="pre">pubspec.yaml</span></code>文件中的配置如下</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">flutter</span><span class="p">:</span>
+  <span class="nt">uses-material-design</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">true</span>
+</pre></div>
+</div>
+<p>Material Design所有图标可以在其官网查看：https://material.io/tools/icons/</p>
+<p>我们看一个简单的例子：</p>
+<div class="highlight-dart notranslate"><div class="highlight"><pre><span></span><span class="kt">String</span> <span class="n">icons</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">;</span>
+<span class="c1">// accessible: &amp;#xE914; or 0xE914 or E914</span>
+<span class="n">icons</span> <span class="o">+=</span> <span class="s2">&quot;</span><span class="se">\uE914</span><span class="s2">&quot;</span><span class="p">;</span>
+<span class="c1">// error: &amp;#xE000; or 0xE000 or E000</span>
+<span class="n">icons</span> <span class="o">+=</span> <span class="s2">&quot; </span><span class="se">\uE000</span><span class="s2">&quot;</span><span class="p">;</span>
+<span class="c1">// fingerprint: &amp;#xE90D; or 0xE90D or E90D</span>
+<span class="n">icons</span> <span class="o">+=</span> <span class="s2">&quot; </span><span class="se">\uE90D</span><span class="s2">&quot;</span><span class="p">;</span>
+
+<span class="n">Text</span><span class="p">(</span><span class="n">icons</span><span class="p">,</span>
+  <span class="nl">style:</span> <span class="n">TextStyle</span><span class="p">(</span>
+      <span class="nl">fontFamily:</span> <span class="s2">&quot;MaterialIcons&quot;</span><span class="p">,</span>
+      <span class="nl">fontSize:</span> <span class="m">24.0</span><span class="p">,</span>
+      <span class="nl">color:</span> <span class="n">Colors</span><span class="p">.</span><span class="n">green</span>
+  <span class="p">),</span>
+<span class="p">);</span>
+</pre></div>
+</div>
+<p>运行效果如图3-21所示：</p>
+<p><img alt="图3-21" src="../_images/3-21.png" /></p>
+<p>通过这个示例可以看到，使用图标就像使用文本一样，但是这种方式需要我们提供每个图标的码点，这并对开发者不友好，所以，Flutter封装了<code class="docutils literal notranslate"><span class="pre">IconData</span></code>和<code class="docutils literal notranslate"><span class="pre">Icon</span></code>来专门显示字体图标，上面的例子也可以用如下方式实现：</p>
+<div class="highlight-dart notranslate"><div class="highlight"><pre><span></span><span class="n">Row</span><span class="p">(</span>
+  <span class="nl">mainAxisAlignment:</span> <span class="n">MainAxisAlignment</span><span class="p">.</span><span class="n">center</span><span class="p">,</span>
+  <span class="nl">children:</span> <span class="o">&lt;</span><span class="n">Widget</span><span class="o">&gt;</span><span class="p">[</span>
+    <span class="n">Icon</span><span class="p">(</span><span class="n">Icons</span><span class="p">.</span><span class="n">accessible</span><span class="p">,</span><span class="nl">color:</span> <span class="n">Colors</span><span class="p">.</span><span class="n">green</span><span class="p">,),</span>
+    <span class="n">Icon</span><span class="p">(</span><span class="n">Icons</span><span class="p">.</span><span class="n">error</span><span class="p">,</span><span class="nl">color:</span> <span class="n">Colors</span><span class="p">.</span><span class="n">green</span><span class="p">,),</span>
+    <span class="n">Icon</span><span class="p">(</span><span class="n">Icons</span><span class="p">.</span><span class="n">fingerprint</span><span class="p">,</span><span class="nl">color:</span> <span class="n">Colors</span><span class="p">.</span><span class="n">green</span><span class="p">,),</span>
+  <span class="p">],</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">Icons</span></code>类中包含了所有Material Design图标的<code class="docutils literal notranslate"><span class="pre">IconData</span></code>静态变量定义。</p>
+</div>
+<div class="section" id="id6">
+<h2>使用自定义字体图标<a class="headerlink" href="#id6" title="Permalink to this headline">¶</a></h2>
+<p>我们也可以使用自定义字体图标。iconfont.cn上有很多字体图标素材，我们可以选择自己需要的图标打包下载后，会生成一些不同格式的字体文件，在Flutter中，我们使用ttf格式即可。</p>
+<p>假设我们项目中需要使用一个书籍图标和微信图标，我们打包下载后导入：</p>
+<ol>
+<li><p>导入字体图标文件；这一步和导入字体文件相同，假设我们的字体图标文件保存在项目根目录下，路径为”fonts/iconfont.ttf”：</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">fonts</span><span class="p">:</span>
+  <span class="p p-Indicator">-</span> <span class="nt">family</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">myIcon</span>  <span class="c1">#指定一个字体名</span>
+    <span class="nt">fonts</span><span class="p">:</span>
+      <span class="p p-Indicator">-</span> <span class="nt">asset</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">fonts/iconfont.ttf</span>
+</pre></div>
+</div>
+</li>
+<li><p>为了使用方便，我们定义一个<code class="docutils literal notranslate"><span class="pre">MyIcons</span></code>类，功能和<code class="docutils literal notranslate"><span class="pre">Icons</span></code>类一样：将字体文件中的所有图标都定义成静态变量：</p>
+<div class="highlight-dart notranslate"><div class="highlight"><pre><span></span><span class="kd">class</span> <span class="nc">MyIcons</span><span class="p">{</span>
+  <span class="c1">// book 图标</span>
+  <span class="kd">static</span> <span class="k">const</span> <span class="n">IconData</span> <span class="n">book</span> <span class="o">=</span> <span class="k">const</span> <span class="n">IconData</span><span class="p">(</span>
+      <span class="mh">0xe614</span><span class="p">,</span> 
+      <span class="nl">fontFamily:</span> <span class="s1">&#39;myIcon&#39;</span><span class="p">,</span> 
+      <span class="nl">matchTextDirection:</span> <span class="kc">true</span>
+  <span class="p">);</span>
+  <span class="c1">// 微信图标</span>
+  <span class="kd">static</span> <span class="k">const</span> <span class="n">IconData</span> <span class="n">wechat</span> <span class="o">=</span> <span class="k">const</span> <span class="n">IconData</span><span class="p">(</span>
+      <span class="mh">0xec7d</span><span class="p">,</span>  
+      <span class="nl">fontFamily:</span> <span class="s1">&#39;myIcon&#39;</span><span class="p">,</span> 
+      <span class="nl">matchTextDirection:</span> <span class="kc">true</span>
+  <span class="p">);</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</li>
+<li><p>使用</p>
+<div class="highlight-dart notranslate"><div class="highlight"><pre><span></span><span class="n">Row</span><span class="p">(</span>
+  <span class="nl">mainAxisAlignment:</span> <span class="n">MainAxisAlignment</span><span class="p">.</span><span class="n">center</span><span class="p">,</span>
+  <span class="nl">children:</span> <span class="o">&lt;</span><span class="n">Widget</span><span class="o">&gt;</span><span class="p">[</span>
+    <span class="n">Icon</span><span class="p">(</span><span class="n">MyIcons</span><span class="p">.</span><span class="n">book</span><span class="p">,</span><span class="nl">color:</span> <span class="n">Colors</span><span class="p">.</span><span class="n">purple</span><span class="p">,),</span>
+    <span class="n">Icon</span><span class="p">(</span><span class="n">MyIcons</span><span class="p">.</span><span class="n">wechat</span><span class="p">,</span><span class="nl">color:</span> <span class="n">Colors</span><span class="p">.</span><span class="n">green</span><span class="p">,),</span>
+  <span class="p">],</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p>运行后效果如图3-22所示：</p>
+<p><img alt="图3-22" src="../_images/3-22.png" /></p>
+</li>
+</ol>
+</div>
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">Flutter in action</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2014, Miguel Grinberg.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.5.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="../_sources/chapter3/img_and_icon.md.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

@@ -1,0 +1,281 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>10.3 组合实例：TurnBox &#8212; Flutter in action  documentation</title>
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="turnbox">
+<h1>10.3 组合实例：TurnBox<a class="headerlink" href="#turnbox" title="Permalink to this headline">¶</a></h1>
+<p>我们之前已经介绍过<code class="docutils literal notranslate"><span class="pre">RotatedBox</span></code>，它可以旋转子组件，但是它有两个缺点：一是只能将其子节点以90度的倍数旋转；二是当旋转的角度发生变化时，旋转角度更新过程没有动画。</p>
+<p>本节我们将实现一个<code class="docutils literal notranslate"><span class="pre">TurnBox</span></code>组件，它不仅可以以任意角度来旋转其子节点，而且可以在角度发生变化时执行一个动画以过渡到新状态，同时，我们可以手动指定动画速度。</p>
+<p><code class="docutils literal notranslate"><span class="pre">TurnBox</span></code>的完整代码如下：</p>
+<div class="highlight-dart notranslate"><div class="highlight"><pre><span></span><span class="k">import</span> <span class="s1">&#39;package:flutter/widgets.dart&#39;</span><span class="p">;</span>
+
+<span class="kd">class</span> <span class="nc">TurnBox</span> <span class="kd">extends</span> <span class="n">StatefulWidget</span> <span class="p">{</span>
+  <span class="k">const</span> <span class="n">TurnBox</span><span class="p">({</span>
+    <span class="n">Key</span> <span class="n">key</span><span class="p">,</span>
+    <span class="k">this</span><span class="p">.</span><span class="n">turns</span> <span class="o">=</span> <span class="p">.</span><span class="m">0</span><span class="p">,</span> <span class="c1">//旋转的“圈”数,一圈为360度，如0.25圈即90度</span>
+    <span class="k">this</span><span class="p">.</span><span class="n">speed</span> <span class="o">=</span> <span class="m">200</span><span class="p">,</span> <span class="c1">//过渡动画执行的总时长</span>
+    <span class="k">this</span><span class="p">.</span><span class="n">child</span>
+  <span class="p">})</span> <span class="o">:</span><span class="k">super</span><span class="p">(</span><span class="nl">key:</span> <span class="n">key</span><span class="p">);</span>
+
+  <span class="kd">final</span> <span class="kt">double</span> <span class="n">turns</span><span class="p">;</span>
+  <span class="kd">final</span> <span class="kt">int</span> <span class="n">speed</span><span class="p">;</span>
+  <span class="kd">final</span> <span class="n">Widget</span> <span class="n">child</span><span class="p">;</span>
+
+  <span class="nd">@override</span>
+  <span class="n">_TurnBoxState</span> <span class="n">createState</span><span class="p">()</span> <span class="o">=&gt;</span> <span class="k">new</span> <span class="n">_TurnBoxState</span><span class="p">();</span>
+<span class="p">}</span>
+
+<span class="kd">class</span> <span class="nc">_TurnBoxState</span> <span class="kd">extends</span> <span class="n">State</span><span class="o">&lt;</span><span class="n">TurnBox</span><span class="o">&gt;</span>
+    <span class="kd">with</span> <span class="n">SingleTickerProviderStateMixin</span> <span class="p">{</span>
+  <span class="n">AnimationController</span> <span class="n">_controller</span><span class="p">;</span>
+
+  <span class="nd">@override</span>
+  <span class="kt">void</span> <span class="n">initState</span><span class="p">()</span> <span class="p">{</span>
+    <span class="k">super</span><span class="p">.</span><span class="n">initState</span><span class="p">();</span>
+    <span class="n">_controller</span> <span class="o">=</span> <span class="k">new</span> <span class="n">AnimationController</span><span class="p">(</span>
+        <span class="nl">vsync:</span> <span class="k">this</span><span class="p">,</span>
+        <span class="nl">lowerBound:</span> <span class="o">-</span><span class="kt">double</span><span class="p">.</span><span class="n">infinity</span><span class="p">,</span>
+        <span class="nl">upperBound:</span> <span class="kt">double</span><span class="p">.</span><span class="n">infinity</span>
+    <span class="p">);</span>
+    <span class="n">_controller</span><span class="p">.</span><span class="n">value</span> <span class="o">=</span> <span class="n">widget</span><span class="p">.</span><span class="n">turns</span><span class="p">;</span>
+  <span class="p">}</span>
+
+  <span class="nd">@override</span>
+  <span class="kt">void</span> <span class="n">dispose</span><span class="p">()</span> <span class="p">{</span>
+    <span class="n">_controller</span><span class="p">.</span><span class="n">dispose</span><span class="p">();</span>
+    <span class="k">super</span><span class="p">.</span><span class="n">dispose</span><span class="p">();</span>
+  <span class="p">}</span>
+
+  <span class="nd">@override</span>
+  <span class="n">Widget</span> <span class="n">build</span><span class="p">(</span><span class="n">BuildContext</span> <span class="n">context</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">return</span> <span class="n">RotationTransition</span><span class="p">(</span>
+      <span class="nl">turns:</span> <span class="n">_controller</span><span class="p">,</span>
+      <span class="nl">child:</span> <span class="n">widget</span><span class="p">.</span><span class="n">child</span><span class="p">,</span>
+    <span class="p">);</span>
+  <span class="p">}</span>
+
+  <span class="nd">@override</span>
+  <span class="kt">void</span> <span class="n">didUpdateWidget</span><span class="p">(</span><span class="n">TurnBox</span> <span class="n">oldWidget</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">super</span><span class="p">.</span><span class="n">didUpdateWidget</span><span class="p">(</span><span class="n">oldWidget</span><span class="p">);</span>
+    <span class="c1">//旋转角度发生变化时执行过渡动画  </span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">oldWidget</span><span class="p">.</span><span class="n">turns</span> <span class="o">!=</span> <span class="n">widget</span><span class="p">.</span><span class="n">turns</span><span class="p">)</span> <span class="p">{</span>
+      <span class="n">_controller</span><span class="p">.</span><span class="n">animateTo</span><span class="p">(</span>
+        <span class="n">widget</span><span class="p">.</span><span class="n">turns</span><span class="p">,</span>
+        <span class="nl">duration:</span> <span class="n">Duration</span><span class="p">(</span><span class="nl">milliseconds:</span> <span class="n">widget</span><span class="p">.</span><span class="n">speed</span><span class="o">??</span><span class="m">200</span><span class="p">),</span>
+        <span class="nl">curve:</span> <span class="n">Curves</span><span class="p">.</span><span class="n">easeOut</span><span class="p">,</span>
+      <span class="p">);</span>
+    <span class="p">}</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>上面代码中：</p>
+<ol class="simple">
+<li><p>我们是通过组合<code class="docutils literal notranslate"><span class="pre">RotationTransition</span></code>和child来实现的旋转效果。</p></li>
+<li><p>在<code class="docutils literal notranslate"><span class="pre">didUpdateWidget</span></code>中，我们判断要旋转的角度是否发生了变化，如果变了，则执行一个过渡动画。</p></li>
+</ol>
+<p>下面我们测试一下<code class="docutils literal notranslate"><span class="pre">TurnBox</span></code>的功能，测试代码如下：</p>
+<div class="highlight-dart notranslate"><div class="highlight"><pre><span></span><span class="k">import</span> <span class="s1">&#39;package:flutter/material.dart&#39;</span><span class="p">;</span>
+<span class="k">import</span> <span class="s1">&#39;../widgets/index.dart&#39;</span><span class="p">;</span>
+
+<span class="kd">class</span> <span class="nc">TurnBoxRoute</span> <span class="kd">extends</span> <span class="n">StatefulWidget</span> <span class="p">{</span>
+  <span class="nd">@override</span>
+  <span class="n">_TurnBoxRouteState</span> <span class="n">createState</span><span class="p">()</span> <span class="o">=&gt;</span> <span class="k">new</span> <span class="n">_TurnBoxRouteState</span><span class="p">();</span>
+<span class="p">}</span>
+
+<span class="kd">class</span> <span class="nc">_TurnBoxRouteState</span> <span class="kd">extends</span> <span class="n">State</span><span class="o">&lt;</span><span class="n">TurnBoxRoute</span><span class="o">&gt;</span> <span class="p">{</span>
+  <span class="kt">double</span> <span class="n">_turns</span> <span class="o">=</span> <span class="p">.</span><span class="m">0</span><span class="p">;</span>
+
+  <span class="nd">@override</span>
+  <span class="n">Widget</span> <span class="n">build</span><span class="p">(</span><span class="n">BuildContext</span> <span class="n">context</span><span class="p">)</span> <span class="p">{</span>
+
+    <span class="k">return</span> <span class="n">Center</span><span class="p">(</span>
+      <span class="nl">child:</span> <span class="n">Column</span><span class="p">(</span>
+        <span class="nl">children:</span> <span class="o">&lt;</span><span class="n">Widget</span><span class="o">&gt;</span><span class="p">[</span>
+          <span class="n">TurnBox</span><span class="p">(</span>
+            <span class="nl">turns:</span> <span class="n">_turns</span><span class="p">,</span>
+            <span class="nl">speed:</span> <span class="m">500</span><span class="p">,</span>
+            <span class="nl">child:</span> <span class="n">Icon</span><span class="p">(</span><span class="n">Icons</span><span class="p">.</span><span class="n">refresh</span><span class="p">,</span> <span class="nl">size:</span> <span class="m">50</span><span class="p">,),</span>
+          <span class="p">),</span>
+          <span class="n">TurnBox</span><span class="p">(</span>
+            <span class="nl">turns:</span> <span class="n">_turns</span><span class="p">,</span>
+            <span class="nl">speed:</span> <span class="m">1000</span><span class="p">,</span>
+            <span class="nl">child:</span> <span class="n">Icon</span><span class="p">(</span><span class="n">Icons</span><span class="p">.</span><span class="n">refresh</span><span class="p">,</span> <span class="nl">size:</span> <span class="m">150.0</span><span class="p">,),</span>
+          <span class="p">),</span>
+          <span class="n">RaisedButton</span><span class="p">(</span>
+            <span class="nl">child:</span> <span class="n">Text</span><span class="p">(</span><span class="s2">&quot;顺时针旋转1/5圈&quot;</span><span class="p">),</span>
+            <span class="nl">onPressed:</span> <span class="p">()</span> <span class="p">{</span>
+              <span class="n">setState</span><span class="p">(()</span> <span class="p">{</span>
+                <span class="n">_turns</span> <span class="o">+=</span> <span class="p">.</span><span class="m">2</span><span class="p">;</span>
+              <span class="p">});</span>
+            <span class="p">},</span>
+          <span class="p">),</span>
+          <span class="n">RaisedButton</span><span class="p">(</span>
+            <span class="nl">child:</span> <span class="n">Text</span><span class="p">(</span><span class="s2">&quot;逆时针旋转1/5圈&quot;</span><span class="p">),</span>
+            <span class="nl">onPressed:</span> <span class="p">()</span> <span class="p">{</span>
+              <span class="n">setState</span><span class="p">(()</span> <span class="p">{</span>
+                <span class="n">_turns</span> <span class="o">-=</span> <span class="p">.</span><span class="m">2</span><span class="p">;</span>
+              <span class="p">});</span>
+            <span class="p">},</span>
+          <span class="p">)</span>
+        <span class="p">],</span>
+      <span class="p">),</span>
+    <span class="p">);</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>测试代码运行后效果如图10-2所示：</p>
+<p><img alt="图10-2" src="../_images/10-2.png" /></p>
+<p>当我们点击旋转按钮时，两个图标的旋转都会旋转1/5圈，但旋转的速度是不同的，读者可以自己运行一下示例看看效果。</p>
+<p>实际上本示例只组合了<code class="docutils literal notranslate"><span class="pre">RotationTransition</span></code>一个组件，它是一个最简的组合类组件示例。另外，如果我们封装的是<code class="docutils literal notranslate"><span class="pre">StatefulWidget</span></code>，那么一定要注意在组件更新时是否需要同步状态。比如我们要封装一个富文本展示组件<code class="docutils literal notranslate"><span class="pre">MyRichText</span></code> ，它可以自动处理url链接，定义如下：</p>
+<div class="highlight-dart notranslate"><div class="highlight"><pre><span></span><span class="kd">class</span> <span class="nc">MyRichText</span> <span class="kd">extends</span> <span class="n">StatefulWidget</span> <span class="p">{</span>
+  <span class="n">MyRichText</span><span class="p">({</span>
+    <span class="n">Key</span> <span class="n">key</span><span class="p">,</span>
+    <span class="k">this</span><span class="p">.</span><span class="n">text</span><span class="p">,</span> <span class="c1">// 文本字符串</span>
+    <span class="k">this</span><span class="p">.</span><span class="n">linkStyle</span><span class="p">,</span> <span class="c1">// url链接样式</span>
+  <span class="p">})</span> <span class="o">:</span> <span class="k">super</span><span class="p">(</span><span class="nl">key:</span> <span class="n">key</span><span class="p">);</span>
+
+  <span class="kd">final</span> <span class="kt">String</span> <span class="n">text</span><span class="p">;</span>
+  <span class="kd">final</span> <span class="n">TextStyle</span> <span class="n">linkStyle</span><span class="p">;</span>
+
+  <span class="nd">@override</span>
+  <span class="n">_MyRichTextState</span> <span class="n">createState</span><span class="p">()</span> <span class="o">=&gt;</span> <span class="n">_MyRichTextState</span><span class="p">();</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>接下来我们在<code class="docutils literal notranslate"><span class="pre">_MyRichTextState</span></code>中要实现的功能有两个：</p>
+<ol class="simple">
+<li><p>解析文本字符串“text”，生成<code class="docutils literal notranslate"><span class="pre">TextSpan</span></code>缓存起来；</p></li>
+<li><p>在<code class="docutils literal notranslate"><span class="pre">build</span></code>中返回最终的富文本样式；</p></li>
+</ol>
+<p><code class="docutils literal notranslate"><span class="pre">_MyRichTextState</span></code> 实现的代码大致如下：</p>
+<div class="highlight-dart notranslate"><div class="highlight"><pre><span></span><span class="kd">class</span> <span class="nc">_MyRichTextState</span> <span class="kd">extends</span> <span class="n">State</span><span class="o">&lt;</span><span class="n">MyRichText</span><span class="o">&gt;</span> <span class="p">{</span>
+
+  <span class="n">TextSpan</span> <span class="n">_textSpan</span><span class="p">;</span>
+
+  <span class="nd">@override</span>
+  <span class="n">Widget</span> <span class="n">build</span><span class="p">(</span><span class="n">BuildContext</span> <span class="n">context</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">return</span> <span class="n">RichText</span><span class="p">(</span>
+      <span class="nl">text:</span> <span class="n">_textSpan</span><span class="p">,</span>
+    <span class="p">);</span>
+  <span class="p">}</span>
+
+  <span class="n">TextSpan</span> <span class="n">parseText</span><span class="p">(</span><span class="kt">String</span> <span class="n">text</span><span class="p">)</span> <span class="p">{</span>
+    <span class="c1">// 耗时操作：解析文本字符串，构建出TextSpan。</span>
+    <span class="c1">// 省略具体实现。</span>
+  <span class="p">}</span>
+
+  <span class="nd">@override</span>
+  <span class="kt">void</span> <span class="n">initState</span><span class="p">()</span> <span class="p">{</span>
+    <span class="n">_textSpan</span> <span class="o">=</span> <span class="n">parseText</span><span class="p">(</span><span class="n">widget</span><span class="p">.</span><span class="n">text</span><span class="p">)</span>
+    <span class="k">super</span><span class="p">.</span><span class="n">initState</span><span class="p">();</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>由于解析文本字符串，构建出<code class="docutils literal notranslate"><span class="pre">TextSpan</span></code>是一个耗时操作，为了不在每次build的时候都解析一次，所以我们在<code class="docutils literal notranslate"><span class="pre">initState</span></code>中对解析的结果进行了缓存，然后再<code class="docutils literal notranslate"><span class="pre">build</span></code>中直接使用解析的结果<code class="docutils literal notranslate"><span class="pre">_textSpan</span></code>。这看起来很不错，但是上面的代码有一个严重的问题，就是父组件传入的<code class="docutils literal notranslate"><span class="pre">text</span></code>发生变化时（组件树结构不变），那么<code class="docutils literal notranslate"><span class="pre">MyRichText</span></code>显示的内容不会更新，原因就是<code class="docutils literal notranslate"><span class="pre">initState</span></code>只会在State创建时被调用，所以在<code class="docutils literal notranslate"><span class="pre">text</span></code>发生变化时，<code class="docutils literal notranslate"><span class="pre">parseText</span></code>没有重新执行，导致<code class="docutils literal notranslate"><span class="pre">_textSpan</span></code>任然是旧的解析值。要解决这个问题也很简单，我们只需添加一个<code class="docutils literal notranslate"><span class="pre">didUpdateWidget</span></code>回调，然后再里面重新调用<code class="docutils literal notranslate"><span class="pre">parseText</span></code>即可：</p>
+<div class="highlight-dart notranslate"><div class="highlight"><pre><span></span><span class="nd">@override</span>
+<span class="kt">void</span> <span class="n">didUpdateWidget</span><span class="p">(</span><span class="n">MyRichText</span> <span class="n">oldWidget</span><span class="p">)</span> <span class="p">{</span>
+  <span class="k">if</span> <span class="p">(</span><span class="n">widget</span><span class="p">.</span><span class="n">text</span> <span class="o">!=</span> <span class="n">oldWidget</span><span class="p">.</span><span class="n">text</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">_textSpan</span> <span class="o">=</span> <span class="n">parseText</span><span class="p">(</span><span class="n">widget</span><span class="p">.</span><span class="n">text</span><span class="p">);</span>
+  <span class="p">}</span>
+  <span class="k">super</span><span class="p">.</span><span class="n">didUpdateWidget</span><span class="p">(</span><span class="n">oldWidget</span><span class="p">);</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>有些读者可能会觉得这个点也很简单，是的，的确很简单，之所以要在这里反复强调是因为这个点在实际开发中很容易被忽略，它虽然简单，但却很重要。总之，当我们在State中会缓存某些依赖Widget参数的数据时，一定要注意在组件更新时是否需要同步状态。</p>
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">Flutter in action</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2014, Miguel Grinberg.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.5.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="../_sources/chapter10/turn_box.md.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

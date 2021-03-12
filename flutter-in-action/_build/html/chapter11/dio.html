@@ -1,0 +1,229 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>11.3 Http请求-Dio http库 &#8212; Flutter in action  documentation</title>
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="http-dio-http">
+<h1>11.3 Http请求-Dio http库<a class="headerlink" href="#http-dio-http" title="Permalink to this headline">¶</a></h1>
+<p>通过上一节介绍，我们可以发现直接使用HttpClient发起网络请求是比较麻烦的，很多事情得我们手动处理，如果再涉及到文件上传/下载、Cookie管理等就会非常繁琐。幸运的是，Dart社区有一些第三方http请求库，用它们来发起http请求将会简单的多，本节我们介绍一下目前人气较高的<a class="reference external" href="https://github.com/flutterchina/dio">dio</a>库。</p>
+<blockquote>
+<div><p>dio是一个强大的Dart Http请求库，支持Restful API、FormData、拦截器、请求取消、Cookie管理、文件上传/下载、超时等。dio的使用方式随着其版本升级可能会发生变化，如果本节所述内容和dio官方有差异，请以dio官方文档为准。</p>
+</div></blockquote>
+<div class="section" id="id1">
+<h2>引入<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h2>
+<p>引入dio:</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">dependencies</span><span class="p">:</span>
+  <span class="nt">dio</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">^x.x.x</span> <span class="c1">#请使用pub上的最新版本</span>
+</pre></div>
+</div>
+<p>导入并创建dio实例：</p>
+<div class="highlight-dart notranslate"><div class="highlight"><pre><span></span><span class="k">import</span> <span class="s1">&#39;package:dio/dio.dart&#39;</span><span class="p">;</span>
+<span class="n">Dio</span> <span class="n">dio</span> <span class="o">=</span>  <span class="n">Dio</span><span class="p">();</span>
+</pre></div>
+</div>
+<p>接下来就可以通过 dio实例来发起网络请求了，注意，一个dio实例可以发起多个http请求，一般来说，APP只有一个http数据源时，dio应该使用单例模式。</p>
+</div>
+<div class="section" id="id2">
+<h2>示例<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h2>
+<p>发起 <code class="docutils literal notranslate"><span class="pre">GET</span></code> 请求 :</p>
+<div class="highlight-dart notranslate"><div class="highlight"><pre><span></span><span class="n">Response</span> <span class="n">response</span><span class="p">;</span>
+<span class="n">response</span><span class="o">=</span><span class="kd">await</span> <span class="n">dio</span><span class="p">.</span><span class="kd">get</span><span class="p">(</span><span class="s2">&quot;/test?id=12&amp;name=wendu&quot;</span><span class="p">)</span>
+<span class="n">print</span><span class="p">(</span><span class="n">response</span><span class="p">.</span><span class="n">data</span><span class="p">.</span><span class="n">toString</span><span class="p">());</span>
+</pre></div>
+</div>
+<p>对于<code class="docutils literal notranslate"><span class="pre">GET</span></code>请求我们可以将query参数通过对象来传递，上面的代码等同于：</p>
+<div class="highlight-dart notranslate"><div class="highlight"><pre><span></span><span class="n">response</span><span class="o">=</span><span class="kd">await</span> <span class="n">dio</span><span class="p">.</span><span class="kd">get</span><span class="p">(</span><span class="s2">&quot;/test&quot;</span><span class="p">,</span><span class="nl">queryParameters:</span><span class="p">{</span><span class="s2">&quot;id&quot;</span><span class="o">:</span><span class="m">12</span><span class="p">,</span><span class="s2">&quot;name&quot;</span><span class="o">:</span><span class="s2">&quot;wendu&quot;</span><span class="p">})</span>
+<span class="n">print</span><span class="p">(</span><span class="n">response</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>发起一个 <code class="docutils literal notranslate"><span class="pre">POST</span></code> 请求:</p>
+<div class="highlight-dart notranslate"><div class="highlight"><pre><span></span><span class="n">response</span><span class="o">=</span><span class="kd">await</span> <span class="n">dio</span><span class="p">.</span><span class="n">post</span><span class="p">(</span><span class="s2">&quot;/test&quot;</span><span class="p">,</span><span class="nl">data:</span><span class="p">{</span><span class="s2">&quot;id&quot;</span><span class="o">:</span><span class="m">12</span><span class="p">,</span><span class="s2">&quot;name&quot;</span><span class="o">:</span><span class="s2">&quot;wendu&quot;</span><span class="p">})</span>
+</pre></div>
+</div>
+<p>发起多个并发请求:</p>
+<div class="highlight-dart notranslate"><div class="highlight"><pre><span></span><span class="n">response</span><span class="o">=</span> <span class="kd">await</span> <span class="n">Future</span><span class="p">.</span><span class="n">wait</span><span class="p">([</span><span class="n">dio</span><span class="p">.</span><span class="n">post</span><span class="p">(</span><span class="s2">&quot;/info&quot;</span><span class="p">),</span><span class="n">dio</span><span class="p">.</span><span class="kd">get</span><span class="p">(</span><span class="s2">&quot;/token&quot;</span><span class="p">)]);</span>
+</pre></div>
+</div>
+<p>下载文件:</p>
+<div class="highlight-dart notranslate"><div class="highlight"><pre><span></span><span class="n">response</span><span class="o">=</span><span class="kd">await</span> <span class="n">dio</span><span class="p">.</span><span class="n">download</span><span class="p">(</span><span class="s2">&quot;https://www.google.com/&quot;</span><span class="p">,</span><span class="n">_savePath</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>发送 FormData:</p>
+<div class="highlight-dart notranslate"><div class="highlight"><pre><span></span><span class="n">FormData</span> <span class="n">formData</span> <span class="o">=</span> <span class="k">new</span> <span class="n">FormData</span><span class="p">.</span><span class="n">from</span><span class="p">({</span>
+   <span class="s2">&quot;name&quot;</span><span class="o">:</span> <span class="s2">&quot;wendux&quot;</span><span class="p">,</span>
+   <span class="s2">&quot;age&quot;</span><span class="o">:</span> <span class="m">25</span><span class="p">,</span>
+<span class="p">});</span>
+<span class="n">response</span> <span class="o">=</span> <span class="kd">await</span> <span class="n">dio</span><span class="p">.</span><span class="n">post</span><span class="p">(</span><span class="s2">&quot;/info&quot;</span><span class="p">,</span> <span class="nl">data:</span> <span class="n">formData</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>如果发送的数据是FormData，则dio会将请求header的<code class="docutils literal notranslate"><span class="pre">contentType</span></code>设为“multipart/form-data”。</p>
+<p>通过FormData上传多个文件:</p>
+<div class="highlight-dart notranslate"><div class="highlight"><pre><span></span><span class="n">FormData</span> <span class="n">formData</span> <span class="o">=</span> <span class="k">new</span> <span class="n">FormData</span><span class="p">.</span><span class="n">from</span><span class="p">({</span>
+   <span class="s2">&quot;name&quot;</span><span class="o">:</span> <span class="s2">&quot;wendux&quot;</span><span class="p">,</span>
+   <span class="s2">&quot;age&quot;</span><span class="o">:</span> <span class="m">25</span><span class="p">,</span>
+   <span class="s2">&quot;file1&quot;</span><span class="o">:</span> <span class="k">new</span> <span class="n">UploadFileInfo</span><span class="p">(</span><span class="k">new</span> <span class="n">File</span><span class="p">(</span><span class="s2">&quot;./upload.txt&quot;</span><span class="p">),</span> <span class="s2">&quot;upload1.txt&quot;</span><span class="p">),</span>
+   <span class="s2">&quot;file2&quot;</span><span class="o">:</span> <span class="k">new</span> <span class="n">UploadFileInfo</span><span class="p">(</span><span class="k">new</span> <span class="n">File</span><span class="p">(</span><span class="s2">&quot;./upload.txt&quot;</span><span class="p">),</span> <span class="s2">&quot;upload2.txt&quot;</span><span class="p">),</span>
+     <span class="c1">// 支持文件数组上传</span>
+   <span class="s2">&quot;files&quot;</span><span class="o">:</span> <span class="p">[</span>
+      <span class="k">new</span> <span class="n">UploadFileInfo</span><span class="p">(</span><span class="k">new</span> <span class="n">File</span><span class="p">(</span><span class="s2">&quot;./example/upload.txt&quot;</span><span class="p">),</span> <span class="s2">&quot;upload.txt&quot;</span><span class="p">),</span>
+      <span class="k">new</span> <span class="n">UploadFileInfo</span><span class="p">(</span><span class="k">new</span> <span class="n">File</span><span class="p">(</span><span class="s2">&quot;./example/upload.txt&quot;</span><span class="p">),</span> <span class="s2">&quot;upload.txt&quot;</span><span class="p">)</span>
+    <span class="p">]</span>
+<span class="p">});</span>
+<span class="n">response</span> <span class="o">=</span> <span class="kd">await</span> <span class="n">dio</span><span class="p">.</span><span class="n">post</span><span class="p">(</span><span class="s2">&quot;/info&quot;</span><span class="p">,</span> <span class="nl">data:</span> <span class="n">formData</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>值得一提的是，dio内部仍然使用HttpClient发起的请求，所以代理、请求认证、证书校验等和HttpClient是相同的，我们可以在<code class="docutils literal notranslate"><span class="pre">onHttpClientCreate</span> </code>回调中设置，例如：</p>
+<div class="highlight-dart notranslate"><div class="highlight"><pre><span></span><span class="p">(</span><span class="n">dio</span><span class="p">.</span><span class="n">httpClientAdapter</span> <span class="k">as</span> <span class="n">DefaultHttpClientAdapter</span><span class="p">).</span><span class="n">onHttpClientCreate</span> <span class="o">=</span> <span class="p">(</span><span class="n">client</span><span class="p">)</span> <span class="p">{</span>
+    <span class="c1">//设置代理 </span>
+    <span class="n">client</span><span class="p">.</span><span class="n">findProxy</span> <span class="o">=</span> <span class="p">(</span><span class="n">uri</span><span class="p">)</span> <span class="p">{</span>
+      <span class="k">return</span> <span class="s2">&quot;PROXY 192.168.1.2:8888&quot;</span><span class="p">;</span>
+    <span class="p">};</span>
+    <span class="c1">//校验证书</span>
+    <span class="n">httpClient</span><span class="p">.</span><span class="n">badCertificateCallback</span><span class="o">=</span><span class="p">(</span><span class="n">X509Certificate</span> <span class="n">cert</span><span class="p">,</span> <span class="kt">String</span> <span class="n">host</span><span class="p">,</span> <span class="kt">int</span> <span class="n">port</span><span class="p">){</span>
+      <span class="k">if</span><span class="p">(</span><span class="n">cert</span><span class="p">.</span><span class="n">pem</span><span class="o">==</span><span class="n">PEM</span><span class="p">){</span>
+      <span class="k">return</span> <span class="kc">true</span><span class="p">;</span> <span class="c1">//证书一致，则允许发送数据</span>
+     <span class="p">}</span>
+     <span class="k">return</span> <span class="kc">false</span><span class="p">;</span>
+    <span class="p">};</span>   
+  <span class="p">};</span>
+</pre></div>
+</div>
+<p>注意，<code class="docutils literal notranslate"><span class="pre">onHttpClientCreate</span> </code>会在当前dio实例内部需要创建HttpClient时调用，所以通过此回调配置HttpClient会对整个dio实例生效，如果你想针对某个应用请求单独的代理或证书校验策略，可以创建一个新的dio实例即可。</p>
+<p>怎么样，是不是很简单，除了这些基本的用法，dio还支持请求配置、拦截器等，官方资料比较详细，故本书不再赘述，详情可以参考dio主页：https://github.com/flutterchina/dio 。 下一节我们将使用dio实现一个分块下载器。</p>
+</div>
+<div class="section" id="id3">
+<h2>实例<a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h2>
+<p>我们通过Github开放的API来请求flutterchina组织下的所有公开的开源项目，实现：</p>
+<ol class="simple">
+<li><p>在请求阶段弹出loading</p></li>
+<li><p>请求结束后，如果请求失败，则展示错误信息；如果成功，则将项目名称列表展示出来。</p></li>
+</ol>
+<p>代码如下：</p>
+<div class="highlight-dart notranslate"><div class="highlight"><pre><span></span><span class="kd">class</span> <span class="nc">_FutureBuilderRouteState</span> <span class="kd">extends</span> <span class="n">State</span><span class="o">&lt;</span><span class="n">FutureBuilderRoute</span><span class="o">&gt;</span> <span class="p">{</span>
+  <span class="n">Dio</span> <span class="n">_dio</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Dio</span><span class="p">();</span>
+
+  <span class="nd">@override</span>
+  <span class="n">Widget</span> <span class="n">build</span><span class="p">(</span><span class="n">BuildContext</span> <span class="n">context</span><span class="p">)</span> <span class="p">{</span>
+
+    <span class="k">return</span> <span class="k">new</span> <span class="n">Container</span><span class="p">(</span>
+      <span class="nl">alignment:</span> <span class="n">Alignment</span><span class="p">.</span><span class="n">center</span><span class="p">,</span>
+      <span class="nl">child:</span> <span class="n">FutureBuilder</span><span class="p">(</span>
+          <span class="nl">future:</span> <span class="n">_dio</span><span class="p">.</span><span class="kd">get</span><span class="p">(</span><span class="s2">&quot;https://api.github.com/orgs/flutterchina/repos&quot;</span><span class="p">),</span>
+          <span class="nl">builder:</span> <span class="p">(</span><span class="n">BuildContext</span> <span class="n">context</span><span class="p">,</span> <span class="n">AsyncSnapshot</span> <span class="n">snapshot</span><span class="p">)</span> <span class="p">{</span>
+            <span class="c1">//请求完成</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">snapshot</span><span class="p">.</span><span class="n">connectionState</span> <span class="o">==</span> <span class="n">ConnectionState</span><span class="p">.</span><span class="n">done</span><span class="p">)</span> <span class="p">{</span>
+              <span class="n">Response</span> <span class="n">response</span> <span class="o">=</span> <span class="n">snapshot</span><span class="p">.</span><span class="n">data</span><span class="p">;</span>
+              <span class="c1">//发生错误</span>
+              <span class="k">if</span> <span class="p">(</span><span class="n">snapshot</span><span class="p">.</span><span class="n">hasError</span><span class="p">)</span> <span class="p">{</span>
+                <span class="k">return</span> <span class="n">Text</span><span class="p">(</span><span class="n">snapshot</span><span class="p">.</span><span class="n">error</span><span class="p">.</span><span class="n">toString</span><span class="p">());</span>
+              <span class="p">}</span>
+              <span class="c1">//请求成功，通过项目信息构建用于显示项目名称的ListView</span>
+              <span class="k">return</span> <span class="n">ListView</span><span class="p">(</span>
+                <span class="nl">children:</span> <span class="n">response</span><span class="p">.</span><span class="n">data</span><span class="p">.</span><span class="n">map</span><span class="o">&lt;</span><span class="n">Widget</span><span class="o">&gt;</span><span class="p">((</span><span class="n">e</span><span class="p">)</span> <span class="o">=&gt;</span>
+                    <span class="n">ListTile</span><span class="p">(</span><span class="nl">title:</span> <span class="n">Text</span><span class="p">(</span><span class="n">e</span><span class="p">[</span><span class="s2">&quot;full_name&quot;</span><span class="p">]))</span>
+                <span class="p">).</span><span class="n">toList</span><span class="p">(),</span>
+              <span class="p">);</span>
+            <span class="p">}</span>
+            <span class="c1">//请求未完成时弹出loading</span>
+            <span class="k">return</span> <span class="n">CircularProgressIndicator</span><span class="p">();</span>
+          <span class="p">}</span>
+      <span class="p">),</span>
+    <span class="p">);</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</div>
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">Flutter in action</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2014, Miguel Grinberg.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.5.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="../_sources/chapter11/dio.md.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

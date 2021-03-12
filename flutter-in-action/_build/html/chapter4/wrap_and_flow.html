@@ -1,0 +1,235 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>4.4 流式布局 &#8212; Flutter in action  documentation</title>
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="id1">
+<h1>4.4 流式布局<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h1>
+<p>在介绍Row和Colum时，如果子widget超出屏幕范围，则会报溢出错误，如：</p>
+<div class="highlight-dart notranslate"><div class="highlight"><pre><span></span><span class="n">Row</span><span class="p">(</span>
+  <span class="nl">children:</span> <span class="o">&lt;</span><span class="n">Widget</span><span class="o">&gt;</span><span class="p">[</span>
+    <span class="n">Text</span><span class="p">(</span><span class="s2">&quot;xxx&quot;</span><span class="o">*</span><span class="m">100</span><span class="p">)</span>
+  <span class="p">],</span>
+<span class="p">);</span>
+</pre></div>
+</div>
+<p>运行效果如图4-6所示：</p>
+<p><img alt="图4-6" src="../_images/4-6.png" /></p>
+<p>可以看到，右边溢出部分报错。这是因为Row默认只有一行，如果超出屏幕不会折行。我们把超出屏幕显示范围会自动折行的布局称为流式布局。Flutter中通过<code class="docutils literal notranslate"><span class="pre">Wrap</span></code>和<code class="docutils literal notranslate"><span class="pre">Flow</span></code>来支持流式布局，将上例中的Row换成Wrap后溢出部分则会自动折行，下面我们分别介绍<code class="docutils literal notranslate"><span class="pre">Wrap</span></code>和<code class="docutils literal notranslate"><span class="pre">Flow</span></code>.</p>
+<div class="section" id="wrap">
+<h2>4.4.1 Wrap<a class="headerlink" href="#wrap" title="Permalink to this headline">¶</a></h2>
+<p>下面是Wrap的定义:</p>
+<div class="highlight-dart notranslate"><div class="highlight"><pre><span></span><span class="n">Wrap</span><span class="p">({</span>
+  <span class="p">...</span>
+  <span class="k">this</span><span class="p">.</span><span class="n">direction</span> <span class="o">=</span> <span class="n">Axis</span><span class="p">.</span><span class="n">horizontal</span><span class="p">,</span>
+  <span class="k">this</span><span class="p">.</span><span class="n">alignment</span> <span class="o">=</span> <span class="n">WrapAlignment</span><span class="p">.</span><span class="n">start</span><span class="p">,</span>
+  <span class="k">this</span><span class="p">.</span><span class="n">spacing</span> <span class="o">=</span> <span class="m">0.0</span><span class="p">,</span>
+  <span class="k">this</span><span class="p">.</span><span class="n">runAlignment</span> <span class="o">=</span> <span class="n">WrapAlignment</span><span class="p">.</span><span class="n">start</span><span class="p">,</span>
+  <span class="k">this</span><span class="p">.</span><span class="n">runSpacing</span> <span class="o">=</span> <span class="m">0.0</span><span class="p">,</span>
+  <span class="k">this</span><span class="p">.</span><span class="n">crossAxisAlignment</span> <span class="o">=</span> <span class="n">WrapCrossAlignment</span><span class="p">.</span><span class="n">start</span><span class="p">,</span>
+  <span class="k">this</span><span class="p">.</span><span class="n">textDirection</span><span class="p">,</span>
+  <span class="k">this</span><span class="p">.</span><span class="n">verticalDirection</span> <span class="o">=</span> <span class="n">VerticalDirection</span><span class="p">.</span><span class="n">down</span><span class="p">,</span>
+  <span class="n">List</span><span class="o">&lt;</span><span class="n">Widget</span><span class="o">&gt;</span> <span class="n">children</span> <span class="o">=</span> <span class="k">const</span> <span class="o">&lt;</span><span class="n">Widget</span><span class="o">&gt;</span><span class="p">[],</span>
+<span class="p">})</span>
+</pre></div>
+</div>
+<p>我们可以看到Wrap的很多属性在<code class="docutils literal notranslate"><span class="pre">Row</span></code>（包括<code class="docutils literal notranslate"><span class="pre">Flex</span></code>和<code class="docutils literal notranslate"><span class="pre">Column</span></code>）中也有，如<code class="docutils literal notranslate"><span class="pre">direction</span></code>、<code class="docutils literal notranslate"><span class="pre">crossAxisAlignment</span></code>、<code class="docutils literal notranslate"><span class="pre">textDirection</span></code>、<code class="docutils literal notranslate"><span class="pre">verticalDirection</span></code>等，这些参数意义是相同的，我们不再重复介绍，读者可以查阅前面介绍<code class="docutils literal notranslate"><span class="pre">Row</span></code>的部分。读者可以认为<code class="docutils literal notranslate"><span class="pre">Wrap</span></code>和<code class="docutils literal notranslate"><span class="pre">Flex</span></code>（包括<code class="docutils literal notranslate"><span class="pre">Row</span></code>和<code class="docutils literal notranslate"><span class="pre">Column</span></code>）除了超出显示范围后<code class="docutils literal notranslate"><span class="pre">Wrap</span></code>会折行外，其它行为基本相同。下面我们看一下<code class="docutils literal notranslate"><span class="pre">Wrap</span></code>特有的几个属性：</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">spacing</span></code>：主轴方向子widget的间距</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">runSpacing</span></code>：纵轴方向的间距</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">runAlignment</span></code>：纵轴方向的对齐方式</p></li>
+</ul>
+<p>下面看一个示例子：</p>
+<div class="highlight-dart notranslate"><div class="highlight"><pre><span></span><span class="n">Wrap</span><span class="p">(</span>
+  <span class="nl">spacing:</span> <span class="m">8.0</span><span class="p">,</span> <span class="c1">// 主轴(水平)方向间距</span>
+  <span class="nl">runSpacing:</span> <span class="m">4.0</span><span class="p">,</span> <span class="c1">// 纵轴（垂直）方向间距</span>
+  <span class="nl">alignment:</span> <span class="n">WrapAlignment</span><span class="p">.</span><span class="n">center</span><span class="p">,</span> <span class="c1">//沿主轴方向居中</span>
+  <span class="nl">children:</span> <span class="o">&lt;</span><span class="n">Widget</span><span class="o">&gt;</span><span class="p">[</span>
+    <span class="k">new</span> <span class="n">Chip</span><span class="p">(</span>
+      <span class="nl">avatar:</span> <span class="k">new</span> <span class="n">CircleAvatar</span><span class="p">(</span><span class="nl">backgroundColor:</span> <span class="n">Colors</span><span class="p">.</span><span class="n">blue</span><span class="p">,</span> <span class="nl">child:</span> <span class="n">Text</span><span class="p">(</span><span class="s1">&#39;A&#39;</span><span class="p">)),</span>
+      <span class="nl">label:</span> <span class="k">new</span> <span class="n">Text</span><span class="p">(</span><span class="s1">&#39;Hamilton&#39;</span><span class="p">),</span>
+    <span class="p">),</span>
+    <span class="k">new</span> <span class="n">Chip</span><span class="p">(</span>
+      <span class="nl">avatar:</span> <span class="k">new</span> <span class="n">CircleAvatar</span><span class="p">(</span><span class="nl">backgroundColor:</span> <span class="n">Colors</span><span class="p">.</span><span class="n">blue</span><span class="p">,</span> <span class="nl">child:</span> <span class="n">Text</span><span class="p">(</span><span class="s1">&#39;M&#39;</span><span class="p">)),</span>
+      <span class="nl">label:</span> <span class="k">new</span> <span class="n">Text</span><span class="p">(</span><span class="s1">&#39;Lafayette&#39;</span><span class="p">),</span>
+    <span class="p">),</span>
+    <span class="k">new</span> <span class="n">Chip</span><span class="p">(</span>
+      <span class="nl">avatar:</span> <span class="k">new</span> <span class="n">CircleAvatar</span><span class="p">(</span><span class="nl">backgroundColor:</span> <span class="n">Colors</span><span class="p">.</span><span class="n">blue</span><span class="p">,</span> <span class="nl">child:</span> <span class="n">Text</span><span class="p">(</span><span class="s1">&#39;H&#39;</span><span class="p">)),</span>
+      <span class="nl">label:</span> <span class="k">new</span> <span class="n">Text</span><span class="p">(</span><span class="s1">&#39;Mulligan&#39;</span><span class="p">),</span>
+    <span class="p">),</span>
+    <span class="k">new</span> <span class="n">Chip</span><span class="p">(</span>
+      <span class="nl">avatar:</span> <span class="k">new</span> <span class="n">CircleAvatar</span><span class="p">(</span><span class="nl">backgroundColor:</span> <span class="n">Colors</span><span class="p">.</span><span class="n">blue</span><span class="p">,</span> <span class="nl">child:</span> <span class="n">Text</span><span class="p">(</span><span class="s1">&#39;J&#39;</span><span class="p">)),</span>
+      <span class="nl">label:</span> <span class="k">new</span> <span class="n">Text</span><span class="p">(</span><span class="s1">&#39;Laurens&#39;</span><span class="p">),</span>
+    <span class="p">),</span>
+  <span class="p">],</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p>运行效果如图4-7所示：</p>
+<p><img alt="图4-7" src="../_images/4-7.png" /></p>
+</div>
+<div class="section" id="flow">
+<h2>4.4.2 Flow<a class="headerlink" href="#flow" title="Permalink to this headline">¶</a></h2>
+<p>我们一般很少会使用<code class="docutils literal notranslate"><span class="pre">Flow</span></code>，因为其过于复杂，需要自己实现子widget的位置转换，在很多场景下首先要考虑的是<code class="docutils literal notranslate"><span class="pre">Wrap</span></code>是否满足需求。<code class="docutils literal notranslate"><span class="pre">Flow</span></code>主要用于一些需要自定义布局策略或性能要求较高(如动画中)的场景。<code class="docutils literal notranslate"><span class="pre">Flow</span></code>有如下优点：</p>
+<ul class="simple">
+<li><p>性能好；<code class="docutils literal notranslate"><span class="pre">Flow</span></code>是一个对子组件尺寸以及位置调整非常高效的控件，<code class="docutils literal notranslate"><span class="pre">Flow</span></code>用转换矩阵在对子组件进行位置调整的时候进行了优化：在<code class="docutils literal notranslate"><span class="pre">Flow</span></code>定位过后，如果子组件的尺寸或者位置发生了变化，在<code class="docutils literal notranslate"><span class="pre">FlowDelegate</span></code>中的<code class="docutils literal notranslate"><span class="pre">paintChildren()</span></code>方法中调用<code class="docutils literal notranslate"><span class="pre">context.paintChild</span></code> 进行重绘，而<code class="docutils literal notranslate"><span class="pre">context.paintChild</span></code>在重绘时使用了转换矩阵，并没有实际调整组件位置。</p></li>
+<li><p>灵活；由于我们需要自己实现<code class="docutils literal notranslate"><span class="pre">FlowDelegate</span></code>的<code class="docutils literal notranslate"><span class="pre">paintChildren()</span></code>方法，所以我们需要自己计算每一个组件的位置，因此，可以自定义布局策略。</p></li>
+</ul>
+<p>缺点：</p>
+<ul class="simple">
+<li><p>使用复杂。</p></li>
+<li><p>不能自适应子组件大小，必须通过指定父容器大小或实现<code class="docutils literal notranslate"><span class="pre">TestFlowDelegate</span></code>的<code class="docutils literal notranslate"><span class="pre">getSize</span></code>返回固定大小。</p></li>
+</ul>
+<p>示例：</p>
+<p>我们对六个色块进行自定义流式布局：</p>
+<div class="highlight-dart notranslate"><div class="highlight"><pre><span></span><span class="n">Flow</span><span class="p">(</span>
+  <span class="nl">delegate:</span> <span class="n">TestFlowDelegate</span><span class="p">(</span><span class="nl">margin:</span> <span class="n">EdgeInsets</span><span class="p">.</span><span class="n">all</span><span class="p">(</span><span class="m">10.0</span><span class="p">)),</span>
+  <span class="nl">children:</span> <span class="o">&lt;</span><span class="n">Widget</span><span class="o">&gt;</span><span class="p">[</span>
+    <span class="k">new</span> <span class="n">Container</span><span class="p">(</span><span class="nl">width:</span> <span class="m">80.0</span><span class="p">,</span> <span class="nl">height:</span><span class="m">80.0</span><span class="p">,</span> <span class="nl">color:</span> <span class="n">Colors</span><span class="p">.</span><span class="n">red</span><span class="p">,),</span>
+    <span class="k">new</span> <span class="n">Container</span><span class="p">(</span><span class="nl">width:</span> <span class="m">80.0</span><span class="p">,</span> <span class="nl">height:</span><span class="m">80.0</span><span class="p">,</span> <span class="nl">color:</span> <span class="n">Colors</span><span class="p">.</span><span class="n">green</span><span class="p">,),</span>
+    <span class="k">new</span> <span class="n">Container</span><span class="p">(</span><span class="nl">width:</span> <span class="m">80.0</span><span class="p">,</span> <span class="nl">height:</span><span class="m">80.0</span><span class="p">,</span> <span class="nl">color:</span> <span class="n">Colors</span><span class="p">.</span><span class="n">blue</span><span class="p">,),</span>
+    <span class="k">new</span> <span class="n">Container</span><span class="p">(</span><span class="nl">width:</span> <span class="m">80.0</span><span class="p">,</span> <span class="nl">height:</span><span class="m">80.0</span><span class="p">,</span>  <span class="nl">color:</span> <span class="n">Colors</span><span class="p">.</span><span class="n">yellow</span><span class="p">,),</span>
+    <span class="k">new</span> <span class="n">Container</span><span class="p">(</span><span class="nl">width:</span> <span class="m">80.0</span><span class="p">,</span> <span class="nl">height:</span><span class="m">80.0</span><span class="p">,</span> <span class="nl">color:</span> <span class="n">Colors</span><span class="p">.</span><span class="n">brown</span><span class="p">,),</span>
+    <span class="k">new</span> <span class="n">Container</span><span class="p">(</span><span class="nl">width:</span> <span class="m">80.0</span><span class="p">,</span> <span class="nl">height:</span><span class="m">80.0</span><span class="p">,</span>  <span class="nl">color:</span> <span class="n">Colors</span><span class="p">.</span><span class="n">purple</span><span class="p">,),</span>
+  <span class="p">],</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p>实现TestFlowDelegate:</p>
+<div class="highlight-dart notranslate"><div class="highlight"><pre><span></span><span class="kd">class</span> <span class="nc">TestFlowDelegate</span> <span class="kd">extends</span> <span class="n">FlowDelegate</span> <span class="p">{</span>
+  <span class="n">EdgeInsets</span> <span class="n">margin</span> <span class="o">=</span> <span class="n">EdgeInsets</span><span class="p">.</span><span class="n">zero</span><span class="p">;</span>
+  <span class="n">TestFlowDelegate</span><span class="p">({</span><span class="k">this</span><span class="p">.</span><span class="n">margin</span><span class="p">});</span>
+  <span class="nd">@override</span>
+  <span class="kt">void</span> <span class="n">paintChildren</span><span class="p">(</span><span class="n">FlowPaintingContext</span> <span class="n">context</span><span class="p">)</span> <span class="p">{</span>
+    <span class="kd">var</span> <span class="n">x</span> <span class="o">=</span> <span class="n">margin</span><span class="p">.</span><span class="n">left</span><span class="p">;</span>
+    <span class="kd">var</span> <span class="n">y</span> <span class="o">=</span> <span class="n">margin</span><span class="p">.</span><span class="n">top</span><span class="p">;</span>
+    <span class="c1">//计算每一个子widget的位置  </span>
+    <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="m">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">context</span><span class="p">.</span><span class="n">childCount</span><span class="p">;</span> <span class="n">i</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
+      <span class="kd">var</span> <span class="n">w</span> <span class="o">=</span> <span class="n">context</span><span class="p">.</span><span class="n">getChildSize</span><span class="p">(</span><span class="n">i</span><span class="p">).</span><span class="n">width</span> <span class="o">+</span> <span class="n">x</span> <span class="o">+</span> <span class="n">margin</span><span class="p">.</span><span class="n">right</span><span class="p">;</span>
+      <span class="k">if</span> <span class="p">(</span><span class="n">w</span> <span class="o">&lt;</span> <span class="n">context</span><span class="p">.</span><span class="n">size</span><span class="p">.</span><span class="n">width</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">context</span><span class="p">.</span><span class="n">paintChild</span><span class="p">(</span><span class="n">i</span><span class="p">,</span>
+            <span class="nl">transform:</span> <span class="k">new</span> <span class="n">Matrix4</span><span class="p">.</span><span class="n">translationValues</span><span class="p">(</span>
+                <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="m">0.0</span><span class="p">));</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">w</span> <span class="o">+</span> <span class="n">margin</span><span class="p">.</span><span class="n">left</span><span class="p">;</span>
+      <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">margin</span><span class="p">.</span><span class="n">left</span><span class="p">;</span>
+        <span class="n">y</span> <span class="o">+=</span> <span class="n">context</span><span class="p">.</span><span class="n">getChildSize</span><span class="p">(</span><span class="n">i</span><span class="p">).</span><span class="n">height</span> <span class="o">+</span> <span class="n">margin</span><span class="p">.</span><span class="n">top</span> <span class="o">+</span> <span class="n">margin</span><span class="p">.</span><span class="n">bottom</span><span class="p">;</span>
+        <span class="c1">//绘制子widget(有优化)  </span>
+        <span class="n">context</span><span class="p">.</span><span class="n">paintChild</span><span class="p">(</span><span class="n">i</span><span class="p">,</span>
+            <span class="nl">transform:</span> <span class="k">new</span> <span class="n">Matrix4</span><span class="p">.</span><span class="n">translationValues</span><span class="p">(</span>
+                <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="m">0.0</span><span class="p">));</span>
+         <span class="n">x</span> <span class="o">+=</span> <span class="n">context</span><span class="p">.</span><span class="n">getChildSize</span><span class="p">(</span><span class="n">i</span><span class="p">).</span><span class="n">width</span> <span class="o">+</span> <span class="n">margin</span><span class="p">.</span><span class="n">left</span> <span class="o">+</span> <span class="n">margin</span><span class="p">.</span><span class="n">right</span><span class="p">;</span>
+      <span class="p">}</span>
+    <span class="p">}</span>
+  <span class="p">}</span>
+
+  <span class="nd">@override</span>
+  <span class="n">getSize</span><span class="p">(</span><span class="n">BoxConstraints</span> <span class="n">constraints</span><span class="p">){</span>
+    <span class="c1">//指定Flow的大小  </span>
+    <span class="k">return</span> <span class="n">Size</span><span class="p">(</span><span class="kt">double</span><span class="p">.</span><span class="n">infinity</span><span class="p">,</span><span class="m">200.0</span><span class="p">);</span>
+  <span class="p">}</span>
+
+  <span class="nd">@override</span>
+  <span class="kt">bool</span> <span class="n">shouldRepaint</span><span class="p">(</span><span class="n">FlowDelegate</span> <span class="n">oldDelegate</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">return</span> <span class="n">oldDelegate</span> <span class="o">!=</span> <span class="k">this</span><span class="p">;</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>运行效果见图4-8：</p>
+<p><img alt="图4-8" src="../_images/4-8.png" /></p>
+<p>可以看到我们主要的任务就是实现<code class="docutils literal notranslate"><span class="pre">paintChildren</span></code>，它的主要任务是确定每个子widget位置。由于Flow不能自适应子widget的大小，我们通过在<code class="docutils literal notranslate"><span class="pre">getSize</span></code>返回一个固定大小来指定Flow的大小。</p>
+</div>
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">Flutter in action</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2014, Miguel Grinberg.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.5.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="../_sources/chapter4/wrap_and_flow.md.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

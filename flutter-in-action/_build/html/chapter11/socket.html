@@ -1,0 +1,119 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>11.6 使用Socket API &#8212; Flutter in action  documentation</title>
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="socket-api">
+<h1>11.6 使用Socket API<a class="headerlink" href="#socket-api" title="Permalink to this headline">¶</a></h1>
+<p>我们之前介绍的Http协议和WebSocket协议都属于应用层协议，除了它们，应用层协议还有很多如：SMTP、FTP等，这些应用层协议的实现都是通过Socket API来实现的。其实，操作系统中提供的原生网络请求API是标准的，在C语言的Socket库中，它主要提供了端到端建立链接和发送数据的基础API，而高级编程语言中的Socket库其实都是对操作系统的socket API的一个封装。所以，如果我们需要自定义协议或者想直接来控制管理网络链接、又或者我们觉得自带的HttpClient不好用想重新实现一个，这时我们就需要使用Socket。Flutter的Socket API在dart：io包中，下面我们看一个使用Socket实现简单http请求的示例，以请求百度首页为例：</p>
+<div class="highlight-dart notranslate"><div class="highlight"><pre><span></span><span class="n">_request</span><span class="p">()</span> <span class="kd">async</span><span class="p">{</span>
+  <span class="c1">//建立连接</span>
+  <span class="kd">var</span> <span class="n">socket</span><span class="o">=</span><span class="kd">await</span> <span class="n">Socket</span><span class="p">.</span><span class="n">connect</span><span class="p">(</span><span class="s2">&quot;baidu.com&quot;</span><span class="p">,</span> <span class="m">80</span><span class="p">);</span>
+  <span class="c1">//根据http协议，发送请求头</span>
+  <span class="n">socket</span><span class="p">.</span><span class="n">writeln</span><span class="p">(</span><span class="s2">&quot;GET / HTTP/1.1&quot;</span><span class="p">);</span>
+  <span class="n">socket</span><span class="p">.</span><span class="n">writeln</span><span class="p">(</span><span class="s2">&quot;Host:baidu.com&quot;</span><span class="p">);</span>
+  <span class="n">socket</span><span class="p">.</span><span class="n">writeln</span><span class="p">(</span><span class="s2">&quot;Connection:close&quot;</span><span class="p">);</span>
+  <span class="n">socket</span><span class="p">.</span><span class="n">writeln</span><span class="p">();</span>
+  <span class="kd">await</span> <span class="n">socket</span><span class="p">.</span><span class="n">flush</span><span class="p">();</span> <span class="c1">//发送</span>
+  <span class="c1">//读取返回内容</span>
+  <span class="n">_response</span> <span class="o">=</span><span class="kd">await</span> <span class="n">socket</span><span class="p">.</span><span class="n">transform</span><span class="p">(</span><span class="n">utf8</span><span class="p">.</span><span class="n">decoder</span><span class="p">).</span><span class="n">join</span><span class="p">();</span>
+  <span class="kd">await</span> <span class="n">socket</span><span class="p">.</span><span class="n">close</span><span class="p">();</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>可以看到，使用Socket需要我们自己实现Http协议（需要自己实现和服务器的通信过程），本例只是一个简单示例，没有处理重定向、cookie等。本示例完整代码参考示例demo，运行后效果如图11-2所示：</p>
+<p><img alt="图11-2" src="../_images/11-2.png" /></p>
+<p>可以看到响应内容分两个部分，第一部分是响应头，第二部分是响应体，服务端可以根据请求信息动态来输出响应体。由于本示例请求头比较简单，所以响应体和浏览器中访问的会有差别，读者可以补充一些请求头(如user-agent)来看看输出的变化。</p>
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">Flutter in action</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2014, Miguel Grinberg.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.5.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="../_sources/chapter11/socket.md.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

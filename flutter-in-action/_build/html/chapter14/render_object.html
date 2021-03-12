@@ -1,0 +1,367 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>14.3 RenderObject和RenderBox &#8212; Flutter in action  documentation</title>
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="renderobjectrenderbox">
+<h1>14.3 RenderObject和RenderBox<a class="headerlink" href="#renderobjectrenderbox" title="Permalink to this headline">¶</a></h1>
+<p>在上一节我们说过每个<code class="docutils literal notranslate"><span class="pre">Element</span></code>都对应一个<code class="docutils literal notranslate"><span class="pre">RenderObject</span></code>，我们可以通过<code class="docutils literal notranslate"><span class="pre">Element.renderObject</span></code> 来获取。并且我们也说过<code class="docutils literal notranslate"><span class="pre">RenderObject</span></code>的主要职责是Layout和绘制，所有的<code class="docutils literal notranslate"><span class="pre">RenderObject</span></code>会组成一棵渲染树Render Tree。本节我们将重点介绍一下<code class="docutils literal notranslate"><span class="pre">RenderObject</span></code>的作用。</p>
+<p><code class="docutils literal notranslate"><span class="pre">RenderObject</span></code>就是渲染树中的一个对象，它拥有一个<code class="docutils literal notranslate"><span class="pre">parent</span></code>和一个<code class="docutils literal notranslate"><span class="pre">parentData</span></code> 插槽（slot），所谓插槽，就是指预留的一个接口或位置，这个接口和位置是由其它对象来接入或占据的，这个接口或位置在软件中通常用预留变量来表示，而<code class="docutils literal notranslate"><span class="pre">parentData</span></code>正是一个预留变量，它正是由<code class="docutils literal notranslate"><span class="pre">parent</span></code> 来赋值的，<code class="docutils literal notranslate"><span class="pre">parent</span></code>通常会通过子<code class="docutils literal notranslate"><span class="pre">RenderObject</span></code>的<code class="docutils literal notranslate"><span class="pre">parentData</span></code>存储一些和子元素相关的数据，如在Stack布局中，<code class="docutils literal notranslate"><span class="pre">RenderStack</span></code>就会将子元素的偏移数据存储在子元素的<code class="docutils literal notranslate"><span class="pre">parentData</span></code>中（具体可以查看<code class="docutils literal notranslate"><span class="pre">Positioned</span></code>实现）。</p>
+<p><code class="docutils literal notranslate"><span class="pre">RenderObject</span></code>类本身实现了一套基础的layout和绘制协议，但是并没有定义子节点模型（如一个节点可以有几个子节点，没有子节点？一个？两个？或者更多？）。 它也没有定义坐标系统（如子节点定位是在笛卡尔坐标中还是极坐标？）和具体的布局协议（是通过宽高还是通过constraint和size?，或者是否由父节点在子节点布局之前或之后设置子节点的大小和位置等）。为此，Flutter提供了一个<code class="docutils literal notranslate"><span class="pre">RenderBox</span></code>类，它继承自``RenderObject<code class="docutils literal notranslate"><span class="pre">，布局坐标系统采用笛卡尔坐标系，这和Android和iOS原生坐标系是一致的，都是屏幕的top、left是原点，然后分宽高两个轴，大多数情况下，我们直接使用</span></code>RenderBox<code class="docutils literal notranslate"><span class="pre">就可以了，除非遇到要自定义布局模型或坐标系统的情况，下面我们重点介绍一下</span></code>RenderBox`。</p>
+<div class="section" id="id1">
+<h2>14.3.1 布局过程<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="constraints">
+<h3>Constraints<a class="headerlink" href="#constraints" title="Permalink to this headline">¶</a></h3>
+<p>在<code class="docutils literal notranslate"><span class="pre">RenderBox</span></code> 中，有个<code class="docutils literal notranslate"><span class="pre">size</span></code>属性用来保存控件的宽和高。<code class="docutils literal notranslate"><span class="pre">RenderBox</span></code>的layout是通过在组件树中从上往下传递<code class="docutils literal notranslate"><span class="pre">BoxConstraints</span></code>对象的实现的。<code class="docutils literal notranslate"><span class="pre">BoxConstraints</span></code>对象可以限制子节点的最大和最小宽高，子节点必须遵守父节点给定的限制条件。</p>
+<p>在布局阶段，父节点会调用子节点的<code class="docutils literal notranslate"><span class="pre">layout()</span></code>方法，下面我们看看<code class="docutils literal notranslate"><span class="pre">RenderObject</span></code>中<code class="docutils literal notranslate"><span class="pre">layout()</span></code>方法的大致实现（删掉了一些无关代码和异常捕获）:</p>
+<div class="highlight-dart notranslate"><div class="highlight"><pre><span></span><span class="kt">void</span> <span class="n">layout</span><span class="p">(</span><span class="n">Constraints</span> <span class="n">constraints</span><span class="p">,</span> <span class="p">{</span> <span class="kt">bool</span> <span class="n">parentUsesSize</span> <span class="o">=</span> <span class="kc">false</span> <span class="p">})</span> <span class="p">{</span>
+   <span class="p">...</span>
+   <span class="n">RenderObject</span> <span class="n">relayoutBoundary</span><span class="p">;</span> 
+    <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">parentUsesSize</span> <span class="o">||</span> <span class="n">sizedByParent</span> <span class="o">||</span> <span class="n">constraints</span><span class="p">.</span><span class="n">isTight</span> 
+    	<span class="o">||</span> <span class="n">parent</span> <span class="k">is</span><span class="o">!</span> <span class="n">RenderObject</span><span class="p">)</span> <span class="p">{</span>
+      <span class="n">relayoutBoundary</span> <span class="o">=</span> <span class="k">this</span><span class="p">;</span>
+    <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+      <span class="kd">final</span> <span class="n">RenderObject</span> <span class="n">parent</span> <span class="o">=</span> <span class="k">this</span><span class="p">.</span><span class="n">parent</span><span class="p">;</span>
+      <span class="n">relayoutBoundary</span> <span class="o">=</span> <span class="n">parent</span><span class="p">.</span><span class="n">_relayoutBoundary</span><span class="p">;</span>
+    <span class="p">}</span>
+    <span class="p">...</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">sizedByParent</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">performResize</span><span class="p">();</span>
+    <span class="p">}</span>
+    <span class="n">performLayout</span><span class="p">();</span>
+    <span class="p">...</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>可以看到<code class="docutils literal notranslate"><span class="pre">layout</span></code>方法需要传入两个参数，第一个为<code class="docutils literal notranslate"><span class="pre">constraints</span></code>，即 父节点对子节点大小的限制，该值根据父节点的布局逻辑确定。另外一个参数是 <code class="docutils literal notranslate"><span class="pre">parentUsesSize</span></code>，该值用于确定 <code class="docutils literal notranslate"><span class="pre">relayoutBoundary</span></code>，该参数表示子节点布局变化是否影响父节点，如果为<code class="docutils literal notranslate"><span class="pre">true</span></code>，当子节点布局发生变化时父节点都会标记为需要重新布局，如果为<code class="docutils literal notranslate"><span class="pre">false</span></code>，则子节点布局发生变化后不会影响父节点。</p>
+<div class="section" id="relayoutboundary">
+<h4>relayoutBoundary<a class="headerlink" href="#relayoutboundary" title="Permalink to this headline">¶</a></h4>
+<p>上面<code class="docutils literal notranslate"><span class="pre">layout()</span></code>源码中定义了一个<code class="docutils literal notranslate"><span class="pre">relayoutBoundary</span></code>变量，什么是 <code class="docutils literal notranslate"><span class="pre">relayoutBoundary</span></code>？在前面介绍<code class="docutils literal notranslate"><span class="pre">Element</span></code>时，我们讲过当一个<code class="docutils literal notranslate"><span class="pre">Element</span></code>标记为 dirty 时便会重新build，这时<code class="docutils literal notranslate"><span class="pre">RenderObject</span></code>便会重新布局，我们是通过调用 <code class="docutils literal notranslate"><span class="pre">markNeedsBuild()</span></code> 来标记<code class="docutils literal notranslate"><span class="pre">Element</span></code>为dirty的。在<code class="docutils literal notranslate"><span class="pre">RenderObject</span></code>中有一个类似的<code class="docutils literal notranslate"><span class="pre">markNeedsLayout()</span></code>方法，它会将<code class="docutils literal notranslate"><span class="pre">RenderObject</span></code>的布局状态标记为 dirty，这样在下一个frame中便会重新layout，我们看看<code class="docutils literal notranslate"><span class="pre">RenderObject</span></code>的<code class="docutils literal notranslate"><span class="pre">markNeedsLayout()</span></code>的部分源码：</p>
+<div class="highlight-dart notranslate"><div class="highlight"><pre><span></span><span class="kt">void</span> <span class="n">markNeedsLayout</span><span class="p">()</span> <span class="p">{</span>
+  <span class="p">...</span>
+  <span class="k">assert</span><span class="p">(</span><span class="n">_relayoutBoundary</span> <span class="o">!=</span> <span class="kc">null</span><span class="p">);</span>
+  <span class="k">if</span> <span class="p">(</span><span class="n">_relayoutBoundary</span> <span class="o">!=</span> <span class="k">this</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">markParentNeedsLayout</span><span class="p">();</span>
+  <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+    <span class="n">_needsLayout</span> <span class="o">=</span> <span class="kc">true</span><span class="p">;</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">owner</span> <span class="o">!=</span> <span class="kc">null</span><span class="p">)</span> <span class="p">{</span>
+      <span class="p">...</span>
+      <span class="n">owner</span><span class="p">.</span><span class="n">_nodesNeedingLayout</span><span class="p">.</span><span class="n">add</span><span class="p">(</span><span class="k">this</span><span class="p">);</span>
+      <span class="n">owner</span><span class="p">.</span><span class="n">requestVisualUpdate</span><span class="p">();</span>
+    <span class="p">}</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>代码大致逻辑是先判断自身是不是<code class="docutils literal notranslate"><span class="pre">relayoutBoundary</span></code>，如果不是就继续向parent 查找，一直向上查找到是 <code class="docutils literal notranslate"><span class="pre">relayoutBoundary</span></code> 的 <code class="docutils literal notranslate"><span class="pre">RenderObject</span></code>为止，然后再将其标记为 dirty 的。这样来看它的作用就比较明显了，意思就是当一个控件的大小被改变时可能会影响到它的 parent，因此 parent 也需要被重新布局，那么到什么时候是个头呢？答案就是 <code class="docutils literal notranslate"><span class="pre">relayoutBoundary</span></code>，如果一个 <code class="docutils literal notranslate"><span class="pre">RenderObject</span></code> 是 <code class="docutils literal notranslate"><span class="pre">relayoutBoundary</span></code>，就表示它的大小变化不会再影响到 parent 的大小了，于是 parent 也就不用重新布局了。</p>
+</div>
+<div class="section" id="performresize-performlayout">
+<h4>performResize 和 performLayout<a class="headerlink" href="#performresize-performlayout" title="Permalink to this headline">¶</a></h4>
+<p><code class="docutils literal notranslate"><span class="pre">RenderBox</span></code>实际的测量和布局逻辑是在<code class="docutils literal notranslate"><span class="pre">performResize()</span></code> 和 <code class="docutils literal notranslate"><span class="pre">performLayout()</span></code>两个方法中，RenderBox子类需要实现这两个方法来定制自身的布局逻辑。根据<code class="docutils literal notranslate"><span class="pre">layout()</span></code> 源码可以看出只有 <code class="docutils literal notranslate"><span class="pre">sizedByParent</span></code> 为 <code class="docutils literal notranslate"><span class="pre">true</span></code> 时，<code class="docutils literal notranslate"><span class="pre">performResize()</span></code> 才会被调用，而 <code class="docutils literal notranslate"><span class="pre">performLayout()</span></code> 是每次布局都会被调用的。<code class="docutils literal notranslate"><span class="pre">sizedByParent</span></code> 意为该节点的大小是否仅通过 parent 传给它的 constraints 就可以确定了，即该节点的大小与它自身的属性和其子节点无关，比如如果一个控件永远充满 parent 的大小，那么 <code class="docutils literal notranslate"><span class="pre">sizedByParent</span> </code>就应该返回<code class="docutils literal notranslate"> <span class="pre">true</span></code>，此时其大小在 <code class="docutils literal notranslate"><span class="pre">performResize()</span></code> 中就确定了，在后面的 <code class="docutils literal notranslate"><span class="pre">performLayout()</span></code> 方法中将不会再被修改了，这种情况下 <code class="docutils literal notranslate"><span class="pre">performLayout()</span></code> 只负责布局子节点。</p>
+<p>在 <code class="docutils literal notranslate"><span class="pre">performLayout()</span></code> 方法中除了完成自身布局，也必须完成子节点的布局，这是因为只有父子节点全部完成后布局流程才算真正完成。所以最终的调用栈将会变成：<em>layout() &gt; performResize()/performLayout() &gt; child.layout() &gt; …</em>  ，如此递归完成整个UI的布局。</p>
+<p><code class="docutils literal notranslate"><span class="pre">RenderBox</span></code>子类要定制布局算法不应该重写<code class="docutils literal notranslate"><span class="pre">layout()</span></code>方法，因为对于任何RenderBox的子类来说，它的layout流程基本是相同的，不同之处只在具体的布局算法，而具体的布局算法子类应该通过重写<code class="docutils literal notranslate"><span class="pre">performResize()</span></code> 和 <code class="docutils literal notranslate"><span class="pre">performLayout()</span></code>两个方法来实现，他们会在<code class="docutils literal notranslate"><span class="pre">layout()</span></code>中被调用。</p>
+</div>
+<div class="section" id="parentdata">
+<h4>ParentData<a class="headerlink" href="#parentdata" title="Permalink to this headline">¶</a></h4>
+<p>当layout结束后，每个节点的位置（相对于父节点的偏移）就已经确定了，<code class="docutils literal notranslate"><span class="pre">RenderObject</span></code>就可以根据位置信息来进行最终的绘制。但是在layout过程中，节点的位置信息怎么保存？对于大多数<code class="docutils literal notranslate"><span class="pre">RenderBox</span></code>子类来说如果子类只有一个子节点，那么子节点偏移一般都是<code class="docutils literal notranslate"><span class="pre">Offset.zero</span></code> ，如果有多个子节点，则每个子节点的偏移就可能不同。而子节点在父节点的偏移数据正是通过<code class="docutils literal notranslate"><span class="pre">RenderObject</span></code>的<code class="docutils literal notranslate"><span class="pre">parentData</span></code>属性来保存的。在<code class="docutils literal notranslate"><span class="pre">RenderBox</span></code>中，其<code class="docutils literal notranslate"><span class="pre">parentData</span></code>属性默认是一个<code class="docutils literal notranslate"><span class="pre">BoxParentData</span></code>对象，该属性只能通过父节点的<code class="docutils literal notranslate"><span class="pre">setupParentData()</span></code>方法来设置：</p>
+<div class="highlight-dart notranslate"><div class="highlight"><pre><span></span><span class="kd">abstract</span> <span class="kd">class</span> <span class="nc">RenderBox</span> <span class="kd">extends</span> <span class="n">RenderObject</span> <span class="p">{</span>
+  <span class="nd">@override</span>
+  <span class="kt">void</span> <span class="n">setupParentData</span><span class="p">(</span><span class="kd">covariant</span> <span class="n">RenderObject</span> <span class="n">child</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">child</span><span class="p">.</span><span class="n">parentData</span> <span class="k">is</span><span class="o">!</span> <span class="n">BoxParentData</span><span class="p">)</span>
+      <span class="n">child</span><span class="p">.</span><span class="n">parentData</span> <span class="o">=</span> <span class="n">BoxParentData</span><span class="p">();</span>
+  <span class="p">}</span>
+  <span class="p">...</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">BoxParentData</span></code>定义如下：</p>
+<div class="highlight-dart notranslate"><div class="highlight"><pre><span></span><span class="c1">/// Parentdata 会被RenderBox和它的子类使用.</span>
+<span class="kd">class</span> <span class="nc">BoxParentData</span> <span class="kd">extends</span> <span class="n">ParentData</span> <span class="p">{</span>
+  <span class="c1">/// offset表示在子节点在父节点坐标系中的绘制偏移  </span>
+  <span class="n">Offset</span> <span class="n">offset</span> <span class="o">=</span> <span class="n">Offset</span><span class="p">.</span><span class="n">zero</span><span class="p">;</span>
+
+  <span class="nd">@override</span>
+  <span class="kt">String</span> <span class="n">toString</span><span class="p">()</span> <span class="o">=&gt;</span> <span class="s1">&#39;offset=</span><span class="si">$</span><span class="n">offset</span><span class="s1">&#39;</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<blockquote>
+<div><p>一定要注意，<code class="docutils literal notranslate"><span class="pre">RenderObject</span></code>的<code class="docutils literal notranslate"><span class="pre">parentData</span></code> 只能通过父元素设置.</p>
+</div></blockquote>
+<p>当然，<code class="docutils literal notranslate"><span class="pre">ParentData</span></code>并不仅仅可以用来存储偏移信息，通常所有和子节点特定的数据都可以存储到子节点的<code class="docutils literal notranslate"><span class="pre">ParentData</span></code>中，如<code class="docutils literal notranslate"><span class="pre">ContainerBox</span></code>的<code class="docutils literal notranslate"><span class="pre">ParentData</span></code>就保存了指向兄弟节点的<code class="docutils literal notranslate"><span class="pre">previousSibling</span></code>和<code class="docutils literal notranslate"><span class="pre">nextSibling</span></code>，<code class="docutils literal notranslate"><span class="pre">Element.visitChildren()</span></code>方法也正是通过它们来实现对子节点的遍历。再比如<code class="docutils literal notranslate"><span class="pre">KeepAlive</span></code> 组件，它使用<code class="docutils literal notranslate"><span class="pre">KeepAliveParentDataMixin</span></code>（继承自<code class="docutils literal notranslate"><span class="pre">ParentData</span></code>） 来保存子节的<code class="docutils literal notranslate"><span class="pre">keepAlive</span></code>状态。</p>
+</div>
+</div>
+</div>
+<div class="section" id="id2">
+<h2>14.3.2 绘制过程<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">RenderObject</span></code>可以通过<code class="docutils literal notranslate"><span class="pre">paint()</span></code>方法来完成具体绘制逻辑，流程和布局流程相似，子类可以实现<code class="docutils literal notranslate"><span class="pre">paint()</span></code>方法来完成自身的绘制逻辑，<code class="docutils literal notranslate"><span class="pre">paint()</span></code>签名如下：</p>
+<div class="highlight-dart notranslate"><div class="highlight"><pre><span></span><span class="kt">void</span> <span class="n">paint</span><span class="p">(</span><span class="n">PaintingContext</span> <span class="n">context</span><span class="p">,</span> <span class="n">Offset</span> <span class="n">offset</span><span class="p">)</span> <span class="p">{</span> <span class="p">}</span>
+</pre></div>
+</div>
+<p>通过<code class="docutils literal notranslate"><span class="pre">context.canvas</span></code>可以取到<code class="docutils literal notranslate"><span class="pre">Canvas</span></code>对象，接下来就可以调用<code class="docutils literal notranslate"><span class="pre">Canvas</span></code> API来实现具体的绘制逻辑。</p>
+<p>如果节点有子节点，它除了完成自身绘制逻辑之外，还要调用子节点的绘制方法。我们以<code class="docutils literal notranslate"><span class="pre">RenderFlex</span></code>对象为例说明：</p>
+<div class="highlight-dart notranslate"><div class="highlight"><pre><span></span><span class="nd">@override</span>
+<span class="kt">void</span> <span class="n">paint</span><span class="p">(</span><span class="n">PaintingContext</span> <span class="n">context</span><span class="p">,</span> <span class="n">Offset</span> <span class="n">offset</span><span class="p">)</span> <span class="p">{</span>
+
+  <span class="c1">// 如果子元素未超出当前边界，则绘制子元素  </span>
+  <span class="k">if</span> <span class="p">(</span><span class="n">_overflow</span> <span class="o">&lt;=</span> <span class="m">0.0</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">defaultPaint</span><span class="p">(</span><span class="n">context</span><span class="p">,</span> <span class="n">offset</span><span class="p">);</span>
+    <span class="k">return</span><span class="p">;</span>
+  <span class="p">}</span>
+
+  <span class="c1">// 如果size为空，则无需绘制</span>
+  <span class="k">if</span> <span class="p">(</span><span class="n">size</span><span class="p">.</span><span class="n">isEmpty</span><span class="p">)</span>
+    <span class="k">return</span><span class="p">;</span>
+
+  <span class="c1">// 剪裁掉溢出边界的部分</span>
+  <span class="n">context</span><span class="p">.</span><span class="n">pushClipRect</span><span class="p">(</span><span class="n">needsCompositing</span><span class="p">,</span> <span class="n">offset</span><span class="p">,</span> <span class="n">Offset</span><span class="p">.</span><span class="n">zero</span> <span class="o">&amp;</span> <span class="n">size</span><span class="p">,</span> <span class="n">defaultPaint</span><span class="p">);</span>
+
+  <span class="k">assert</span><span class="p">(()</span> <span class="p">{</span>
+    <span class="kd">final</span> <span class="kt">String</span> <span class="n">debugOverflowHints</span> <span class="o">=</span> <span class="s1">&#39;...&#39;</span><span class="p">;</span> <span class="c1">//溢出提示内容，省略</span>
+    <span class="c1">// 绘制溢出部分的错误提示样式</span>
+    <span class="n">Rect</span> <span class="n">overflowChildRect</span><span class="p">;</span>
+    <span class="k">switch</span> <span class="p">(</span><span class="n">_direction</span><span class="p">)</span> <span class="p">{</span>
+      <span class="k">case</span> <span class="n">Axis</span><span class="p">.</span><span class="nl">horizontal:</span>
+        <span class="n">overflowChildRect</span> <span class="o">=</span> <span class="n">Rect</span><span class="p">.</span><span class="n">fromLTWH</span><span class="p">(</span><span class="m">0.0</span><span class="p">,</span> <span class="m">0.0</span><span class="p">,</span> <span class="n">size</span><span class="p">.</span><span class="n">width</span> <span class="o">+</span> <span class="n">_overflow</span><span class="p">,</span> <span class="m">0.0</span><span class="p">);</span>
+        <span class="k">break</span><span class="p">;</span>
+      <span class="k">case</span> <span class="n">Axis</span><span class="p">.</span><span class="nl">vertical:</span>
+        <span class="n">overflowChildRect</span> <span class="o">=</span> <span class="n">Rect</span><span class="p">.</span><span class="n">fromLTWH</span><span class="p">(</span><span class="m">0.0</span><span class="p">,</span> <span class="m">0.0</span><span class="p">,</span> <span class="m">0.0</span><span class="p">,</span> <span class="n">size</span><span class="p">.</span><span class="n">height</span> <span class="o">+</span> <span class="n">_overflow</span><span class="p">);</span>
+        <span class="k">break</span><span class="p">;</span>
+    <span class="p">}</span>  
+    <span class="n">paintOverflowIndicator</span><span class="p">(</span><span class="n">context</span><span class="p">,</span> <span class="n">offset</span><span class="p">,</span> <span class="n">Offset</span><span class="p">.</span><span class="n">zero</span> <span class="o">&amp;</span> <span class="n">size</span><span class="p">,</span>
+                           <span class="n">overflowChildRect</span><span class="p">,</span> <span class="nl">overflowHints:</span> <span class="n">debugOverflowHints</span><span class="p">);</span>
+    <span class="k">return</span> <span class="kc">true</span><span class="p">;</span>
+  <span class="p">}());</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>代码很简单，首先判断有无溢出，如果没有则调用<code class="docutils literal notranslate"><span class="pre">defaultPaint(context,</span> <span class="pre">offset)</span></code>来完成绘制，该方法源码如下：</p>
+<div class="highlight-dart notranslate"><div class="highlight"><pre><span></span><span class="kt">void</span> <span class="n">defaultPaint</span><span class="p">(</span><span class="n">PaintingContext</span> <span class="n">context</span><span class="p">,</span> <span class="n">Offset</span> <span class="n">offset</span><span class="p">)</span> <span class="p">{</span>
+  <span class="n">ChildType</span> <span class="n">child</span> <span class="o">=</span> <span class="n">firstChild</span><span class="p">;</span>
+  <span class="k">while</span> <span class="p">(</span><span class="n">child</span> <span class="o">!=</span> <span class="kc">null</span><span class="p">)</span> <span class="p">{</span>
+    <span class="kd">final</span> <span class="n">ParentDataType</span> <span class="n">childParentData</span> <span class="o">=</span> <span class="n">child</span><span class="p">.</span><span class="n">parentData</span><span class="p">;</span>
+    <span class="c1">//绘制子节点， </span>
+    <span class="n">context</span><span class="p">.</span><span class="n">paintChild</span><span class="p">(</span><span class="n">child</span><span class="p">,</span> <span class="n">childParentData</span><span class="p">.</span><span class="n">offset</span> <span class="o">+</span> <span class="n">offset</span><span class="p">);</span>
+    <span class="n">child</span> <span class="o">=</span> <span class="n">childParentData</span><span class="p">.</span><span class="n">nextSibling</span><span class="p">;</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>很明显，由于Flex本身没有需要绘制的东西，所以直接遍历其子节点，然后调用<code class="docutils literal notranslate"><span class="pre">paintChild()</span></code>来绘制子节点，同时将子节点<code class="docutils literal notranslate"><span class="pre">ParentData</span></code>中在layout阶段保存的offset加上自身偏移作为第二个参数传递给<code class="docutils literal notranslate"><span class="pre">paintChild()</span></code>。而如果子节点还有子节点时，<code class="docutils literal notranslate"><span class="pre">paintChild()</span></code>方法还会调用子节点的<code class="docutils literal notranslate"><span class="pre">paint()</span></code>方法，如此递归完成整个节点树的绘制，最终调用栈为： <em>paint() &gt; paintChild() &gt; paint() …</em> 。</p>
+<p>当需要绘制的内容大小溢出当前空间时，将会执行<code class="docutils literal notranslate"><span class="pre">paintOverflowIndicator()</span></code> 来绘制溢出部分提示，这个就是我们经常看到的溢出提示，如图14-3所示：</p>
+<p><img alt="overflow" src="../_images/14-3.png" /></p>
+<div class="section" id="repaintboundary">
+<h3>RepaintBoundary<a class="headerlink" href="#repaintboundary" title="Permalink to this headline">¶</a></h3>
+<p>我们已经在<code class="docutils literal notranslate"><span class="pre">CustomPaint</span></code>一节中介绍过<code class="docutils literal notranslate"><span class="pre">RepaintBoundary</span></code>，现在我们深入的了解一些。与 <code class="docutils literal notranslate"><span class="pre">RelayoutBoundary</span></code> 相似，<code class="docutils literal notranslate"><span class="pre">RepaintBoundary</span></code>是用于在确定重绘边界的，与<code class="docutils literal notranslate"><span class="pre">RelayoutBoundary</span></code>不同的是，这个绘制边界需要由开发者通过<code class="docutils literal notranslate"><span class="pre">RepaintBoundary</span></code> 组件自己指定，如：</p>
+<div class="highlight-dart notranslate"><div class="highlight"><pre><span></span><span class="n">CustomPaint</span><span class="p">(</span>
+  <span class="nl">size:</span> <span class="n">Size</span><span class="p">(</span><span class="m">300</span><span class="p">,</span> <span class="m">300</span><span class="p">),</span> <span class="c1">//指定画布大小</span>
+  <span class="nl">painter:</span> <span class="n">MyPainter</span><span class="p">(),</span>
+  <span class="nl">child:</span> <span class="n">RepaintBoundary</span><span class="p">(</span>
+    <span class="nl">child:</span> <span class="n">Container</span><span class="p">(...),</span>
+  <span class="p">),</span>
+<span class="p">),</span>
+</pre></div>
+</div>
+<p>下面我们看看<code class="docutils literal notranslate"><span class="pre">RepaintBoundary</span></code>的原理，<code class="docutils literal notranslate"><span class="pre">RenderObject</span></code>有一个<code class="docutils literal notranslate"><span class="pre">isRepaintBoundary</span> </code>属性，该属性决定这个<code class="docutils literal notranslate"><span class="pre">RenderObject</span></code>重绘时是否独立于其父元素，如果该属性值为<code class="docutils literal notranslate"><span class="pre">true</span></code> ，则独立绘制，反之则一起绘制。那独立绘制是怎么实现的呢？ 答案就在<code class="docutils literal notranslate"><span class="pre">paintChild()</span></code>源码中：</p>
+<div class="highlight-dart notranslate"><div class="highlight"><pre><span></span><span class="kt">void</span> <span class="n">paintChild</span><span class="p">(</span><span class="n">RenderObject</span> <span class="n">child</span><span class="p">,</span> <span class="n">Offset</span> <span class="n">offset</span><span class="p">)</span> <span class="p">{</span>
+  <span class="p">...</span>
+  <span class="k">if</span> <span class="p">(</span><span class="n">child</span><span class="p">.</span><span class="n">isRepaintBoundary</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">stopRecordingIfNeeded</span><span class="p">();</span>
+    <span class="n">_compositeChild</span><span class="p">(</span><span class="n">child</span><span class="p">,</span> <span class="n">offset</span><span class="p">);</span>
+  <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+    <span class="n">child</span><span class="p">.</span><span class="n">_paintWithContext</span><span class="p">(</span><span class="k">this</span><span class="p">,</span> <span class="n">offset</span><span class="p">);</span>
+  <span class="p">}</span>
+  <span class="p">...</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>我们可以看到，在绘制子节点时，如果<code class="docutils literal notranslate"><span class="pre">child.isRepaintBoundary</span></code> 为 <code class="docutils literal notranslate"><span class="pre">true</span></code>则会调用<code class="docutils literal notranslate"><span class="pre">_compositeChild()</span></code>方法，<code class="docutils literal notranslate"><span class="pre">_compositeChild()</span></code>源码如下：</p>
+<div class="highlight-dart notranslate"><div class="highlight"><pre><span></span><span class="kt">void</span> <span class="n">_compositeChild</span><span class="p">(</span><span class="n">RenderObject</span> <span class="n">child</span><span class="p">,</span> <span class="n">Offset</span> <span class="n">offset</span><span class="p">)</span> <span class="p">{</span>
+  <span class="c1">// 给子节点创建一个layer ，然后再上面绘制子节点 </span>
+  <span class="k">if</span> <span class="p">(</span><span class="n">child</span><span class="p">.</span><span class="n">_needsPaint</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">repaintCompositedChild</span><span class="p">(</span><span class="n">child</span><span class="p">,</span> <span class="nl">debugAlsoPaintedParent:</span> <span class="kc">true</span><span class="p">);</span>
+  <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+    <span class="p">...</span>
+  <span class="p">}</span>
+  <span class="k">assert</span><span class="p">(</span><span class="n">child</span><span class="p">.</span><span class="n">_layer</span> <span class="o">!=</span> <span class="kc">null</span><span class="p">);</span>
+  <span class="n">child</span><span class="p">.</span><span class="n">_layer</span><span class="p">.</span><span class="n">offset</span> <span class="o">=</span> <span class="n">offset</span><span class="p">;</span>
+  <span class="n">appendLayer</span><span class="p">(</span><span class="n">child</span><span class="p">.</span><span class="n">_layer</span><span class="p">);</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>很明显了，独立绘制是通过在不同的layer（层）上绘制的。所以，很明显，正确使用<code class="docutils literal notranslate"><span class="pre">isRepaintBoundary</span></code>属性可以提高绘制效率，避免不必要的重绘。具体原理是：和触发重新build和layout类似，<code class="docutils literal notranslate"><span class="pre">RenderObject</span></code>也提供了一个<code class="docutils literal notranslate"><span class="pre">markNeedsPaint()</span></code>方法，其源码如下：</p>
+<div class="highlight-dart notranslate"><div class="highlight"><pre><span></span><span class="kt">void</span> <span class="n">markNeedsPaint</span><span class="p">()</span> <span class="p">{</span>
+ <span class="p">...</span>
+  <span class="c1">//如果RenderObject.isRepaintBoundary 为true,则该RenderObject拥有layer，直接绘制  </span>
+  <span class="k">if</span> <span class="p">(</span><span class="n">isRepaintBoundary</span><span class="p">)</span> <span class="p">{</span>
+    <span class="p">...</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">owner</span> <span class="o">!=</span> <span class="kc">null</span><span class="p">)</span> <span class="p">{</span>
+      <span class="c1">//找到最近的layer，绘制  </span>
+      <span class="n">owner</span><span class="p">.</span><span class="n">_nodesNeedingPaint</span><span class="p">.</span><span class="n">add</span><span class="p">(</span><span class="k">this</span><span class="p">);</span>
+      <span class="n">owner</span><span class="p">.</span><span class="n">requestVisualUpdate</span><span class="p">();</span>
+    <span class="p">}</span>
+  <span class="p">}</span> <span class="k">else</span> <span class="k">if</span> <span class="p">(</span><span class="n">parent</span> <span class="k">is</span> <span class="n">RenderObject</span><span class="p">)</span> <span class="p">{</span>
+    <span class="c1">// 没有自己的layer, 会和一个祖先节点共用一个layer  </span>
+    <span class="k">assert</span><span class="p">(</span><span class="n">_layer</span> <span class="o">==</span> <span class="kc">null</span><span class="p">);</span>
+    <span class="kd">final</span> <span class="n">RenderObject</span> <span class="n">parent</span> <span class="o">=</span> <span class="k">this</span><span class="p">.</span><span class="n">parent</span><span class="p">;</span>
+    <span class="c1">// 向父级递归查找  </span>
+    <span class="n">parent</span><span class="p">.</span><span class="n">markNeedsPaint</span><span class="p">();</span>
+    <span class="k">assert</span><span class="p">(</span><span class="n">parent</span> <span class="o">==</span> <span class="k">this</span><span class="p">.</span><span class="n">parent</span><span class="p">);</span>
+  <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+    <span class="c1">// 如果直到根节点也没找到一个Layer，那么便需要绘制自身，因为没有其它节点可以绘制根节点。  </span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">owner</span> <span class="o">!=</span> <span class="kc">null</span><span class="p">)</span>
+      <span class="n">owner</span><span class="p">.</span><span class="n">requestVisualUpdate</span><span class="p">();</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>可以看出，当调用 <code class="docutils literal notranslate"><span class="pre">markNeedsPaint()</span></code> 方法时，会从当前 <code class="docutils literal notranslate"><span class="pre">RenderObject</span></code> 开始一直向父节点查找，直到找到 一个<code class="docutils literal notranslate"><span class="pre">isRepaintBoundary</span></code> 为 <code class="docutils literal notranslate"><span class="pre">true</span></code>的<code class="docutils literal notranslate"><span class="pre">RenderObject</span></code> 时，才会触发重绘，这样便可以实现局部重绘。当 有<code class="docutils literal notranslate"><span class="pre">RenderObject</span></code> 绘制的很频繁或很复杂时，可以通过RepaintBoundary Widget来指定<code class="docutils literal notranslate"><span class="pre">isRepaintBoundary</span></code> 为 <code class="docutils literal notranslate"><span class="pre">true</span></code>，这样在绘制时仅会重绘自身而无需重绘它的 parent，如此便可提高性能。</p>
+<p>还有一个问题，通过<code class="docutils literal notranslate"><span class="pre">RepaintBoundary</span></code> 如何设置<code class="docutils literal notranslate"><span class="pre">isRepaintBoundary</span></code>属性呢？其实，如果使用了<code class="docutils literal notranslate"><span class="pre">RepaintBoundary</span></code>，其对应的<code class="docutils literal notranslate"><span class="pre">RenderRepaintBoundary</span></code>会自动将<code class="docutils literal notranslate"><span class="pre">isRepaintBoundary</span></code>设为<code class="docutils literal notranslate"><span class="pre">true</span></code>的：</p>
+<div class="highlight-dart notranslate"><div class="highlight"><pre><span></span><span class="kd">class</span> <span class="nc">RenderRepaintBoundary</span> <span class="kd">extends</span> <span class="n">RenderProxyBox</span> <span class="p">{</span>
+  <span class="c1">/// Creates a repaint boundary around [child].</span>
+  <span class="n">RenderRepaintBoundary</span><span class="p">({</span> <span class="n">RenderBox</span> <span class="n">child</span> <span class="p">})</span> <span class="o">:</span> <span class="k">super</span><span class="p">(</span><span class="n">child</span><span class="p">);</span>
+
+  <span class="nd">@override</span>
+  <span class="kt">bool</span> <span class="kd">get</span> <span class="n">isRepaintBoundary</span> <span class="o">=&gt;</span> <span class="kc">true</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="id3">
+<h2>14.3.3 命中测试<a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h2>
+<p>我们在“事件处理与通知”一章中已经讲过Flutter事件机制和命中测试流程，本节我们看一下其内部实现原理。</p>
+<p>一个对象是否可以响应事件，取决于其对命中测试的返回，当发生用户事件时，会从根节点（<code class="docutils literal notranslate"><span class="pre">RenderView</span></code>）开始进行命中测试，下面是<code class="docutils literal notranslate"><span class="pre">RenderView</span></code>的<code class="docutils literal notranslate"><span class="pre">hitTest()</span></code>源码：</p>
+<div class="highlight-dart notranslate"><div class="highlight"><pre><span></span><span class="kt">bool</span> <span class="n">hitTest</span><span class="p">(</span><span class="n">HitTestResult</span> <span class="n">result</span><span class="p">,</span> <span class="p">{</span> <span class="n">Offset</span> <span class="n">position</span> <span class="p">})</span> <span class="p">{</span>
+  <span class="k">if</span> <span class="p">(</span><span class="n">child</span> <span class="o">!=</span> <span class="kc">null</span><span class="p">)</span>
+    <span class="n">child</span><span class="p">.</span><span class="n">hitTest</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="nl">position:</span> <span class="n">position</span><span class="p">);</span> <span class="c1">//递归子RenderBox进行命中测试</span>
+  <span class="n">result</span><span class="p">.</span><span class="n">add</span><span class="p">(</span><span class="n">HitTestEntry</span><span class="p">(</span><span class="k">this</span><span class="p">));</span> <span class="c1">//将测试结果添加到result中</span>
+  <span class="k">return</span> <span class="kc">true</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>我们再看看<code class="docutils literal notranslate"><span class="pre">RenderBox</span></code>默认的<code class="docutils literal notranslate"><span class="pre">hitTest()</span></code>实现：</p>
+<div class="highlight-dart notranslate"><div class="highlight"><pre><span></span><span class="kt">bool</span> <span class="n">hitTest</span><span class="p">(</span><span class="n">HitTestResult</span> <span class="n">result</span><span class="p">,</span> <span class="p">{</span> <span class="nd">@required</span> <span class="n">Offset</span> <span class="n">position</span> <span class="p">})</span> <span class="p">{</span>
+  <span class="p">...</span>  
+  <span class="k">if</span> <span class="p">(</span><span class="n">_size</span><span class="p">.</span><span class="n">contains</span><span class="p">(</span><span class="n">position</span><span class="p">))</span> <span class="p">{</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">hitTestChildren</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="nl">position:</span> <span class="n">position</span><span class="p">)</span> <span class="o">||</span> <span class="n">hitTestSelf</span><span class="p">(</span><span class="n">position</span><span class="p">))</span> <span class="p">{</span>
+      <span class="n">result</span><span class="p">.</span><span class="n">add</span><span class="p">(</span><span class="n">BoxHitTestEntry</span><span class="p">(</span><span class="k">this</span><span class="p">,</span> <span class="n">position</span><span class="p">));</span>
+      <span class="k">return</span> <span class="kc">true</span><span class="p">;</span>
+    <span class="p">}</span>
+  <span class="p">}</span>
+  <span class="k">return</span> <span class="kc">false</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>我们看到默认的实现里调用了<code class="docutils literal notranslate"><span class="pre">hitTestSelf()</span></code>和<code class="docutils literal notranslate"><span class="pre">hitTestChildren()</span></code>两个方法，这两个方法默认实现如下：</p>
+<div class="highlight-dart notranslate"><div class="highlight"><pre><span></span> 
+<span class="nd">@protected</span>
+<span class="kt">bool</span> <span class="n">hitTestSelf</span><span class="p">(</span><span class="n">Offset</span> <span class="n">position</span><span class="p">)</span> <span class="o">=&gt;</span> <span class="kc">false</span><span class="p">;</span>
+ 
+<span class="nd">@protected</span>
+<span class="kt">bool</span> <span class="n">hitTestChildren</span><span class="p">(</span><span class="n">HitTestResult</span> <span class="n">result</span><span class="p">,</span> <span class="p">{</span> <span class="n">Offset</span> <span class="n">position</span> <span class="p">})</span> <span class="o">=&gt;</span> <span class="kc">false</span><span class="p">;</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">hitTest</span></code> 方法用来判断该<code class="docutils literal notranslate"> <span class="pre">RenderObject</span></code> 是否在被点击的范围内，同时负责将被点击的 <code class="docutils literal notranslate"><span class="pre">RenderBox</span></code> 添加到 <code class="docutils literal notranslate"><span class="pre">HitTestResult</span></code> 列表中，参数 <code class="docutils literal notranslate"><span class="pre">position</span></code> 为事件触发的坐标（如果有的话），返回 true 则表示有<code class="docutils literal notranslate"> <span class="pre">RenderBox</span></code> 通过了命中测试，需要响应事件，反之则认为当前<code class="docutils literal notranslate"><span class="pre">RenderBox</span></code>没有命中。在继承<code class="docutils literal notranslate"><span class="pre">RenderBox</span></code>时，可以直接重写<code class="docutils literal notranslate"><span class="pre">hitTest()</span></code>方法，也可以重写 <code class="docutils literal notranslate"><span class="pre">hitTestSelf()</span></code> 或 <code class="docutils literal notranslate"><span class="pre">hitTestChildren()</span></code>, 唯一不同的是 <code class="docutils literal notranslate"><span class="pre">hitTest()</span></code>中需要将通过命中测试的节点信息添加到命中测试结果列表中，而 <code class="docutils literal notranslate"><span class="pre">hitTestSelf()</span></code> 和 <code class="docutils literal notranslate"><span class="pre">hitTestChildren()</span></code>则只需要简单的返回<code class="docutils literal notranslate"><span class="pre">true</span></code>或<code class="docutils literal notranslate"><span class="pre">false</span></code>。</p>
+</div>
+<div class="section" id="id4">
+<h2>14.3.4 语义化<a class="headerlink" href="#id4" title="Permalink to this headline">¶</a></h2>
+<p>语义化即Semantics，主要是提供给读屏软件的接口，也是实现辅助功能的基础，通过语义化接口可以让机器理解页面上的内容，对于有视力障碍用户可以使用读屏软件来理解UI内容。如果一个<code class="docutils literal notranslate"><span class="pre">RenderObject</span></code>要支持语义化接口，可以实现 <code class="docutils literal notranslate"><span class="pre">describeApproximatePaintClip</span></code>和 <code class="docutils literal notranslate"><span class="pre">visitChildrenForSemantics</span></code>方法和<code class="docutils literal notranslate"><span class="pre">semanticsAnnotator</span></code> getter。更多关于语义化的信息可以查看API文档。</p>
+</div>
+<div class="section" id="id5">
+<h2>14.3.5 总结<a class="headerlink" href="#id5" title="Permalink to this headline">¶</a></h2>
+<p>本节我们介绍了<code class="docutils literal notranslate"><span class="pre">RenderObject</span></code>主要的功能和方法，理解这些内容可以帮助我们更好的理解Flutter UI底层原理。我们也可以看到，如果要从头到尾实现一个<code class="docutils literal notranslate"><span class="pre">RenderObject</span></code>是比较麻烦的，我们必须去实现layout、绘制和命中测试逻辑，但是值得庆幸的是，大多数时候我们可以直接在Widget层通过组合或者<code class="docutils literal notranslate"><span class="pre">CustomPaint</span></code>完成自定义UI。如果遇到只能定义一个新<code class="docutils literal notranslate"><span class="pre">RenderObject</span></code>的场景时（如要实现一个新的layout算法的布局容器），可以直接继承自<code class="docutils literal notranslate"><span class="pre">RenderBox</span></code>，这样可以帮我们减少一部分工作。</p>
+</div>
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">Flutter in action</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2014, Miguel Grinberg.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.5.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="../_sources/chapter14/render_object.md.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

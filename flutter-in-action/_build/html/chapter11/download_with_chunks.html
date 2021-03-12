@@ -1,0 +1,295 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>11.4 实例：Http分块下载 &#8212; Flutter in action  documentation</title>
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="http">
+<h1>11.4 实例：Http分块下载<a class="headerlink" href="#http" title="Permalink to this headline">¶</a></h1>
+<p>本节将通过一个“Http分块下载”的示例演示一下dio的具体用法。</p>
+<div class="section" id="id1">
+<h2>原理<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h2>
+<p>Http协议定义了分块传输的响应header字段，但具体是否支持取决于Server的实现，我们可以指定请求头的”range”字段来验证服务器是否支持分块传输。例如，我们可以利用curl命令来验证：</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>bogon:~ duwen$ curl -H <span class="s2">&quot;Range: bytes=0-10&quot;</span> http://download.dcloud.net.cn/HBuilder.9.0.2.macosx_64.dmg -v
+<span class="c1"># 请求头</span>
+&gt; GET /HBuilder.9.0.2.macosx_64.dmg HTTP/1.1
+&gt; Host: download.dcloud.net.cn
+&gt; User-Agent: curl/7.54.0
+&gt; Accept: */*
+&gt; Range: <span class="nv">bytes</span><span class="o">=</span><span class="m">0</span>-10
+<span class="c1"># 响应头</span>
+&lt; HTTP/1.1 <span class="m">206</span> Partial Content
+&lt; Content-Type: application/octet-stream
+&lt; Content-Length: <span class="m">11</span>
+&lt; Connection: keep-alive
+&lt; Date: Thu, <span class="m">21</span> Feb <span class="m">2019</span> <span class="m">06</span>:25:15 GMT
+&lt; Content-Range: bytes <span class="m">0</span>-10/233295878
+</pre></div>
+</div>
+<p>我们在请求头中添加”Range: bytes=0-10”的作用是，告诉服务器本次请求我们只想获取文件0-10(包括10，共11字节)这块内容。如果服务器支持分块传输，则响应状态码为206，表示“部分内容”，并且同时响应头中包含“Content-Range”字段，如果不支持则不会包含。我们看看上面“Content-Range”的内容：</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">Content</span><span class="o">-</span><span class="n">Range</span><span class="p">:</span> <span class="nb">bytes</span> <span class="mi">0</span><span class="o">-</span><span class="mi">10</span><span class="o">/</span><span class="mi">233295878</span>
+</pre></div>
+</div>
+<p>0-10表示本次返回的区块，233295878代表文件的总长度，单位都是byte,  也就是该文件大概233M多一点。</p>
+<p>基于此，我们可以设计一个简单的多线程的文件分块下载器，实现的思路是：</p>
+<ol class="simple">
+<li><p>先检测是否支持分块传输，如果不支持，则直接下载；若支持，则将剩余内容分块下载。</p></li>
+<li><p>各个分块下载时保存到各自临时文件，等到所有分块下载完后合并临时文件。</p></li>
+<li><p>删除临时文件。</p></li>
+</ol>
+</div>
+<div class="section" id="id2">
+<h2>实现<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h2>
+<p>下面是整体的流程：</p>
+<div class="highlight-dart notranslate"><div class="highlight"><pre><span></span><span class="c1">// 通过第一个分块请求检测服务器是否支持分块传输  </span>
+<span class="n">Response</span> <span class="n">response</span> <span class="o">=</span> <span class="kd">await</span> <span class="n">downloadChunk</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="m">0</span><span class="p">,</span> <span class="n">firstChunkSize</span><span class="p">,</span> <span class="m">0</span><span class="p">);</span>
+<span class="k">if</span> <span class="p">(</span><span class="n">response</span><span class="p">.</span><span class="n">statusCode</span> <span class="o">==</span> <span class="m">206</span><span class="p">)</span> <span class="p">{</span>    <span class="c1">//如果支持</span>
+    <span class="c1">//解析文件总长度，进而算出剩余长度</span>
+    <span class="n">total</span> <span class="o">=</span> <span class="kt">int</span><span class="p">.</span><span class="n">parse</span><span class="p">(</span>
+        <span class="n">response</span><span class="p">.</span><span class="n">headers</span><span class="p">.</span><span class="n">value</span><span class="p">(</span><span class="n">HttpHeaders</span><span class="p">.</span><span class="n">contentRangeHeader</span><span class="p">).</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">).</span><span class="n">last</span><span class="p">);</span>
+    <span class="kt">int</span> <span class="n">reserved</span> <span class="o">=</span> <span class="n">total</span> <span class="o">-</span>
+        <span class="kt">int</span><span class="p">.</span><span class="n">parse</span><span class="p">(</span><span class="n">response</span><span class="p">.</span><span class="n">headers</span><span class="p">.</span><span class="n">value</span><span class="p">(</span><span class="n">HttpHeaders</span><span class="p">.</span><span class="n">contentLengthHeader</span><span class="p">));</span>
+    <span class="c1">//文件的总块数(包括第一块)</span>
+    <span class="kt">int</span> <span class="n">chunk</span> <span class="o">=</span> <span class="p">(</span><span class="n">reserved</span> <span class="o">/</span> <span class="n">firstChunkSize</span><span class="p">).</span><span class="n">ceil</span><span class="p">()</span> <span class="o">+</span> <span class="m">1</span><span class="p">;</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">chunk</span> <span class="o">&gt;</span> <span class="m">1</span><span class="p">)</span> <span class="p">{</span>
+        <span class="kt">int</span> <span class="n">chunkSize</span> <span class="o">=</span> <span class="n">firstChunkSize</span><span class="p">;</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">chunk</span> <span class="o">&gt;</span> <span class="n">maxChunk</span> <span class="o">+</span> <span class="m">1</span><span class="p">)</span> <span class="p">{</span>
+            <span class="n">chunk</span> <span class="o">=</span> <span class="n">maxChunk</span> <span class="o">+</span> <span class="m">1</span><span class="p">;</span>
+            <span class="n">chunkSize</span> <span class="o">=</span> <span class="p">(</span><span class="n">reserved</span> <span class="o">/</span> <span class="n">maxChunk</span><span class="p">).</span><span class="n">ceil</span><span class="p">();</span>
+        <span class="p">}</span>
+        <span class="kd">var</span> <span class="n">futures</span> <span class="o">=</span> <span class="o">&lt;</span><span class="n">Future</span><span class="o">&gt;</span><span class="p">[];</span>
+        <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="m">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">maxChunk</span><span class="p">;</span> <span class="o">++</span><span class="n">i</span><span class="p">)</span> <span class="p">{</span>
+            <span class="kt">int</span> <span class="n">start</span> <span class="o">=</span> <span class="n">firstChunkSize</span> <span class="o">+</span> <span class="n">i</span> <span class="o">*</span> <span class="n">chunkSize</span><span class="p">;</span>
+            <span class="c1">//分块下载剩余文件  </span>
+            <span class="n">futures</span><span class="p">.</span><span class="n">add</span><span class="p">(</span><span class="n">downloadChunk</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="n">start</span><span class="p">,</span> <span class="n">start</span> <span class="o">+</span> <span class="n">chunkSize</span><span class="p">,</span> <span class="n">i</span> <span class="o">+</span> <span class="m">1</span><span class="p">));</span>
+        <span class="p">}</span>
+        <span class="c1">//等待所有分块全部下载完成</span>
+        <span class="kd">await</span> <span class="n">Future</span><span class="p">.</span><span class="n">wait</span><span class="p">(</span><span class="n">futures</span><span class="p">);</span>
+    <span class="p">}</span>
+    <span class="c1">//合并文件文件  </span>
+    <span class="kd">await</span> <span class="n">mergeTempFiles</span><span class="p">(</span><span class="n">chunk</span><span class="p">);</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>下面我们使用dio的<code class="docutils literal notranslate"><span class="pre">download</span></code> API 实现<code class="docutils literal notranslate"><span class="pre">downloadChunk</span></code>：</p>
+<div class="highlight-dart notranslate"><div class="highlight"><pre><span></span><span class="c1">//start 代表当前块的起始位置，end代表结束位置</span>
+<span class="c1">//no 代表当前是第几块</span>
+<span class="n">Future</span><span class="o">&lt;</span><span class="n">Response</span><span class="o">&gt;</span> <span class="n">downloadChunk</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="n">start</span><span class="p">,</span> <span class="n">end</span><span class="p">,</span> <span class="n">no</span><span class="p">)</span> <span class="kd">async</span> <span class="p">{</span>
+  <span class="n">progress</span><span class="p">.</span><span class="n">add</span><span class="p">(</span><span class="m">0</span><span class="p">);</span> <span class="c1">//progress记录每一块已接收数据的长度</span>
+  <span class="o">--</span><span class="n">end</span><span class="p">;</span>
+  <span class="k">return</span> <span class="n">dio</span><span class="p">.</span><span class="n">download</span><span class="p">(</span>
+    <span class="n">url</span><span class="p">,</span>
+    <span class="n">savePath</span> <span class="o">+</span> <span class="s2">&quot;temp</span><span class="si">$</span><span class="n">no</span><span class="s2">&quot;</span><span class="p">,</span> <span class="c1">//临时文件按照块的序号命名，方便最后合并</span>
+    <span class="nl">onReceiveProgress:</span> <span class="n">createCallback</span><span class="p">(</span><span class="n">no</span><span class="p">),</span> <span class="c1">// 创建进度回调，后面实现</span>
+    <span class="nl">options:</span> <span class="n">Options</span><span class="p">(</span>
+      <span class="nl">headers:</span> <span class="p">{</span><span class="s2">&quot;range&quot;</span><span class="o">:</span> <span class="s2">&quot;bytes=</span><span class="si">$</span><span class="n">start</span><span class="s2">-</span><span class="si">$</span><span class="n">end</span><span class="s2">&quot;</span><span class="p">},</span> <span class="c1">//指定请求的内容区间</span>
+    <span class="p">),</span>
+  <span class="p">);</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>接下来实现<code class="docutils literal notranslate"><span class="pre">mergeTempFiles</span></code>:</p>
+<div class="highlight-dart notranslate"><div class="highlight"><pre><span></span><span class="n">Future</span> <span class="n">mergeTempFiles</span><span class="p">(</span><span class="n">chunk</span><span class="p">)</span> <span class="kd">async</span> <span class="p">{</span>
+  <span class="n">File</span> <span class="n">f</span> <span class="o">=</span> <span class="n">File</span><span class="p">(</span><span class="n">savePath</span> <span class="o">+</span> <span class="s2">&quot;temp0&quot;</span><span class="p">);</span>
+  <span class="n">IOSink</span> <span class="n">ioSink</span><span class="o">=</span> <span class="n">f</span><span class="p">.</span><span class="n">openWrite</span><span class="p">(</span><span class="nl">mode:</span> <span class="n">FileMode</span><span class="p">.</span><span class="n">writeOnlyAppend</span><span class="p">);</span>
+  <span class="c1">//合并临时文件  </span>
+  <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="m">1</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">chunk</span><span class="p">;</span> <span class="o">++</span><span class="n">i</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">File</span> <span class="n">_f</span> <span class="o">=</span> <span class="n">File</span><span class="p">(</span><span class="n">savePath</span> <span class="o">+</span> <span class="s2">&quot;temp</span><span class="si">$</span><span class="n">i</span><span class="s2">&quot;</span><span class="p">);</span>
+    <span class="kd">await</span> <span class="n">ioSink</span><span class="p">.</span><span class="n">addStream</span><span class="p">(</span><span class="n">_f</span><span class="p">.</span><span class="n">openRead</span><span class="p">());</span>
+    <span class="kd">await</span> <span class="n">_f</span><span class="p">.</span><span class="n">delete</span><span class="p">();</span> <span class="c1">//删除临时文件</span>
+  <span class="p">}</span>
+  <span class="kd">await</span> <span class="n">ioSink</span><span class="p">.</span><span class="n">close</span><span class="p">();</span>
+  <span class="kd">await</span> <span class="n">f</span><span class="p">.</span><span class="n">rename</span><span class="p">(</span><span class="n">savePath</span><span class="p">);</span> <span class="c1">//合并后的文件重命名为真正的名称</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>下面我们看一下完整实现：</p>
+<div class="highlight-dart notranslate"><div class="highlight"><pre><span></span><span class="c1">/// Downloading by spiting as file in chunks</span>
+<span class="n">Future</span> <span class="n">downloadWithChunks</span><span class="p">(</span>
+  <span class="n">url</span><span class="p">,</span>
+  <span class="n">savePath</span><span class="p">,</span> <span class="p">{</span>
+  <span class="n">ProgressCallback</span> <span class="n">onReceiveProgress</span><span class="p">,</span>
+<span class="p">})</span> <span class="kd">async</span> <span class="p">{</span>
+  <span class="k">const</span> <span class="n">firstChunkSize</span> <span class="o">=</span> <span class="m">102</span><span class="p">;</span>
+  <span class="k">const</span> <span class="n">maxChunk</span> <span class="o">=</span> <span class="m">3</span><span class="p">;</span>
+
+  <span class="kt">int</span> <span class="n">total</span> <span class="o">=</span> <span class="m">0</span><span class="p">;</span>
+  <span class="kd">var</span> <span class="n">dio</span> <span class="o">=</span> <span class="n">Dio</span><span class="p">();</span>
+  <span class="kd">var</span> <span class="n">progress</span> <span class="o">=</span> <span class="o">&lt;</span><span class="kt">int</span><span class="o">&gt;</span><span class="p">[];</span>
+
+  <span class="n">createCallback</span><span class="p">(</span><span class="n">no</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">return</span> <span class="p">(</span><span class="kt">int</span> <span class="n">received</span><span class="p">,</span> <span class="n">_</span><span class="p">)</span> <span class="p">{</span>
+      <span class="n">progress</span><span class="p">[</span><span class="n">no</span><span class="p">]</span> <span class="o">=</span> <span class="n">received</span><span class="p">;</span>
+      <span class="k">if</span> <span class="p">(</span><span class="n">onReceiveProgress</span> <span class="o">!=</span> <span class="kc">null</span> <span class="o">&amp;&amp;</span> <span class="n">total</span> <span class="o">!=</span> <span class="m">0</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">onReceiveProgress</span><span class="p">(</span><span class="n">progress</span><span class="p">.</span><span class="n">reduce</span><span class="p">((</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">)</span> <span class="o">=&gt;</span> <span class="n">a</span> <span class="o">+</span> <span class="n">b</span><span class="p">),</span> <span class="n">total</span><span class="p">);</span>
+      <span class="p">}</span>
+    <span class="p">};</span>
+  <span class="p">}</span>
+
+  <span class="n">Future</span><span class="o">&lt;</span><span class="n">Response</span><span class="o">&gt;</span> <span class="n">downloadChunk</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="n">start</span><span class="p">,</span> <span class="n">end</span><span class="p">,</span> <span class="n">no</span><span class="p">)</span> <span class="kd">async</span> <span class="p">{</span>
+    <span class="n">progress</span><span class="p">.</span><span class="n">add</span><span class="p">(</span><span class="m">0</span><span class="p">);</span>
+    <span class="o">--</span><span class="n">end</span><span class="p">;</span>
+    <span class="k">return</span> <span class="n">dio</span><span class="p">.</span><span class="n">download</span><span class="p">(</span>
+      <span class="n">url</span><span class="p">,</span>
+      <span class="n">savePath</span> <span class="o">+</span> <span class="s2">&quot;temp</span><span class="si">$</span><span class="n">no</span><span class="s2">&quot;</span><span class="p">,</span>
+      <span class="nl">onReceiveProgress:</span> <span class="n">createCallback</span><span class="p">(</span><span class="n">no</span><span class="p">),</span>
+      <span class="nl">options:</span> <span class="n">Options</span><span class="p">(</span>
+        <span class="nl">headers:</span> <span class="p">{</span><span class="s2">&quot;range&quot;</span><span class="o">:</span> <span class="s2">&quot;bytes=</span><span class="si">$</span><span class="n">start</span><span class="s2">-</span><span class="si">$</span><span class="n">end</span><span class="s2">&quot;</span><span class="p">},</span>
+      <span class="p">),</span>
+    <span class="p">);</span>
+  <span class="p">}</span>
+
+  <span class="n">Future</span> <span class="n">mergeTempFiles</span><span class="p">(</span><span class="n">chunk</span><span class="p">)</span> <span class="kd">async</span> <span class="p">{</span>
+    <span class="n">File</span> <span class="n">f</span> <span class="o">=</span> <span class="n">File</span><span class="p">(</span><span class="n">savePath</span> <span class="o">+</span> <span class="s2">&quot;temp0&quot;</span><span class="p">);</span>
+    <span class="n">IOSink</span> <span class="n">ioSink</span><span class="o">=</span> <span class="n">f</span><span class="p">.</span><span class="n">openWrite</span><span class="p">(</span><span class="nl">mode:</span> <span class="n">FileMode</span><span class="p">.</span><span class="n">writeOnlyAppend</span><span class="p">);</span>
+    <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="m">1</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">chunk</span><span class="p">;</span> <span class="o">++</span><span class="n">i</span><span class="p">)</span> <span class="p">{</span>
+      <span class="n">File</span> <span class="n">_f</span> <span class="o">=</span> <span class="n">File</span><span class="p">(</span><span class="n">savePath</span> <span class="o">+</span> <span class="s2">&quot;temp</span><span class="si">$</span><span class="n">i</span><span class="s2">&quot;</span><span class="p">);</span>
+      <span class="kd">await</span> <span class="n">ioSink</span><span class="p">.</span><span class="n">addStream</span><span class="p">(</span><span class="n">_f</span><span class="p">.</span><span class="n">openRead</span><span class="p">());</span>
+      <span class="kd">await</span> <span class="n">_f</span><span class="p">.</span><span class="n">delete</span><span class="p">();</span>
+    <span class="p">}</span>
+    <span class="kd">await</span> <span class="n">ioSink</span><span class="p">.</span><span class="n">close</span><span class="p">();</span>
+    <span class="kd">await</span> <span class="n">f</span><span class="p">.</span><span class="n">rename</span><span class="p">(</span><span class="n">savePath</span><span class="p">);</span>
+  <span class="p">}</span>
+
+  <span class="n">Response</span> <span class="n">response</span> <span class="o">=</span> <span class="kd">await</span> <span class="n">downloadChunk</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="m">0</span><span class="p">,</span> <span class="n">firstChunkSize</span><span class="p">,</span> <span class="m">0</span><span class="p">);</span>
+  <span class="k">if</span> <span class="p">(</span><span class="n">response</span><span class="p">.</span><span class="n">statusCode</span> <span class="o">==</span> <span class="m">206</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">total</span> <span class="o">=</span> <span class="kt">int</span><span class="p">.</span><span class="n">parse</span><span class="p">(</span>
+        <span class="n">response</span><span class="p">.</span><span class="n">headers</span><span class="p">.</span><span class="n">value</span><span class="p">(</span><span class="n">HttpHeaders</span><span class="p">.</span><span class="n">contentRangeHeader</span><span class="p">).</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">).</span><span class="n">last</span><span class="p">);</span>
+    <span class="kt">int</span> <span class="n">reserved</span> <span class="o">=</span> <span class="n">total</span> <span class="o">-</span>
+        <span class="kt">int</span><span class="p">.</span><span class="n">parse</span><span class="p">(</span><span class="n">response</span><span class="p">.</span><span class="n">headers</span><span class="p">.</span><span class="n">value</span><span class="p">(</span><span class="n">HttpHeaders</span><span class="p">.</span><span class="n">contentLengthHeader</span><span class="p">));</span>
+    <span class="kt">int</span> <span class="n">chunk</span> <span class="o">=</span> <span class="p">(</span><span class="n">reserved</span> <span class="o">/</span> <span class="n">firstChunkSize</span><span class="p">).</span><span class="n">ceil</span><span class="p">()</span> <span class="o">+</span> <span class="m">1</span><span class="p">;</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">chunk</span> <span class="o">&gt;</span> <span class="m">1</span><span class="p">)</span> <span class="p">{</span>
+      <span class="kt">int</span> <span class="n">chunkSize</span> <span class="o">=</span> <span class="n">firstChunkSize</span><span class="p">;</span>
+      <span class="k">if</span> <span class="p">(</span><span class="n">chunk</span> <span class="o">&gt;</span> <span class="n">maxChunk</span> <span class="o">+</span> <span class="m">1</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">chunk</span> <span class="o">=</span> <span class="n">maxChunk</span> <span class="o">+</span> <span class="m">1</span><span class="p">;</span>
+        <span class="n">chunkSize</span> <span class="o">=</span> <span class="p">(</span><span class="n">reserved</span> <span class="o">/</span> <span class="n">maxChunk</span><span class="p">).</span><span class="n">ceil</span><span class="p">();</span>
+      <span class="p">}</span>
+      <span class="kd">var</span> <span class="n">futures</span> <span class="o">=</span> <span class="o">&lt;</span><span class="n">Future</span><span class="o">&gt;</span><span class="p">[];</span>
+      <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="m">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">maxChunk</span><span class="p">;</span> <span class="o">++</span><span class="n">i</span><span class="p">)</span> <span class="p">{</span>
+        <span class="kt">int</span> <span class="n">start</span> <span class="o">=</span> <span class="n">firstChunkSize</span> <span class="o">+</span> <span class="n">i</span> <span class="o">*</span> <span class="n">chunkSize</span><span class="p">;</span>
+        <span class="n">futures</span><span class="p">.</span><span class="n">add</span><span class="p">(</span><span class="n">downloadChunk</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="n">start</span><span class="p">,</span> <span class="n">start</span> <span class="o">+</span> <span class="n">chunkSize</span><span class="p">,</span> <span class="n">i</span> <span class="o">+</span> <span class="m">1</span><span class="p">));</span>
+      <span class="p">}</span>
+      <span class="kd">await</span> <span class="n">Future</span><span class="p">.</span><span class="n">wait</span><span class="p">(</span><span class="n">futures</span><span class="p">);</span>
+    <span class="p">}</span>
+    <span class="kd">await</span> <span class="n">mergeTempFiles</span><span class="p">(</span><span class="n">chunk</span><span class="p">);</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>现在可以进行分块下载了：</p>
+<div class="highlight-dart notranslate"><div class="highlight"><pre><span></span><span class="n">main</span><span class="p">()</span> <span class="kd">async</span> <span class="p">{</span>
+  <span class="kd">var</span> <span class="n">url</span> <span class="o">=</span> <span class="s2">&quot;http://download.dcloud.net.cn/HBuilder.9.0.2.macosx_64.dmg&quot;</span><span class="p">;</span>
+  <span class="kd">var</span> <span class="n">savePath</span> <span class="o">=</span> <span class="s2">&quot;./example/HBuilder.9.0.2.macosx_64.dmg&quot;</span><span class="p">;</span>
+  <span class="kd">await</span> <span class="n">downloadWithChunks</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="n">savePath</span><span class="p">,</span> <span class="nl">onReceiveProgress:</span> <span class="p">(</span><span class="n">received</span><span class="p">,</span> <span class="n">total</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">total</span> <span class="o">!=</span> <span class="o">-</span><span class="m">1</span><span class="p">)</span> <span class="p">{</span>
+      <span class="n">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">${</span><span class="p">(</span><span class="n">received</span> <span class="o">/</span> <span class="n">total</span> <span class="o">*</span> <span class="m">100</span><span class="p">).</span><span class="n">floor</span><span class="p">()</span><span class="si">}</span><span class="s2">%&quot;</span><span class="p">);</span>
+    <span class="p">}</span>
+  <span class="p">});</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="id3">
+<h2>思考<a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h2>
+<ol>
+<li><p>分块下载真的能提高下载速度吗？</p>
+<p>其实下载速度的主要瓶颈是取决于网络速度和服务器的出口速度，如果是同一个数据源，分块下载的意义并不大，因为服务器是同一个，出口速度确定的，主要取决于网速，而上面的例子正式同源分块下载，读者可以自己对比一下分块和不分块的的下载速度。如果有多个下载源，并且每个下载源的出口带宽都是有限制的，这时分块下载可能会更快一下，之所以说“可能”，是由于这并不是一定的，比如有三个源，三个源的出口带宽都为1G/s，而我们设备所连网络的峰值假设只有800M/s，那么瓶颈就在我们的网络。即使我们设备的带宽大于任意一个源，下载速度依然不一定就比单源单线下载快，试想一下，假设有两个源A和B，速度A源是B源的3倍，如果采用分块下载，两个源各下载一半的话，读者可以算一下所需的下载时间，然后再算一下只从A源下载所需的时间，看看哪个更快。</p>
+<p>分块下载的最终速度受设备所在网络带宽、源出口速度、每个块大小、以及分块的数量等诸多因素影响，实际过程中很难保证速度最优。在实际开发中，读者可可以先测试对比后再决定是否使用。</p>
+</li>
+<li><p>分块下载有什么实际的用处吗？</p>
+<p>分块下载还有一个比较使用的场景是断点续传，可以将文件分为若干个块，然后维护一个下载状态文件用以记录每一个块的状态，这样即使在网络中断后，也可以恢复中断前的状态，具体实现读者可以自己尝试一下，还是有一些细节需要特别注意的，比如分块大小多少合适？下载到一半的块如何处理？要不要维护一个任务队列？</p>
+</li>
+</ol>
+</div>
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">Flutter in action</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2014, Miguel Grinberg.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.5.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="../_sources/chapter11/download_with_chunks.md.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

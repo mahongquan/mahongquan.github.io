@@ -1,0 +1,257 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>10.4 自绘组件 （CustomPaint与Canvas） &#8212; Flutter in action  documentation</title>
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="custompaintcanvas">
+<h1>10.4 自绘组件 （CustomPaint与Canvas）<a class="headerlink" href="#custompaintcanvas" title="Permalink to this headline">¶</a></h1>
+<p>对于一些复杂或不规则的UI，我们可能无法通过组合其它组件的方式来实现，比如我们需要一个正六边形、一个渐变的圆形进度条、一个棋盘等。当然，有时候我们可以使用图片来实现，但在一些需要动态交互的场景静态图片也是实现不了的，比如要实现一个手写输入面板，这时，我们就需要来自己绘制UI外观。</p>
+<p>几乎所有的UI系统都会提供一个自绘UI的接口，这个接口通常会提供一块2D画布<code class="docutils literal notranslate"><span class="pre">Canvas</span></code>，<code class="docutils literal notranslate"><span class="pre">Canvas</span></code>内部封装了一些基本绘制的API，开发者可以通过<code class="docutils literal notranslate"><span class="pre">Canvas</span></code>绘制各种自定义图形。在Flutter中，提供了一个<code class="docutils literal notranslate"><span class="pre">CustomPaint</span></code> 组件，它可以结合画笔<code class="docutils literal notranslate"><span class="pre">CustomPainter</span></code>来实现自定义图形绘制。</p>
+<div class="section" id="custompaint">
+<h2>CustomPaint<a class="headerlink" href="#custompaint" title="Permalink to this headline">¶</a></h2>
+<p>我们看看<code class="docutils literal notranslate"><span class="pre">CustomPaint</span></code>构造函数：</p>
+<div class="highlight-dart notranslate"><div class="highlight"><pre><span></span><span class="n">CustomPaint</span><span class="p">({</span>
+  <span class="n">Key</span> <span class="n">key</span><span class="p">,</span>
+  <span class="k">this</span><span class="p">.</span><span class="n">painter</span><span class="p">,</span> 
+  <span class="k">this</span><span class="p">.</span><span class="n">foregroundPainter</span><span class="p">,</span>
+  <span class="k">this</span><span class="p">.</span><span class="n">size</span> <span class="o">=</span> <span class="n">Size</span><span class="p">.</span><span class="n">zero</span><span class="p">,</span> 
+  <span class="k">this</span><span class="p">.</span><span class="n">isComplex</span> <span class="o">=</span> <span class="kc">false</span><span class="p">,</span> 
+  <span class="k">this</span><span class="p">.</span><span class="n">willChange</span> <span class="o">=</span> <span class="kc">false</span><span class="p">,</span> 
+  <span class="n">Widget</span> <span class="n">child</span><span class="p">,</span> <span class="c1">//子节点，可以为空</span>
+<span class="p">})</span>
+</pre></div>
+</div>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">painter</span></code>: 背景画笔，会显示在子节点后面;</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">foregroundPainter</span></code>: 前景画笔，会显示在子节点前面</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">size</span></code>：当child为null时，代表默认绘制区域大小，如果有child则忽略此参数，画布尺寸则为child尺寸。如果有child但是想指定画布为特定大小，可以使用SizeBox包裹CustomPaint实现。</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">isComplex</span></code>：是否复杂的绘制，如果是，Flutter会应用一些缓存策略来减少重复渲染的开销。</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">willChange</span></code>：和<code class="docutils literal notranslate"><span class="pre">isComplex</span></code>配合使用，当启用缓存时，该属性代表在下一帧中绘制是否会改变。</p></li>
+</ul>
+<p>可以看到，绘制时我们需要提供前景或背景画笔，两者也可以同时提供。我们的画笔需要继承<code class="docutils literal notranslate"><span class="pre">CustomPainter</span></code>类，我们在画笔类中实现真正的绘制逻辑。</p>
+<div class="section" id="id1">
+<h3>注意<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h3>
+<p>如果<code class="docutils literal notranslate"><span class="pre">CustomPaint</span></code>有子节点，为了避免子节点不必要的重绘并提高性能，通常情况下都会将子节点包裹在<code class="docutils literal notranslate"><span class="pre">RepaintBoundary</span> </code>组件中，这样会在绘制时就会创建一个新的绘制层（Layer），其子组件将在新的Layer上绘制，而父组件将在原来Layer上绘制，也就是说<code class="docutils literal notranslate"><span class="pre">RepaintBoundary</span></code> 子组件的绘制将独立于父组件的绘制，<code class="docutils literal notranslate"><span class="pre">RepaintBoundary</span></code>会隔离其子节点和<code class="docutils literal notranslate"><span class="pre">CustomPaint</span></code>本身的绘制边界。示例如下：</p>
+<div class="highlight-dart notranslate"><div class="highlight"><pre><span></span><span class="n">CustomPaint</span><span class="p">(</span>
+  <span class="nl">size:</span> <span class="n">Size</span><span class="p">(</span><span class="m">300</span><span class="p">,</span> <span class="m">300</span><span class="p">),</span> <span class="c1">//指定画布大小</span>
+  <span class="nl">painter:</span> <span class="n">MyPainter</span><span class="p">(),</span>
+  <span class="nl">child:</span> <span class="n">RepaintBoundary</span><span class="p">(</span><span class="nl">child:</span><span class="p">...)),</span> 
+<span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="custompainter">
+<h2>CustomPainter<a class="headerlink" href="#custompainter" title="Permalink to this headline">¶</a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">CustomPainter</span></code>中提定义了一个虚函数<code class="docutils literal notranslate"><span class="pre">paint</span></code>：</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">void</span> <span class="n">paint</span><span class="p">(</span><span class="n">Canvas</span> <span class="n">canvas</span><span class="p">,</span> <span class="n">Size</span> <span class="n">size</span><span class="p">);</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">paint</span></code>有两个参数:</p>
+<ul>
+<li><p><code class="docutils literal notranslate"><span class="pre">Canvas</span></code>：一个画布，包括各种绘制方法，我们列出一下常用的方法：</p>
+<p>|API名称     | 功能   |
+| ———- | —— |
+| drawLine   | 画线   |
+| drawPoint  | 画点   |
+| drawPath   | 画路径 |
+| drawImage  | 画图像 |
+| drawRect   | 画矩形 |
+| drawCircle | 画圆   |
+| drawOval   | 画椭圆 |
+| drawArc    | 画圆弧 |</p>
+</li>
+<li><p><code class="docutils literal notranslate"><span class="pre">Size</span></code>：当前绘制区域大小。</p></li>
+</ul>
+</div>
+<div class="section" id="paint">
+<h2>画笔Paint<a class="headerlink" href="#paint" title="Permalink to this headline">¶</a></h2>
+<p>现在画布有了，我们最后还缺一个画笔，Flutter提供了<code class="docutils literal notranslate"><span class="pre">Paint</span></code>类来实现画笔。在<code class="docutils literal notranslate"><span class="pre">Paint</span></code>中，我们可以配置画笔的各种属性如粗细、颜色、样式等。如：</p>
+<div class="highlight-dart notranslate"><div class="highlight"><pre><span></span><span class="kd">var</span> <span class="n">paint</span> <span class="o">=</span> <span class="n">Paint</span><span class="p">()</span> <span class="c1">//创建一个画笔并配置其属性</span>
+  <span class="p">..</span><span class="n">isAntiAlias</span> <span class="o">=</span> <span class="kc">true</span> <span class="c1">//是否抗锯齿</span>
+  <span class="p">..</span><span class="n">style</span> <span class="o">=</span> <span class="n">PaintingStyle</span><span class="p">.</span><span class="n">fill</span> <span class="c1">//画笔样式：填充</span>
+  <span class="p">..</span><span class="n">color</span><span class="o">=</span><span class="n">Color</span><span class="p">(</span><span class="mh">0x77cdb175</span><span class="p">);</span><span class="c1">//画笔颜色</span>
+</pre></div>
+</div>
+<p>更多的配置属性读者可以参考Paint类定义。</p>
+</div>
+<div class="section" id="id2">
+<h2>示例：五子棋/盘<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h2>
+<p>下面我们通过一个五子棋游戏中棋盘和棋子的绘制来演示自绘UI的过程，首先我们看一下我们的目标效果，如图10-3所示：</p>
+<p><img alt="图10-3" src="../_images/10-3.png" /></p>
+<p>代码：</p>
+<div class="highlight-dart notranslate"><div class="highlight"><pre><span></span><span class="k">import</span> <span class="s1">&#39;package:flutter/material.dart&#39;</span><span class="p">;</span>
+<span class="k">import</span> <span class="s1">&#39;dart:math&#39;</span><span class="p">;</span>
+
+<span class="kd">class</span> <span class="nc">CustomPaintRoute</span> <span class="kd">extends</span> <span class="n">StatelessWidget</span> <span class="p">{</span>
+  <span class="nd">@override</span>
+  <span class="n">Widget</span> <span class="n">build</span><span class="p">(</span><span class="n">BuildContext</span> <span class="n">context</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">return</span> <span class="n">Center</span><span class="p">(</span>
+      <span class="nl">child:</span> <span class="n">CustomPaint</span><span class="p">(</span>
+        <span class="nl">size:</span> <span class="n">Size</span><span class="p">(</span><span class="m">300</span><span class="p">,</span> <span class="m">300</span><span class="p">),</span> <span class="c1">//指定画布大小</span>
+        <span class="nl">painter:</span> <span class="n">MyPainter</span><span class="p">(),</span>
+      <span class="p">),</span>
+    <span class="p">);</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="kd">class</span> <span class="nc">MyPainter</span> <span class="kd">extends</span> <span class="n">CustomPainter</span> <span class="p">{</span>
+  <span class="nd">@override</span>
+  <span class="kt">void</span> <span class="n">paint</span><span class="p">(</span><span class="n">Canvas</span> <span class="n">canvas</span><span class="p">,</span> <span class="n">Size</span> <span class="n">size</span><span class="p">)</span> <span class="p">{</span>
+    <span class="kt">double</span> <span class="n">eWidth</span> <span class="o">=</span> <span class="n">size</span><span class="p">.</span><span class="n">width</span> <span class="o">/</span> <span class="m">15</span><span class="p">;</span>
+    <span class="kt">double</span> <span class="n">eHeight</span> <span class="o">=</span> <span class="n">size</span><span class="p">.</span><span class="n">height</span> <span class="o">/</span> <span class="m">15</span><span class="p">;</span>
+      
+    <span class="c1">//画棋盘背景</span>
+    <span class="kd">var</span> <span class="n">paint</span> <span class="o">=</span> <span class="n">Paint</span><span class="p">()</span>
+      <span class="p">..</span><span class="n">isAntiAlias</span> <span class="o">=</span> <span class="kc">true</span>
+      <span class="p">..</span><span class="n">style</span> <span class="o">=</span> <span class="n">PaintingStyle</span><span class="p">.</span><span class="n">fill</span> <span class="c1">//填充</span>
+      <span class="p">..</span><span class="n">color</span> <span class="o">=</span> <span class="n">Color</span><span class="p">(</span><span class="mh">0x77cdb175</span><span class="p">);</span> <span class="c1">//背景为纸黄色</span>
+    <span class="n">canvas</span><span class="p">.</span><span class="n">drawRect</span><span class="p">(</span><span class="n">Offset</span><span class="p">.</span><span class="n">zero</span> <span class="o">&amp;</span> <span class="n">size</span><span class="p">,</span> <span class="n">paint</span><span class="p">);</span>
+
+    <span class="c1">//画棋盘网格</span>
+    <span class="n">paint</span>
+      <span class="p">..</span><span class="n">style</span> <span class="o">=</span> <span class="n">PaintingStyle</span><span class="p">.</span><span class="n">stroke</span> <span class="c1">//线</span>
+      <span class="p">..</span><span class="n">color</span> <span class="o">=</span> <span class="n">Colors</span><span class="p">.</span><span class="n">black87</span>
+      <span class="p">..</span><span class="n">strokeWidth</span> <span class="o">=</span> <span class="m">1.0</span><span class="p">;</span>
+
+    <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="m">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;=</span> <span class="m">15</span><span class="p">;</span> <span class="o">++</span><span class="n">i</span><span class="p">)</span> <span class="p">{</span>
+      <span class="kt">double</span> <span class="n">dy</span> <span class="o">=</span> <span class="n">eHeight</span> <span class="o">*</span> <span class="n">i</span><span class="p">;</span>
+      <span class="n">canvas</span><span class="p">.</span><span class="n">drawLine</span><span class="p">(</span><span class="n">Offset</span><span class="p">(</span><span class="m">0</span><span class="p">,</span> <span class="n">dy</span><span class="p">),</span> <span class="n">Offset</span><span class="p">(</span><span class="n">size</span><span class="p">.</span><span class="n">width</span><span class="p">,</span> <span class="n">dy</span><span class="p">),</span> <span class="n">paint</span><span class="p">);</span>
+    <span class="p">}</span>
+
+    <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="m">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;=</span> <span class="m">15</span><span class="p">;</span> <span class="o">++</span><span class="n">i</span><span class="p">)</span> <span class="p">{</span>
+      <span class="kt">double</span> <span class="n">dx</span> <span class="o">=</span> <span class="n">eWidth</span> <span class="o">*</span> <span class="n">i</span><span class="p">;</span>
+      <span class="n">canvas</span><span class="p">.</span><span class="n">drawLine</span><span class="p">(</span><span class="n">Offset</span><span class="p">(</span><span class="n">dx</span><span class="p">,</span> <span class="m">0</span><span class="p">),</span> <span class="n">Offset</span><span class="p">(</span><span class="n">dx</span><span class="p">,</span> <span class="n">size</span><span class="p">.</span><span class="n">height</span><span class="p">),</span> <span class="n">paint</span><span class="p">);</span>
+    <span class="p">}</span>
+
+    <span class="c1">//画一个黑子</span>
+    <span class="n">paint</span>
+      <span class="p">..</span><span class="n">style</span> <span class="o">=</span> <span class="n">PaintingStyle</span><span class="p">.</span><span class="n">fill</span>
+      <span class="p">..</span><span class="n">color</span> <span class="o">=</span> <span class="n">Colors</span><span class="p">.</span><span class="n">black</span><span class="p">;</span>
+    <span class="n">canvas</span><span class="p">.</span><span class="n">drawCircle</span><span class="p">(</span>
+      <span class="n">Offset</span><span class="p">(</span><span class="n">size</span><span class="p">.</span><span class="n">width</span> <span class="o">/</span> <span class="m">2</span> <span class="o">-</span> <span class="n">eWidth</span> <span class="o">/</span> <span class="m">2</span><span class="p">,</span> <span class="n">size</span><span class="p">.</span><span class="n">height</span> <span class="o">/</span> <span class="m">2</span> <span class="o">-</span> <span class="n">eHeight</span> <span class="o">/</span> <span class="m">2</span><span class="p">),</span>
+      <span class="n">min</span><span class="p">(</span><span class="n">eWidth</span> <span class="o">/</span> <span class="m">2</span><span class="p">,</span> <span class="n">eHeight</span> <span class="o">/</span> <span class="m">2</span><span class="p">)</span> <span class="o">-</span> <span class="m">2</span><span class="p">,</span>
+      <span class="n">paint</span><span class="p">,</span>
+    <span class="p">);</span>
+      
+    <span class="c1">//画一个白子</span>
+    <span class="n">paint</span><span class="p">.</span><span class="n">color</span> <span class="o">=</span> <span class="n">Colors</span><span class="p">.</span><span class="n">white</span><span class="p">;</span>
+    <span class="n">canvas</span><span class="p">.</span><span class="n">drawCircle</span><span class="p">(</span>
+      <span class="n">Offset</span><span class="p">(</span><span class="n">size</span><span class="p">.</span><span class="n">width</span> <span class="o">/</span> <span class="m">2</span> <span class="o">+</span> <span class="n">eWidth</span> <span class="o">/</span> <span class="m">2</span><span class="p">,</span> <span class="n">size</span><span class="p">.</span><span class="n">height</span> <span class="o">/</span> <span class="m">2</span> <span class="o">-</span> <span class="n">eHeight</span> <span class="o">/</span> <span class="m">2</span><span class="p">),</span>
+      <span class="n">min</span><span class="p">(</span><span class="n">eWidth</span> <span class="o">/</span> <span class="m">2</span><span class="p">,</span> <span class="n">eHeight</span> <span class="o">/</span> <span class="m">2</span><span class="p">)</span> <span class="o">-</span> <span class="m">2</span><span class="p">,</span>
+      <span class="n">paint</span><span class="p">,</span>
+    <span class="p">);</span>
+  <span class="p">}</span>
+
+  <span class="c1">//在实际场景中正确利用此回调可以避免重绘开销，本示例我们简单的返回true</span>
+  <span class="nd">@override</span>
+  <span class="kt">bool</span> <span class="n">shouldRepaint</span><span class="p">(</span><span class="n">CustomPainter</span> <span class="n">oldDelegate</span><span class="p">)</span> <span class="o">=&gt;</span> <span class="kc">true</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="id3">
+<h2>性能<a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h2>
+<p>绘制是比较昂贵的操作，所以我们在实现自绘控件时应该考虑到性能开销，下面是两条关于性能优化的建议：</p>
+<ul class="simple">
+<li><p>尽可能的利用好<code class="docutils literal notranslate"><span class="pre">shouldRepaint</span></code>返回值；在UI树重新build时，控件在绘制前都会先调用该方法以确定是否有必要重绘；假如我们绘制的UI不依赖外部状态，那么就应该始终返回<code class="docutils literal notranslate"><span class="pre">false</span></code>，因为外部状态改变导致重新build时不会影响我们的UI外观；如果绘制依赖外部状态，那么我们就应该在<code class="docutils literal notranslate"><span class="pre">shouldRepaint</span></code>中判断依赖的状态是否改变，如果已改变则应返回<code class="docutils literal notranslate"><span class="pre">true</span></code>来重绘，反之则应返回<code class="docutils literal notranslate"><span class="pre">false</span></code>不需要重绘。</p></li>
+<li><p>绘制尽可能多的分层；在上面五子棋的示例中，我们将棋盘和棋子的绘制放在了一起，这样会有一个问题：由于棋盘始终是不变的，用户每次落子时变的只是棋子，但是如果按照上面的代码来实现，每次绘制棋子时都要重新绘制一次棋盘，这是没必要的。优化的方法就是将棋盘单独抽为一个组件，并设置其<code class="docutils literal notranslate"><span class="pre">shouldRepaint</span></code>回调值为<code class="docutils literal notranslate"><span class="pre">false</span></code>，然后将棋盘组件作为背景。然后将棋子的绘制放到另一个组件中，这样每次落子时只需要绘制棋子。</p></li>
+</ul>
+</div>
+<div class="section" id="id4">
+<h2>总结<a class="headerlink" href="#id4" title="Permalink to this headline">¶</a></h2>
+<p>自绘控件非常强大，理论上可以实现任何2D图形外观，实际上Flutter提供的所有组件最终都是通过调用Canvas绘制出来的，只不过绘制的逻辑被封装起来了，读者有兴趣可以查看具有外观样式的组件源码，找到其对应的<code class="docutils literal notranslate"><span class="pre">RenderObject</span></code>对象，如<code class="docutils literal notranslate"><span class="pre">Text</span></code>对应的<code class="docutils literal notranslate"><span class="pre">RenderParagraph</span></code>对象最终会通过<code class="docutils literal notranslate"><span class="pre">Canvas</span></code>实现文本绘制逻辑。下一节我们会再通过一个自绘的圆形背景渐变进度条的实例来帮助读者加深印象。</p>
+</div>
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">Flutter in action</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2014, Miguel Grinberg.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.5.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="../_sources/chapter10/custom_paint.md.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

@@ -1,0 +1,555 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>15.6 APP入口及主页 &#8212; Flutter in action  documentation</title>
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="app">
+<h1>15.6 APP入口及主页<a class="headerlink" href="#app" title="Permalink to this headline">¶</a></h1>
+<p>本节来介绍一下APP入口及首页。</p>
+<div class="section" id="id1">
+<h2>15.6.1 APP入口<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">main</span></code>函数为APP入口函数，实现如下：</p>
+<div class="highlight-dart notranslate"><div class="highlight"><pre><span></span><span class="kt">void</span> <span class="n">main</span><span class="p">()</span> <span class="o">=&gt;</span> <span class="n">Global</span><span class="p">.</span><span class="n">init</span><span class="p">().</span><span class="n">then</span><span class="p">((</span><span class="n">e</span><span class="p">)</span> <span class="o">=&gt;</span> <span class="n">runApp</span><span class="p">(</span><span class="n">MyApp</span><span class="p">()));</span>
+</pre></div>
+</div>
+<p>初始化完成后才会加载UI(<code class="docutils literal notranslate"><span class="pre">MyApp</span></code>)，<code class="docutils literal notranslate"><span class="pre">MyApp</span></code> 是应用的入口Widget，实现如下：</p>
+<div class="highlight-dart notranslate"><div class="highlight"><pre><span></span><span class="kd">class</span> <span class="nc">MyApp</span> <span class="kd">extends</span> <span class="n">StatelessWidget</span> <span class="p">{</span>
+  <span class="c1">// This widget is the root of your application.</span>
+  <span class="nd">@override</span>
+  <span class="n">Widget</span> <span class="n">build</span><span class="p">(</span><span class="n">BuildContext</span> <span class="n">context</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">return</span> <span class="n">MultiProvider</span><span class="p">(</span>
+      <span class="nl">providers:</span> <span class="o">&lt;</span><span class="n">SingleChildCloneableWidget</span><span class="o">&gt;</span><span class="p">[</span>
+        <span class="n">ChangeNotifierProvider</span><span class="p">.</span><span class="n">value</span><span class="p">(</span><span class="nl">value:</span> <span class="n">ThemeModel</span><span class="p">()),</span>
+        <span class="n">ChangeNotifierProvider</span><span class="p">.</span><span class="n">value</span><span class="p">(</span><span class="nl">value:</span> <span class="n">UserModel</span><span class="p">()),</span>
+        <span class="n">ChangeNotifierProvider</span><span class="p">.</span><span class="n">value</span><span class="p">(</span><span class="nl">value:</span> <span class="n">LocaleModel</span><span class="p">()),</span>
+      <span class="p">],</span>
+      <span class="nl">child:</span> <span class="n">Consumer2</span><span class="o">&lt;</span><span class="n">ThemeModel</span><span class="p">,</span> <span class="n">LocaleModel</span><span class="o">&gt;</span><span class="p">(</span>
+        <span class="nl">builder:</span> <span class="p">(</span><span class="n">BuildContext</span> <span class="n">context</span><span class="p">,</span> <span class="n">themeModel</span><span class="p">,</span> <span class="n">localeModel</span><span class="p">,</span> <span class="n">Widget</span> <span class="n">child</span><span class="p">)</span> <span class="p">{</span>
+          <span class="k">return</span> <span class="n">MaterialApp</span><span class="p">(</span>
+            <span class="nl">theme:</span> <span class="n">ThemeData</span><span class="p">(</span>
+              <span class="nl">primarySwatch:</span> <span class="n">themeModel</span><span class="p">.</span><span class="n">theme</span><span class="p">,</span>
+            <span class="p">),</span>
+            <span class="nl">onGenerateTitle:</span> <span class="p">(</span><span class="n">context</span><span class="p">){</span>
+              <span class="k">return</span> <span class="n">GmLocalizations</span><span class="p">.</span><span class="n">of</span><span class="p">(</span><span class="n">context</span><span class="p">).</span><span class="n">title</span><span class="p">;</span>
+            <span class="p">},</span>
+            <span class="nl">home:</span> <span class="n">HomeRoute</span><span class="p">(),</span> <span class="c1">//应用主页</span>
+            <span class="nl">locale:</span> <span class="n">localeModel</span><span class="p">.</span><span class="n">getLocale</span><span class="p">(),</span>
+            <span class="c1">//我们只支持美国英语和中文简体</span>
+            <span class="nl">supportedLocales:</span> <span class="p">[</span>
+              <span class="k">const</span> <span class="n">Locale</span><span class="p">(</span><span class="s1">&#39;en&#39;</span><span class="p">,</span> <span class="s1">&#39;US&#39;</span><span class="p">),</span> <span class="c1">// 美国英语</span>
+              <span class="k">const</span> <span class="n">Locale</span><span class="p">(</span><span class="s1">&#39;zh&#39;</span><span class="p">,</span> <span class="s1">&#39;CN&#39;</span><span class="p">),</span> <span class="c1">// 中文简体</span>
+              <span class="c1">//其它Locales</span>
+            <span class="p">],</span>
+            <span class="nl">localizationsDelegates:</span> <span class="p">[</span>
+              <span class="c1">// 本地化的代理类</span>
+              <span class="n">GlobalMaterialLocalizations</span><span class="p">.</span><span class="n">delegate</span><span class="p">,</span>
+              <span class="n">GlobalWidgetsLocalizations</span><span class="p">.</span><span class="n">delegate</span><span class="p">,</span>
+              <span class="n">GmLocalizationsDelegate</span><span class="p">()</span>
+            <span class="p">],</span>
+            <span class="nl">localeResolutionCallback:</span>
+                <span class="p">(</span><span class="n">Locale</span> <span class="n">_locale</span><span class="p">,</span> <span class="n">Iterable</span><span class="o">&lt;</span><span class="n">Locale</span><span class="o">&gt;</span> <span class="n">supportedLocales</span><span class="p">)</span> <span class="p">{</span>
+              <span class="k">if</span> <span class="p">(</span><span class="n">localeModel</span><span class="p">.</span><span class="n">getLocale</span><span class="p">()</span> <span class="o">!=</span> <span class="kc">null</span><span class="p">)</span> <span class="p">{</span>
+                <span class="c1">//如果已经选定语言，则不跟随系统</span>
+                <span class="k">return</span> <span class="n">localeModel</span><span class="p">.</span><span class="n">getLocale</span><span class="p">();</span>
+              <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+         
+                <span class="n">Locale</span> <span class="n">locale</span><span class="p">;</span>
+                <span class="c1">//APP语言跟随系统语言，如果系统语言不是中文简体或美国英语，</span>
+                <span class="c1">//则默认使用美国英语</span>
+                <span class="k">if</span> <span class="p">(</span><span class="n">supportedLocales</span><span class="p">.</span><span class="n">contains</span><span class="p">(</span><span class="n">_locale</span><span class="p">))</span> <span class="p">{</span>
+                  <span class="n">locale</span><span class="o">=</span> <span class="n">_locale</span><span class="p">;</span>
+                <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+                  <span class="n">locale</span><span class="o">=</span> <span class="n">Locale</span><span class="p">(</span><span class="s1">&#39;en&#39;</span><span class="p">,</span> <span class="s1">&#39;US&#39;</span><span class="p">);</span>
+                <span class="p">}</span>
+                <span class="k">return</span> <span class="n">locale</span><span class="p">;</span>
+              <span class="p">}</span>
+            <span class="p">},</span>
+            <span class="c1">// 注册命名路由表</span>
+            <span class="nl">routes:</span> <span class="o">&lt;</span><span class="kt">String</span><span class="p">,</span> <span class="n">WidgetBuilder</span><span class="o">&gt;</span><span class="p">{</span>
+              <span class="s2">&quot;login&quot;</span><span class="o">:</span> <span class="p">(</span><span class="n">context</span><span class="p">)</span> <span class="o">=&gt;</span> <span class="n">LoginRoute</span><span class="p">(),</span>
+              <span class="s2">&quot;themes&quot;</span><span class="o">:</span> <span class="p">(</span><span class="n">context</span><span class="p">)</span> <span class="o">=&gt;</span> <span class="n">ThemeChangeRoute</span><span class="p">(),</span>
+              <span class="s2">&quot;language&quot;</span><span class="o">:</span> <span class="p">(</span><span class="n">context</span><span class="p">)</span> <span class="o">=&gt;</span> <span class="n">LanguageRoute</span><span class="p">(),</span>
+            <span class="p">},</span>
+          <span class="p">);</span>
+        <span class="p">},</span>
+      <span class="p">),</span>
+    <span class="p">);</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>在上面的代码中：</p>
+<ol class="simple">
+<li><p>我们的根widget是<code class="docutils literal notranslate"><span class="pre">MultiProvider</span></code>，它将主题、用户、语言三种状态绑定到了应用的根上，如此一来，任何路由中都可以通过<code class="docutils literal notranslate"><span class="pre">Provider.of()</span></code>来获取这些状态，也就是说这三种状态是全局共享的！</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">HomeRoute</span></code>是应用的主页。</p></li>
+<li><p>在构建<code class="docutils literal notranslate"><span class="pre">MaterialApp</span></code>时，我们配置了APP支持的语言列表，以及监听了系统语言改变事件；另外<code class="docutils literal notranslate"><span class="pre">MaterialApp</span></code>消费（依赖）了<code class="docutils literal notranslate"><span class="pre">ThemeModel</span></code>和<code class="docutils literal notranslate"><span class="pre">LocaleModel</span></code>，所以当APP主题或语言改变时<code class="docutils literal notranslate"><span class="pre">MaterialApp</span></code>会重新构建</p></li>
+<li><p>我们注册了命名路由表，以便在APP中可以直接通过路由名跳转。</p></li>
+<li><p>为了支持多语言（本APP中我们支持美国英语和中文简体两种语言）我们实现了一个<code class="docutils literal notranslate"><span class="pre">GmLocalizationsDelegate</span></code>，子Widget中都可以通过<code class="docutils literal notranslate"><span class="pre">GmLocalizations</span></code>来动态获取APP当前语言对应的文案。关于<code class="docutils literal notranslate"><span class="pre">GmLocalizationsDelegate</span></code>和<code class="docutils literal notranslate"><span class="pre">GmLocalizations</span></code>的实现方式读者可以参考“国际化”一章中的介绍，此处不再赘述。</p></li>
+</ol>
+</div>
+<div class="section" id="id2">
+<h2>15.6.2 主页<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h2>
+<p>为了简单起见，当APP启动后，如果之前已登录了APP，则显示该用户项目列表；如果之前未登录，则显示一个登录按钮，点击后跳转到登录页。另外，我们实现一个抽屉菜单，里面包含当前用户头像及APP的菜单。下面我们先看看要实现的效果，如图15-1、15-2所示：</p>
+<p><img alt="15-1" src="../_images/15-1.png" /><img alt="15-2" src="../_images/15-2.png" /></p>
+<p>我们在“lib/routes”下创建一个“home_page.dart”文件，实现如下：</p>
+<div class="highlight-dart notranslate"><div class="highlight"><pre><span></span><span class="kd">class</span> <span class="nc">HomeRoute</span> <span class="kd">extends</span> <span class="n">StatefulWidget</span> <span class="p">{</span>
+  <span class="nd">@override</span>
+  <span class="n">_HomeRouteState</span> <span class="n">createState</span><span class="p">()</span> <span class="o">=&gt;</span> <span class="n">_HomeRouteState</span><span class="p">();</span>
+<span class="p">}</span>
+
+<span class="kd">class</span> <span class="nc">_HomeRouteState</span> <span class="kd">extends</span> <span class="n">State</span><span class="o">&lt;</span><span class="n">HomeRoute</span><span class="o">&gt;</span> <span class="p">{</span>
+  <span class="nd">@override</span>
+  <span class="n">Widget</span> <span class="n">build</span><span class="p">(</span><span class="n">BuildContext</span> <span class="n">context</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">return</span> <span class="n">Scaffold</span><span class="p">(</span>
+      <span class="nl">appBar:</span> <span class="n">AppBar</span><span class="p">(</span>
+        <span class="nl">title:</span> <span class="n">Text</span><span class="p">(</span><span class="n">GmLocalizations</span><span class="p">.</span><span class="n">of</span><span class="p">(</span><span class="n">context</span><span class="p">).</span><span class="n">home</span><span class="p">),</span>
+      <span class="p">),</span>
+      <span class="nl">body:</span> <span class="n">_buildBody</span><span class="p">(),</span> <span class="c1">// 构建主页面</span>
+      <span class="nl">drawer:</span> <span class="n">MyDrawer</span><span class="p">(),</span> <span class="c1">//抽屉菜单</span>
+    <span class="p">);</span>
+  <span class="p">}</span>
+  <span class="p">...</span><span class="c1">// 省略</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>上面代码中，主页的标题（title）我们是通过<code class="docutils literal notranslate"><span class="pre">GmLocalizations.of(context).home</span></code>来获得，<code class="docutils literal notranslate"><span class="pre">GmLocalizations</span></code>是我们提供的一个<code class="docutils literal notranslate"><span class="pre">Localizations</span></code>类，用于支持多语言，因此当APP语言改变时，凡是使用<code class="docutils literal notranslate"><span class="pre">GmLocalizations</span></code>动态获取的文案都会是相应语言的文案，这在前面“国际化”一章中已经介绍过，读者可以前翻查阅。</p>
+<p>我们通过 <code class="docutils literal notranslate"><span class="pre">_buildBody()</span></code>方法来构建主页内容，<code class="docutils literal notranslate"><span class="pre">_buildBody()</span></code>方法实现代码如下：</p>
+<div class="highlight-dart notranslate"><div class="highlight"><pre><span></span>  <span class="n">Widget</span> <span class="n">_buildBody</span><span class="p">()</span> <span class="p">{</span>
+    <span class="n">UserModel</span> <span class="n">userModel</span> <span class="o">=</span> <span class="n">Provider</span><span class="p">.</span><span class="n">of</span><span class="o">&lt;</span><span class="n">UserModel</span><span class="o">&gt;</span><span class="p">(</span><span class="n">context</span><span class="p">);</span>
+    <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">userModel</span><span class="p">.</span><span class="n">isLogin</span><span class="p">)</span> <span class="p">{</span>
+      <span class="c1">//用户未登录，显示登录按钮</span>
+      <span class="k">return</span> <span class="n">Center</span><span class="p">(</span>
+        <span class="nl">child:</span> <span class="n">RaisedButton</span><span class="p">(</span>
+          <span class="nl">child:</span> <span class="n">Text</span><span class="p">(</span><span class="n">GmLocalizations</span><span class="p">.</span><span class="n">of</span><span class="p">(</span><span class="n">context</span><span class="p">).</span><span class="n">login</span><span class="p">),</span>
+          <span class="nl">onPressed:</span> <span class="p">()</span> <span class="o">=&gt;</span> <span class="n">Navigator</span><span class="p">.</span><span class="n">of</span><span class="p">(</span><span class="n">context</span><span class="p">).</span><span class="n">pushNamed</span><span class="p">(</span><span class="s2">&quot;login&quot;</span><span class="p">),</span>
+        <span class="p">),</span>
+      <span class="p">);</span>
+    <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+      <span class="c1">//已登录，则展示项目列表</span>
+      <span class="k">return</span> <span class="n">InfiniteListView</span><span class="o">&lt;</span><span class="n">Repo</span><span class="o">&gt;</span><span class="p">(</span>
+        <span class="nl">onRetrieveData:</span> <span class="p">(</span><span class="kt">int</span> <span class="n">page</span><span class="p">,</span> <span class="n">List</span><span class="o">&lt;</span><span class="n">Repo</span><span class="o">&gt;</span> <span class="n">items</span><span class="p">,</span> <span class="kt">bool</span> <span class="n">refresh</span><span class="p">)</span> <span class="kd">async</span> <span class="p">{</span>
+          <span class="kd">var</span> <span class="n">data</span> <span class="o">=</span> <span class="kd">await</span> <span class="n">Git</span><span class="p">(</span><span class="n">context</span><span class="p">).</span><span class="n">getRepos</span><span class="p">(</span>
+            <span class="nl">refresh:</span> <span class="n">refresh</span><span class="p">,</span>
+            <span class="nl">queryParameters:</span> <span class="p">{</span>
+              <span class="s1">&#39;page&#39;</span><span class="o">:</span> <span class="n">page</span><span class="p">,</span>
+              <span class="s1">&#39;page_size&#39;</span><span class="o">:</span> <span class="m">20</span><span class="p">,</span>
+            <span class="p">},</span>
+          <span class="p">);</span>
+          <span class="c1">//把请求到的新数据添加到items中</span>
+          <span class="n">items</span><span class="p">.</span><span class="n">addAll</span><span class="p">(</span><span class="n">data</span><span class="p">);</span> 
+          <span class="c1">// 如果接口返回的数量等于&#39;page_size&#39;，则认为还有数据，反之则认为最后一页</span>
+          <span class="k">return</span> <span class="n">data</span><span class="p">.</span><span class="n">length</span><span class="o">==</span><span class="m">20</span><span class="p">;</span>
+        <span class="p">},</span>
+        <span class="nl">itemBuilder:</span> <span class="p">(</span><span class="n">List</span> <span class="n">list</span><span class="p">,</span> <span class="kt">int</span> <span class="n">index</span><span class="p">,</span> <span class="n">BuildContext</span> <span class="n">ctx</span><span class="p">)</span> <span class="p">{</span>
+          <span class="c1">// 项目信息列表项</span>
+          <span class="k">return</span> <span class="n">RepoItem</span><span class="p">(</span><span class="n">list</span><span class="p">[</span><span class="n">index</span><span class="p">]);</span>
+        <span class="p">},</span>
+      <span class="p">);</span>
+    <span class="p">}</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>上面代码注释很清楚：如果用户未登录，显示登录按钮；如果用户已登录，则展示项目列表。这里项目列表使用了<code class="docutils literal notranslate"><span class="pre">InfiniteListView</span></code> Widget，它是flukit package中提供的。<code class="docutils literal notranslate"><span class="pre">InfiniteListView</span></code>同时支持了下拉刷新和上拉加载更多两种功能。<code class="docutils literal notranslate"><span class="pre">onRetrieveData</span></code> 为数据获取回调，该回调函数接收三个参数：</p>
+<p>| 参数名  | 类型    | 解释                   |
+| ——- | ——- | ———————- |
+| page    | int     | 当前页号               |
+| items   | List<T> | 保存当前列表数据的List |
+| refresh | bool    | 是否是下拉刷新触发     |</p>
+<p>返回值类型为<code class="docutils literal notranslate"><span class="pre">bool</span></code>，为<code class="docutils literal notranslate"><span class="pre">true</span></code>时表示还有数据，为<code class="docutils literal notranslate"><span class="pre">false</span></code>时则表示后续没有数据了。<code class="docutils literal notranslate"><span class="pre">onRetrieveData</span></code> 回调中我们调用<code class="docutils literal notranslate"><span class="pre">Git(context).getRepos(...)</span></code>来获取用户项目列表，同时指定每次请求获取20条。当获取成功时，首先要将新获取的项目数据添加到<code class="docutils literal notranslate"><span class="pre">items</span></code>中，然后根据本次请求的项目条数是否等于期望的20条来判断还有没有更多的数据。在此需要注意，<code class="docutils literal notranslate"><span class="pre">Git(context).getRepos(…)</span></code>方法中需要<code class="docutils literal notranslate"><span class="pre">refresh</span></code>参数来判断是否使用缓存。</p>
+<p><code class="docutils literal notranslate"><span class="pre">itemBuilder</span></code>为列表项的builder，我们需要在该回调中构建每一个列表项Widget。由于列表项构建逻辑较复杂，我们单独封装一个<code class="docutils literal notranslate"><span class="pre">RepoItem</span></code> Widget 专门用于构建列表项UI。<code class="docutils literal notranslate"><span class="pre">RepoItem</span></code> 实现如下：</p>
+<div class="highlight-dart notranslate"><div class="highlight"><pre><span></span><span class="k">import</span> <span class="s1">&#39;../index.dart&#39;</span><span class="p">;</span>
+
+<span class="kd">class</span> <span class="nc">RepoItem</span> <span class="kd">extends</span> <span class="n">StatefulWidget</span> <span class="p">{</span>
+  <span class="c1">// 将`repo.id`作为RepoItem的默认key</span>
+  <span class="n">RepoItem</span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="n">repo</span><span class="p">)</span> <span class="o">:</span> <span class="k">super</span><span class="p">(</span><span class="nl">key:</span> <span class="n">ValueKey</span><span class="p">(</span><span class="n">repo</span><span class="p">.</span><span class="n">id</span><span class="p">));</span>
+
+  <span class="kd">final</span> <span class="n">Repo</span> <span class="n">repo</span><span class="p">;</span>
+
+  <span class="nd">@override</span>
+  <span class="n">_RepoItemState</span> <span class="n">createState</span><span class="p">()</span> <span class="o">=&gt;</span> <span class="n">_RepoItemState</span><span class="p">();</span>
+<span class="p">}</span>
+
+<span class="kd">class</span> <span class="nc">_RepoItemState</span> <span class="kd">extends</span> <span class="n">State</span><span class="o">&lt;</span><span class="n">RepoItem</span><span class="o">&gt;</span> <span class="p">{</span>
+  <span class="nd">@override</span>
+  <span class="n">Widget</span> <span class="n">build</span><span class="p">(</span><span class="n">BuildContext</span> <span class="n">context</span><span class="p">)</span> <span class="p">{</span>
+    <span class="kd">var</span> <span class="n">subtitle</span><span class="p">;</span>
+    <span class="k">return</span> <span class="n">Padding</span><span class="p">(</span>
+      <span class="nl">padding:</span> <span class="k">const</span> <span class="n">EdgeInsets</span><span class="p">.</span><span class="n">only</span><span class="p">(</span><span class="nl">top:</span> <span class="m">8.0</span><span class="p">),</span>
+      <span class="nl">child:</span> <span class="n">Material</span><span class="p">(</span>
+        <span class="nl">color:</span> <span class="n">Colors</span><span class="p">.</span><span class="n">white</span><span class="p">,</span>
+        <span class="nl">shape:</span> <span class="n">BorderDirectional</span><span class="p">(</span>
+          <span class="nl">bottom:</span> <span class="n">BorderSide</span><span class="p">(</span>
+            <span class="nl">color:</span> <span class="n">Theme</span><span class="p">.</span><span class="n">of</span><span class="p">(</span><span class="n">context</span><span class="p">).</span><span class="n">dividerColor</span><span class="p">,</span>
+            <span class="nl">width:</span> <span class="p">.</span><span class="m">5</span><span class="p">,</span>
+          <span class="p">),</span>
+        <span class="p">),</span>
+        <span class="nl">child:</span> <span class="n">Padding</span><span class="p">(</span>
+          <span class="nl">padding:</span> <span class="k">const</span> <span class="n">EdgeInsets</span><span class="p">.</span><span class="n">only</span><span class="p">(</span><span class="nl">top:</span> <span class="m">0.0</span><span class="p">,</span> <span class="nl">bottom:</span> <span class="m">16</span><span class="p">),</span>
+          <span class="nl">child:</span> <span class="n">Column</span><span class="p">(</span>
+            <span class="nl">crossAxisAlignment:</span> <span class="n">CrossAxisAlignment</span><span class="p">.</span><span class="n">start</span><span class="p">,</span>
+            <span class="nl">children:</span> <span class="o">&lt;</span><span class="n">Widget</span><span class="o">&gt;</span><span class="p">[</span>
+              <span class="n">ListTile</span><span class="p">(</span>
+                <span class="nl">dense:</span> <span class="kc">true</span><span class="p">,</span>
+                <span class="nl">leading:</span> <span class="n">gmAvatar</span><span class="p">(</span>
+                  <span class="c1">//项目owner头像</span>
+                  <span class="n">widget</span><span class="p">.</span><span class="n">repo</span><span class="p">.</span><span class="n">owner</span><span class="p">.</span><span class="n">avatar_url</span><span class="p">,</span>
+                  <span class="nl">width:</span> <span class="m">24.0</span><span class="p">,</span>
+                  <span class="nl">borderRadius:</span> <span class="n">BorderRadius</span><span class="p">.</span><span class="n">circular</span><span class="p">(</span><span class="m">12</span><span class="p">),</span>
+                <span class="p">),</span>
+                <span class="nl">title:</span> <span class="n">Text</span><span class="p">(</span>
+                  <span class="n">widget</span><span class="p">.</span><span class="n">repo</span><span class="p">.</span><span class="n">owner</span><span class="p">.</span><span class="n">login</span><span class="p">,</span>
+                  <span class="nl">textScaleFactor:</span> <span class="p">.</span><span class="m">9</span><span class="p">,</span>
+                <span class="p">),</span>
+                <span class="nl">subtitle:</span> <span class="n">subtitle</span><span class="p">,</span>
+                <span class="nl">trailing:</span> <span class="n">Text</span><span class="p">(</span><span class="n">widget</span><span class="p">.</span><span class="n">repo</span><span class="p">.</span><span class="n">language</span> <span class="o">??</span> <span class="s2">&quot;&quot;</span><span class="p">),</span>
+              <span class="p">),</span>
+              <span class="c1">// 构建项目标题和简介</span>
+              <span class="n">Padding</span><span class="p">(</span>
+                <span class="nl">padding:</span> <span class="k">const</span> <span class="n">EdgeInsets</span><span class="p">.</span><span class="n">symmetric</span><span class="p">(</span><span class="nl">horizontal:</span> <span class="m">16.0</span><span class="p">),</span>
+                <span class="nl">child:</span> <span class="n">Column</span><span class="p">(</span>
+                  <span class="nl">crossAxisAlignment:</span> <span class="n">CrossAxisAlignment</span><span class="p">.</span><span class="n">start</span><span class="p">,</span>
+                  <span class="nl">children:</span> <span class="o">&lt;</span><span class="n">Widget</span><span class="o">&gt;</span><span class="p">[</span>
+                    <span class="n">Text</span><span class="p">(</span>
+                      <span class="n">widget</span><span class="p">.</span><span class="n">repo</span><span class="p">.</span><span class="n">fork</span>
+                          <span class="o">?</span> <span class="n">widget</span><span class="p">.</span><span class="n">repo</span><span class="p">.</span><span class="n">full_name</span>
+                          <span class="o">:</span> <span class="n">widget</span><span class="p">.</span><span class="n">repo</span><span class="p">.</span><span class="n">name</span><span class="p">,</span>
+                      <span class="nl">style:</span> <span class="n">TextStyle</span><span class="p">(</span>
+                        <span class="nl">fontSize:</span> <span class="m">15</span><span class="p">,</span>
+                        <span class="nl">fontWeight:</span> <span class="n">FontWeight</span><span class="p">.</span><span class="n">bold</span><span class="p">,</span>
+                        <span class="nl">fontStyle:</span> <span class="n">widget</span><span class="p">.</span><span class="n">repo</span><span class="p">.</span><span class="n">fork</span>
+                            <span class="o">?</span> <span class="n">FontStyle</span><span class="p">.</span><span class="n">italic</span>
+                            <span class="o">:</span> <span class="n">FontStyle</span><span class="p">.</span><span class="n">normal</span><span class="p">,</span>
+                      <span class="p">),</span>
+                    <span class="p">),</span>
+                    <span class="n">Padding</span><span class="p">(</span>
+                      <span class="nl">padding:</span> <span class="k">const</span> <span class="n">EdgeInsets</span><span class="p">.</span><span class="n">only</span><span class="p">(</span><span class="nl">top:</span> <span class="m">8</span><span class="p">,</span> <span class="nl">bottom:</span> <span class="m">12</span><span class="p">),</span>
+                      <span class="nl">child:</span> <span class="n">widget</span><span class="p">.</span><span class="n">repo</span><span class="p">.</span><span class="n">description</span> <span class="o">==</span> <span class="kc">null</span>
+                          <span class="o">?</span> <span class="n">Text</span><span class="p">(</span>
+                              <span class="n">GmLocalizations</span><span class="p">.</span><span class="n">of</span><span class="p">(</span><span class="n">context</span><span class="p">).</span><span class="n">noDescription</span><span class="p">,</span>
+                              <span class="nl">style:</span> <span class="n">TextStyle</span><span class="p">(</span>
+                                  <span class="nl">fontStyle:</span> <span class="n">FontStyle</span><span class="p">.</span><span class="n">italic</span><span class="p">,</span>
+                                  <span class="nl">color:</span> <span class="n">Colors</span><span class="p">.</span><span class="n">grey</span><span class="p">[</span><span class="m">700</span><span class="p">]),</span>
+                            <span class="p">)</span>
+                          <span class="o">:</span> <span class="n">Text</span><span class="p">(</span>
+                              <span class="n">widget</span><span class="p">.</span><span class="n">repo</span><span class="p">.</span><span class="n">description</span><span class="p">,</span>
+                              <span class="nl">maxLines:</span> <span class="m">3</span><span class="p">,</span>
+                              <span class="nl">style:</span> <span class="n">TextStyle</span><span class="p">(</span>
+                                <span class="nl">height:</span> <span class="m">1.15</span><span class="p">,</span>
+                                <span class="nl">color:</span> <span class="n">Colors</span><span class="p">.</span><span class="n">blueGrey</span><span class="p">[</span><span class="m">700</span><span class="p">],</span>
+                                <span class="nl">fontSize:</span> <span class="m">13</span><span class="p">,</span>
+                              <span class="p">),</span>
+                            <span class="p">),</span>
+                    <span class="p">),</span>
+                  <span class="p">],</span>
+                <span class="p">),</span>
+              <span class="p">),</span>
+              <span class="c1">// 构建卡片底部信息</span>
+              <span class="n">_buildBottom</span><span class="p">()</span>
+            <span class="p">],</span>
+          <span class="p">),</span>
+        <span class="p">),</span>
+      <span class="p">),</span>
+    <span class="p">);</span>
+  <span class="p">}</span>
+
+  <span class="c1">// 构建卡片底部信息</span>
+  <span class="n">Widget</span> <span class="n">_buildBottom</span><span class="p">()</span> <span class="p">{</span>
+    <span class="k">const</span> <span class="n">paddingWidth</span> <span class="o">=</span> <span class="m">10</span><span class="p">;</span>
+    <span class="k">return</span> <span class="n">IconTheme</span><span class="p">(</span>
+      <span class="nl">data:</span> <span class="n">IconThemeData</span><span class="p">(</span>
+        <span class="nl">color:</span> <span class="n">Colors</span><span class="p">.</span><span class="n">grey</span><span class="p">,</span>
+        <span class="nl">size:</span> <span class="m">15</span><span class="p">,</span>
+      <span class="p">),</span>
+      <span class="nl">child:</span> <span class="n">DefaultTextStyle</span><span class="p">(</span>
+        <span class="nl">style:</span> <span class="n">TextStyle</span><span class="p">(</span><span class="nl">color:</span> <span class="n">Colors</span><span class="p">.</span><span class="n">grey</span><span class="p">,</span> <span class="nl">fontSize:</span> <span class="m">12</span><span class="p">),</span>
+        <span class="nl">child:</span> <span class="n">Padding</span><span class="p">(</span>
+          <span class="nl">padding:</span> <span class="k">const</span> <span class="n">EdgeInsets</span><span class="p">.</span><span class="n">symmetric</span><span class="p">(</span><span class="nl">horizontal:</span> <span class="m">16</span><span class="p">),</span>
+          <span class="nl">child:</span> <span class="n">Builder</span><span class="p">(</span><span class="nl">builder:</span> <span class="p">(</span><span class="n">context</span><span class="p">)</span> <span class="p">{</span>
+            <span class="kd">var</span> <span class="n">children</span> <span class="o">=</span> <span class="o">&lt;</span><span class="n">Widget</span><span class="o">&gt;</span><span class="p">[</span>
+              <span class="n">Icon</span><span class="p">(</span><span class="n">Icons</span><span class="p">.</span><span class="n">star</span><span class="p">),</span>
+              <span class="n">Text</span><span class="p">(</span><span class="s2">&quot; &quot;</span> <span class="o">+</span>
+                  <span class="n">widget</span><span class="p">.</span><span class="n">repo</span><span class="p">.</span><span class="n">stargazers_count</span>
+                      <span class="p">.</span><span class="n">toString</span><span class="p">()</span>
+                      <span class="p">.</span><span class="n">padRight</span><span class="p">(</span><span class="n">paddingWidth</span><span class="p">)),</span>
+              <span class="n">Icon</span><span class="p">(</span><span class="n">Icons</span><span class="p">.</span><span class="n">info_outline</span><span class="p">),</span>
+              <span class="n">Text</span><span class="p">(</span><span class="s2">&quot; &quot;</span> <span class="o">+</span>
+                  <span class="n">widget</span><span class="p">.</span><span class="n">repo</span><span class="p">.</span><span class="n">open_issues_count</span>
+                      <span class="p">.</span><span class="n">toString</span><span class="p">()</span>
+                      <span class="p">.</span><span class="n">padRight</span><span class="p">(</span><span class="n">paddingWidth</span><span class="p">)),</span>
+
+              <span class="n">Icon</span><span class="p">(</span><span class="n">MyIcons</span><span class="p">.</span><span class="n">fork</span><span class="p">),</span> <span class="c1">//我们的自定义图标</span>
+              <span class="n">Text</span><span class="p">(</span><span class="n">widget</span><span class="p">.</span><span class="n">repo</span><span class="p">.</span><span class="n">forks_count</span><span class="p">.</span><span class="n">toString</span><span class="p">().</span><span class="n">padRight</span><span class="p">(</span><span class="n">paddingWidth</span><span class="p">)),</span>
+            <span class="p">];</span>
+
+            <span class="k">if</span> <span class="p">(</span><span class="n">widget</span><span class="p">.</span><span class="n">repo</span><span class="p">.</span><span class="n">fork</span><span class="p">)</span> <span class="p">{</span>
+              <span class="n">children</span><span class="p">.</span><span class="n">add</span><span class="p">(</span><span class="n">Text</span><span class="p">(</span><span class="s2">&quot;Forked&quot;</span><span class="p">.</span><span class="n">padRight</span><span class="p">(</span><span class="n">paddingWidth</span><span class="p">)));</span>
+            <span class="p">}</span>
+
+            <span class="k">if</span> <span class="p">(</span><span class="n">widget</span><span class="p">.</span><span class="n">repo</span><span class="p">.</span><span class="n">private</span> <span class="o">==</span> <span class="kc">true</span><span class="p">)</span> <span class="p">{</span>
+              <span class="n">children</span><span class="p">.</span><span class="n">addAll</span><span class="p">(</span><span class="o">&lt;</span><span class="n">Widget</span><span class="o">&gt;</span><span class="p">[</span>
+                <span class="n">Icon</span><span class="p">(</span><span class="n">Icons</span><span class="p">.</span><span class="n">lock</span><span class="p">),</span>
+                <span class="n">Text</span><span class="p">(</span><span class="s2">&quot; private&quot;</span><span class="p">.</span><span class="n">padRight</span><span class="p">(</span><span class="n">paddingWidth</span><span class="p">))</span>
+              <span class="p">]);</span>
+            <span class="p">}</span>
+            <span class="k">return</span> <span class="n">Row</span><span class="p">(</span><span class="nl">children:</span> <span class="n">children</span><span class="p">);</span>
+          <span class="p">}),</span>
+        <span class="p">),</span>
+      <span class="p">),</span>
+    <span class="p">);</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>上面代码有两点需要注意：</p>
+<ol>
+<li><p>在构建项目拥有者头像时调用了<code class="docutils literal notranslate"><span class="pre">gmAvatar(…)</span></code>方法，该方法是是一个全局工具函数，专门用于获取头像图片，实现如下：</p>
+<div class="highlight-dart notranslate"><div class="highlight"><pre><span></span><span class="n">Widget</span> <span class="n">gmAvatar</span><span class="p">(</span><span class="kt">String</span> <span class="n">url</span><span class="p">,</span> <span class="p">{</span>
+  <span class="kt">double</span> <span class="n">width</span> <span class="o">=</span> <span class="m">30</span><span class="p">,</span>
+  <span class="kt">double</span> <span class="n">height</span><span class="p">,</span>
+  <span class="n">BoxFit</span> <span class="n">fit</span><span class="p">,</span>
+  <span class="n">BorderRadius</span> <span class="n">borderRadius</span><span class="p">,</span>
+<span class="p">})</span> <span class="p">{</span>
+  <span class="kd">var</span> <span class="n">placeholder</span> <span class="o">=</span> <span class="n">Image</span><span class="p">.</span><span class="n">asset</span><span class="p">(</span>
+      <span class="s2">&quot;imgs/avatar-default.png&quot;</span><span class="p">,</span> <span class="c1">//头像占位图，加载过程中显示</span>
+      <span class="nl">width:</span> <span class="n">width</span><span class="p">,</span>
+      <span class="nl">height:</span> <span class="n">height</span>
+  <span class="p">);</span>
+  <span class="k">return</span> <span class="n">ClipRRect</span><span class="p">(</span>
+    <span class="nl">borderRadius:</span> <span class="n">borderRadius</span> <span class="o">??</span> <span class="n">BorderRadius</span><span class="p">.</span><span class="n">circular</span><span class="p">(</span><span class="m">2</span><span class="p">),</span>
+    <span class="nl">child:</span> <span class="n">CachedNetworkImage</span><span class="p">(</span> 
+      <span class="nl">imageUrl:</span> <span class="n">url</span><span class="p">,</span>
+      <span class="nl">width:</span> <span class="n">width</span><span class="p">,</span>
+      <span class="nl">height:</span> <span class="n">height</span><span class="p">,</span>
+      <span class="nl">fit:</span> <span class="n">fit</span><span class="p">,</span>
+      <span class="nl">placeholder:</span> <span class="p">(</span><span class="n">context</span><span class="p">,</span> <span class="n">url</span><span class="p">)</span> <span class="o">=&gt;</span><span class="n">placeholder</span><span class="p">,</span>
+      <span class="nl">errorWidget:</span> <span class="p">(</span><span class="n">context</span><span class="p">,</span> <span class="n">url</span><span class="p">,</span> <span class="n">error</span><span class="p">)</span> <span class="o">=&gt;</span><span class="n">placeholder</span><span class="p">,</span>
+    <span class="p">),</span>
+  <span class="p">);</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>代码中调用了<code class="docutils literal notranslate"><span class="pre">CachedNetworkImage</span></code> 是cached_network_image包中提供的一个Widget，它不仅可以在图片加载过程中指定一个占位图，而且还可以对网络请求的图片进行缓存，更多详情读者可以自行查阅其文档。</p>
+</li>
+<li><p>由于Flutter 的Material 图标库中没有fork图标，所以我们在iconfont.cn上找了一个fork图标，然后根据“图片和Icon”一节中介绍的使用自定义字体图标的方法集成到了我们的项目中。</p></li>
+</ol>
+</div>
+<div class="section" id="id3">
+<h2>15.6.3 抽屉菜单<a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h2>
+<p>抽屉菜单分为两部分：顶部头像和底部功能菜单项。当用户未登录，则抽屉菜单顶部会显示一个默认的灰色占位图，若用户已登录，则会显示用户的头像。抽屉菜单底部有“换肤”和“语言”两个固定菜单，若用户已登录，则会多一个“注销”菜单。用户点击“换肤”和“语言”两个菜单项，会进入相应的设置页面。我们的抽屉菜单效果如图15-3、15-4所示：</p>
+<p><img alt="15-3" src="../_images/15-3.png" /><img alt="15-4" src="../_images/15-4.png" /></p>
+<p>实现代码如下：</p>
+<div class="highlight-dart notranslate"><div class="highlight"><pre><span></span><span class="kd">class</span> <span class="nc">MyDrawer</span> <span class="kd">extends</span> <span class="n">StatelessWidget</span> <span class="p">{</span>
+  <span class="k">const</span> <span class="n">MyDrawer</span><span class="p">({</span>
+    <span class="n">Key</span> <span class="n">key</span><span class="p">,</span>
+  <span class="p">})</span> <span class="o">:</span> <span class="k">super</span><span class="p">(</span><span class="nl">key:</span> <span class="n">key</span><span class="p">);</span>
+
+  <span class="nd">@override</span>
+  <span class="n">Widget</span> <span class="n">build</span><span class="p">(</span><span class="n">BuildContext</span> <span class="n">context</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">return</span> <span class="n">Drawer</span><span class="p">(</span>
+      <span class="c1">//移除顶部padding</span>
+      <span class="nl">child:</span> <span class="n">MediaQuery</span><span class="p">.</span><span class="n">removePadding</span><span class="p">(</span>
+        <span class="nl">context:</span> <span class="n">context</span><span class="p">,</span>
+        <span class="nl">removeTop:</span> <span class="kc">true</span><span class="p">,</span>
+        <span class="nl">child:</span> <span class="n">Column</span><span class="p">(</span>
+          <span class="nl">crossAxisAlignment:</span> <span class="n">CrossAxisAlignment</span><span class="p">.</span><span class="n">start</span><span class="p">,</span>
+          <span class="nl">children:</span> <span class="o">&lt;</span><span class="n">Widget</span><span class="o">&gt;</span><span class="p">[</span>
+            <span class="n">_buildHeader</span><span class="p">(),</span> <span class="c1">//构建抽屉菜单头部</span>
+            <span class="n">Expanded</span><span class="p">(</span><span class="nl">child:</span> <span class="n">_buildMenus</span><span class="p">()),</span> <span class="c1">//构建功能菜单</span>
+          <span class="p">],</span>
+        <span class="p">),</span>
+      <span class="p">),</span>
+    <span class="p">);</span>
+  <span class="p">}</span>
+
+  <span class="n">Widget</span> <span class="n">_buildHeader</span><span class="p">()</span> <span class="p">{</span>
+    <span class="k">return</span> <span class="n">Consumer</span><span class="o">&lt;</span><span class="n">UserModel</span><span class="o">&gt;</span><span class="p">(</span>
+      <span class="nl">builder:</span> <span class="p">(</span><span class="n">BuildContext</span> <span class="n">context</span><span class="p">,</span> <span class="n">UserModel</span> <span class="n">value</span><span class="p">,</span> <span class="n">Widget</span> <span class="n">child</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">return</span> <span class="n">GestureDetector</span><span class="p">(</span>
+          <span class="nl">child:</span> <span class="n">Container</span><span class="p">(</span>
+            <span class="nl">color:</span> <span class="n">Theme</span><span class="p">.</span><span class="n">of</span><span class="p">(</span><span class="n">context</span><span class="p">).</span><span class="n">primaryColor</span><span class="p">,</span>
+            <span class="nl">padding:</span> <span class="n">EdgeInsets</span><span class="p">.</span><span class="n">only</span><span class="p">(</span><span class="nl">top:</span> <span class="m">40</span><span class="p">,</span> <span class="nl">bottom:</span> <span class="m">20</span><span class="p">),</span>
+            <span class="nl">child:</span> <span class="n">Row</span><span class="p">(</span>
+              <span class="nl">children:</span> <span class="o">&lt;</span><span class="n">Widget</span><span class="o">&gt;</span><span class="p">[</span>
+                <span class="n">Padding</span><span class="p">(</span>
+                  <span class="nl">padding:</span> <span class="k">const</span> <span class="n">EdgeInsets</span><span class="p">.</span><span class="n">symmetric</span><span class="p">(</span><span class="nl">horizontal:</span> <span class="m">16.0</span><span class="p">),</span>
+                  <span class="nl">child:</span> <span class="n">ClipOval</span><span class="p">(</span>
+                    <span class="c1">// 如果已登录，则显示用户头像；若未登录，则显示默认头像</span>
+                    <span class="nl">child:</span> <span class="n">value</span><span class="p">.</span><span class="n">isLogin</span>
+                        <span class="o">?</span> <span class="n">gmAvatar</span><span class="p">(</span><span class="n">value</span><span class="p">.</span><span class="n">user</span><span class="p">.</span><span class="n">avatar_url</span><span class="p">,</span> <span class="nl">width:</span> <span class="m">80</span><span class="p">)</span>
+                        <span class="o">:</span> <span class="n">Image</span><span class="p">.</span><span class="n">asset</span><span class="p">(</span>
+                            <span class="s2">&quot;imgs/avatar-default.png&quot;</span><span class="p">,</span>
+                            <span class="nl">width:</span> <span class="m">80</span><span class="p">,</span>
+                          <span class="p">),</span>
+                  <span class="p">),</span>
+                <span class="p">),</span>
+                <span class="n">Text</span><span class="p">(</span>
+                  <span class="n">value</span><span class="p">.</span><span class="n">isLogin</span>
+                      <span class="o">?</span> <span class="n">value</span><span class="p">.</span><span class="n">user</span><span class="p">.</span><span class="n">login</span>
+                      <span class="o">:</span> <span class="n">GmLocalizations</span><span class="p">.</span><span class="n">of</span><span class="p">(</span><span class="n">context</span><span class="p">).</span><span class="n">login</span><span class="p">,</span>
+                  <span class="nl">style:</span> <span class="n">TextStyle</span><span class="p">(</span>
+                    <span class="nl">fontWeight:</span> <span class="n">FontWeight</span><span class="p">.</span><span class="n">bold</span><span class="p">,</span>
+                    <span class="nl">color:</span> <span class="n">Colors</span><span class="p">.</span><span class="n">white</span><span class="p">,</span>
+                  <span class="p">),</span>
+                <span class="p">)</span>
+              <span class="p">],</span>
+            <span class="p">),</span>
+          <span class="p">),</span>
+          <span class="nl">onTap:</span> <span class="p">()</span> <span class="p">{</span>
+            <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">value</span><span class="p">.</span><span class="n">isLogin</span><span class="p">)</span> <span class="n">Navigator</span><span class="p">.</span><span class="n">of</span><span class="p">(</span><span class="n">context</span><span class="p">).</span><span class="n">pushNamed</span><span class="p">(</span><span class="s2">&quot;login&quot;</span><span class="p">);</span>
+          <span class="p">},</span>
+        <span class="p">);</span>
+      <span class="p">},</span>
+    <span class="p">);</span>
+  <span class="p">}</span>
+
+  <span class="c1">// 构建菜单项</span>
+  <span class="n">Widget</span> <span class="n">_buildMenus</span><span class="p">()</span> <span class="p">{</span>
+    <span class="k">return</span> <span class="n">Consumer</span><span class="o">&lt;</span><span class="n">UserModel</span><span class="o">&gt;</span><span class="p">(</span>
+      <span class="nl">builder:</span> <span class="p">(</span><span class="n">BuildContext</span> <span class="n">context</span><span class="p">,</span> <span class="n">UserModel</span> <span class="n">userModel</span><span class="p">,</span> <span class="n">Widget</span> <span class="n">child</span><span class="p">)</span> <span class="p">{</span>
+        <span class="kd">var</span> <span class="n">gm</span> <span class="o">=</span> <span class="n">GmLocalizations</span><span class="p">.</span><span class="n">of</span><span class="p">(</span><span class="n">context</span><span class="p">);</span>
+        <span class="k">return</span> <span class="n">ListView</span><span class="p">(</span>
+          <span class="nl">children:</span> <span class="o">&lt;</span><span class="n">Widget</span><span class="o">&gt;</span><span class="p">[</span>
+            <span class="n">ListTile</span><span class="p">(</span>
+              <span class="nl">leading:</span> <span class="k">const</span> <span class="n">Icon</span><span class="p">(</span><span class="n">Icons</span><span class="p">.</span><span class="n">color_lens</span><span class="p">),</span>
+              <span class="nl">title:</span> <span class="n">Text</span><span class="p">(</span><span class="n">gm</span><span class="p">.</span><span class="n">theme</span><span class="p">),</span>
+              <span class="nl">onTap:</span> <span class="p">()</span> <span class="o">=&gt;</span> <span class="n">Navigator</span><span class="p">.</span><span class="n">pushNamed</span><span class="p">(</span><span class="n">context</span><span class="p">,</span> <span class="s2">&quot;themes&quot;</span><span class="p">),</span>
+            <span class="p">),</span>
+            <span class="n">ListTile</span><span class="p">(</span>
+              <span class="nl">leading:</span> <span class="k">const</span> <span class="n">Icon</span><span class="p">(</span><span class="n">Icons</span><span class="p">.</span><span class="n">language</span><span class="p">),</span>
+              <span class="nl">title:</span> <span class="n">Text</span><span class="p">(</span><span class="n">gm</span><span class="p">.</span><span class="n">language</span><span class="p">),</span>
+              <span class="nl">onTap:</span> <span class="p">()</span> <span class="o">=&gt;</span> <span class="n">Navigator</span><span class="p">.</span><span class="n">pushNamed</span><span class="p">(</span><span class="n">context</span><span class="p">,</span> <span class="s2">&quot;language&quot;</span><span class="p">),</span>
+            <span class="p">),</span>
+            <span class="k">if</span><span class="p">(</span><span class="n">userModel</span><span class="p">.</span><span class="n">isLogin</span><span class="p">)</span> <span class="n">ListTile</span><span class="p">(</span>
+              <span class="nl">leading:</span> <span class="k">const</span> <span class="n">Icon</span><span class="p">(</span><span class="n">Icons</span><span class="p">.</span><span class="n">power_settings_new</span><span class="p">),</span>
+              <span class="nl">title:</span> <span class="n">Text</span><span class="p">(</span><span class="n">gm</span><span class="p">.</span><span class="n">logout</span><span class="p">),</span>
+              <span class="nl">onTap:</span> <span class="p">()</span> <span class="p">{</span>
+                <span class="n">showDialog</span><span class="p">(</span>
+                  <span class="nl">context:</span> <span class="n">context</span><span class="p">,</span>
+                  <span class="nl">builder:</span> <span class="p">(</span><span class="n">ctx</span><span class="p">)</span> <span class="p">{</span>
+                    <span class="c1">//退出账号前先弹二次确认窗</span>
+                    <span class="k">return</span> <span class="n">AlertDialog</span><span class="p">(</span>
+                      <span class="nl">content:</span> <span class="n">Text</span><span class="p">(</span><span class="n">gm</span><span class="p">.</span><span class="n">logoutTip</span><span class="p">),</span>
+                      <span class="nl">actions:</span> <span class="o">&lt;</span><span class="n">Widget</span><span class="o">&gt;</span><span class="p">[</span>
+                        <span class="n">FlatButton</span><span class="p">(</span>
+                          <span class="nl">child:</span> <span class="n">Text</span><span class="p">(</span><span class="n">gm</span><span class="p">.</span><span class="n">cancel</span><span class="p">),</span>
+                          <span class="nl">onPressed:</span> <span class="p">()</span> <span class="o">=&gt;</span> <span class="n">Navigator</span><span class="p">.</span><span class="n">pop</span><span class="p">(</span><span class="n">context</span><span class="p">),</span>
+                        <span class="p">),</span>
+                        <span class="n">FlatButton</span><span class="p">(</span>
+                          <span class="nl">child:</span> <span class="n">Text</span><span class="p">(</span><span class="n">gm</span><span class="p">.</span><span class="n">yes</span><span class="p">),</span>
+                          <span class="nl">onPressed:</span> <span class="p">()</span> <span class="p">{</span>
+                            <span class="c1">//该赋值语句会触发MaterialApp rebuild</span>
+                            <span class="n">userModel</span><span class="p">.</span><span class="n">user</span> <span class="o">=</span> <span class="kc">null</span><span class="p">;</span>
+                            <span class="n">Navigator</span><span class="p">.</span><span class="n">pop</span><span class="p">(</span><span class="n">context</span><span class="p">);</span>
+                          <span class="p">},</span>
+                        <span class="p">),</span>
+                      <span class="p">],</span>
+                    <span class="p">);</span>
+                  <span class="p">},</span>
+                <span class="p">);</span>
+              <span class="p">},</span>
+            <span class="p">),</span>
+          <span class="p">],</span>
+        <span class="p">);</span>
+      <span class="p">},</span>
+    <span class="p">);</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>用户点击“注销”，<code class="docutils literal notranslate"><span class="pre">userModel.user</span></code> 会被置空，此时所有依赖<code class="docutils literal notranslate"><span class="pre">userModel</span></code>的组件都会被<code class="docutils literal notranslate"><span class="pre">rebuild</span></code>，如主页会恢复成未登录的状态。</p>
+<p>本小节我们介绍了APP入口<code class="docutils literal notranslate"><span class="pre">MaterialApp</span></code>的一些配置，然后实现了APP的首页。后面我们将展示登录页、换肤页、语言切换页。</p>
+</div>
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">Flutter in action</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2014, Miguel Grinberg.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.5.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="../_sources/chapter15/entry.md.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>
