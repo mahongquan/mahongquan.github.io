@@ -1,0 +1,191 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>5.5 Container &#8212; Flutter in action  documentation</title>
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="container">
+<h1>5.5 Container<a class="headerlink" href="#container" title="Permalink to this headline">¶</a></h1>
+<p>我们在前面的章节示例中多次用到过<code class="docutils literal notranslate"><span class="pre">Container</span></code>组件，本节我们就详细介绍一下<code class="docutils literal notranslate"><span class="pre">Container</span></code>组件。<code class="docutils literal notranslate"><span class="pre">Container</span></code>是一个组合类容器，它本身不对应具体的<code class="docutils literal notranslate"><span class="pre">RenderObject</span></code>，它是<code class="docutils literal notranslate"><span class="pre">DecoratedBox</span></code>、<code class="docutils literal notranslate"><span class="pre">ConstrainedBox、Transform</span></code>、<code class="docutils literal notranslate"><span class="pre">Padding</span></code>、<code class="docutils literal notranslate"><span class="pre">Align</span></code>等组件组合的一个多功能容器，所以我们只需通过一个<code class="docutils literal notranslate"><span class="pre">Container</span></code>组件可以实现同时需要装饰、变换、限制的场景。下面是<code class="docutils literal notranslate"><span class="pre">Container</span></code>的定义：</p>
+<div class="highlight-dart notranslate"><div class="highlight"><pre><span></span><span class="n">Container</span><span class="p">({</span>
+  <span class="k">this</span><span class="p">.</span><span class="n">alignment</span><span class="p">,</span>
+  <span class="k">this</span><span class="p">.</span><span class="n">padding</span><span class="p">,</span> <span class="c1">//容器内补白，属于decoration的装饰范围</span>
+  <span class="n">Color</span> <span class="n">color</span><span class="p">,</span> <span class="c1">// 背景色</span>
+  <span class="n">Decoration</span> <span class="n">decoration</span><span class="p">,</span> <span class="c1">// 背景装饰</span>
+  <span class="n">Decoration</span> <span class="n">foregroundDecoration</span><span class="p">,</span> <span class="c1">//前景装饰</span>
+  <span class="kt">double</span> <span class="n">width</span><span class="p">,</span><span class="c1">//容器的宽度</span>
+  <span class="kt">double</span> <span class="n">height</span><span class="p">,</span> <span class="c1">//容器的高度</span>
+  <span class="n">BoxConstraints</span> <span class="n">constraints</span><span class="p">,</span> <span class="c1">//容器大小的限制条件</span>
+  <span class="k">this</span><span class="p">.</span><span class="n">margin</span><span class="p">,</span><span class="c1">//容器外补白，不属于decoration的装饰范围</span>
+  <span class="k">this</span><span class="p">.</span><span class="n">transform</span><span class="p">,</span> <span class="c1">//变换</span>
+  <span class="k">this</span><span class="p">.</span><span class="n">child</span><span class="p">,</span>
+<span class="p">})</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">Container</span></code>的大多数属性在介绍其它容器时都已经介绍过了，不再赘述，但有两点需要说明：</p>
+<ul class="simple">
+<li><p>容器的大小可以通过<code class="docutils literal notranslate"><span class="pre">width</span></code>、<code class="docutils literal notranslate"><span class="pre">height</span></code>属性来指定，也可以通过<code class="docutils literal notranslate"><span class="pre">constraints</span></code>来指定；如果它们同时存在时，<code class="docutils literal notranslate"><span class="pre">width</span></code>、<code class="docutils literal notranslate"><span class="pre">height</span></code>优先。实际上Container内部会根据<code class="docutils literal notranslate"><span class="pre">width</span></code>、<code class="docutils literal notranslate"><span class="pre">height</span></code>来生成一个<code class="docutils literal notranslate"><span class="pre">constraints</span></code>。</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">color</span></code>和<code class="docutils literal notranslate"><span class="pre">decoration</span></code>是互斥的，如果同时设置它们则会报错！实际上，当指定<code class="docutils literal notranslate"><span class="pre">color</span></code>时，<code class="docutils literal notranslate"><span class="pre">Container</span></code>内会自动创建一个<code class="docutils literal notranslate"><span class="pre">decoration</span></code>。</p></li>
+</ul>
+<div class="section" id="id1">
+<h2>实例<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h2>
+<p>我们通过<code class="docutils literal notranslate"><span class="pre">Container</span></code>来实现如图5-16所示的卡片：</p>
+<p><img alt="图5-16" src="../_images/5-16.png" /></p>
+<p>实现代码如下：</p>
+<div class="highlight-dart notranslate"><div class="highlight"><pre><span></span><span class="n">Container</span><span class="p">(</span>
+  <span class="nl">margin:</span> <span class="n">EdgeInsets</span><span class="p">.</span><span class="n">only</span><span class="p">(</span><span class="nl">top:</span> <span class="m">50.0</span><span class="p">,</span> <span class="nl">left:</span> <span class="m">120.0</span><span class="p">),</span> <span class="c1">//容器外填充</span>
+  <span class="nl">constraints:</span> <span class="n">BoxConstraints</span><span class="p">.</span><span class="n">tightFor</span><span class="p">(</span><span class="nl">width:</span> <span class="m">200.0</span><span class="p">,</span> <span class="nl">height:</span> <span class="m">150.0</span><span class="p">),</span> <span class="c1">//卡片大小</span>
+  <span class="nl">decoration:</span> <span class="n">BoxDecoration</span><span class="p">(</span><span class="c1">//背景装饰</span>
+      <span class="nl">gradient:</span> <span class="n">RadialGradient</span><span class="p">(</span> <span class="c1">//背景径向渐变</span>
+          <span class="nl">colors:</span> <span class="p">[</span><span class="n">Colors</span><span class="p">.</span><span class="n">red</span><span class="p">,</span> <span class="n">Colors</span><span class="p">.</span><span class="n">orange</span><span class="p">],</span>
+          <span class="nl">center:</span> <span class="n">Alignment</span><span class="p">.</span><span class="n">topLeft</span><span class="p">,</span>
+          <span class="nl">radius:</span> <span class="p">.</span><span class="m">98</span>
+      <span class="p">),</span>
+      <span class="nl">boxShadow:</span> <span class="p">[</span> <span class="c1">//卡片阴影</span>
+        <span class="n">BoxShadow</span><span class="p">(</span>
+            <span class="nl">color:</span> <span class="n">Colors</span><span class="p">.</span><span class="n">black54</span><span class="p">,</span>
+            <span class="nl">offset:</span> <span class="n">Offset</span><span class="p">(</span><span class="m">2.0</span><span class="p">,</span> <span class="m">2.0</span><span class="p">),</span>
+            <span class="nl">blurRadius:</span> <span class="m">4.0</span>
+        <span class="p">)</span>
+      <span class="p">]</span>
+  <span class="p">),</span>
+  <span class="nl">transform:</span> <span class="n">Matrix4</span><span class="p">.</span><span class="n">rotationZ</span><span class="p">(.</span><span class="m">2</span><span class="p">),</span> <span class="c1">//卡片倾斜变换</span>
+  <span class="nl">alignment:</span> <span class="n">Alignment</span><span class="p">.</span><span class="n">center</span><span class="p">,</span> <span class="c1">//卡片内文字居中</span>
+  <span class="nl">child:</span> <span class="n">Text</span><span class="p">(</span> <span class="c1">//卡片文字</span>
+    <span class="s2">&quot;5.20&quot;</span><span class="p">,</span> <span class="nl">style:</span> <span class="n">TextStyle</span><span class="p">(</span><span class="nl">color:</span> <span class="n">Colors</span><span class="p">.</span><span class="n">white</span><span class="p">,</span> <span class="nl">fontSize:</span> <span class="m">40.0</span><span class="p">),</span>
+  <span class="p">),</span>
+<span class="p">);</span>
+</pre></div>
+</div>
+<p>可以看到<code class="docutils literal notranslate"><span class="pre">Container</span></code>具备多种组件的功能，通过查看<code class="docutils literal notranslate"><span class="pre">Container</span></code>源码，我们会很容易发现它正是前面我们介绍过的多种组件组合而成。在Flutter中，<code class="docutils literal notranslate"><span class="pre">Container</span></code>组件也正是组合优先于继承的实例。</p>
+</div>
+<div class="section" id="paddingmargin">
+<h2>Padding和Margin<a class="headerlink" href="#paddingmargin" title="Permalink to this headline">¶</a></h2>
+<p>接下来我们来研究一下<code class="docutils literal notranslate"><span class="pre">Container</span></code>组件<code class="docutils literal notranslate"><span class="pre">margin</span></code>和<code class="docutils literal notranslate"><span class="pre">padding</span></code>属性的区别:</p>
+<div class="highlight-dart notranslate"><div class="highlight"><pre><span></span><span class="p">...</span>
+<span class="n">Container</span><span class="p">(</span>
+  <span class="nl">margin:</span> <span class="n">EdgeInsets</span><span class="p">.</span><span class="n">all</span><span class="p">(</span><span class="m">20.0</span><span class="p">),</span> <span class="c1">//容器外补白</span>
+  <span class="nl">color:</span> <span class="n">Colors</span><span class="p">.</span><span class="n">orange</span><span class="p">,</span>
+  <span class="nl">child:</span> <span class="n">Text</span><span class="p">(</span><span class="s2">&quot;Hello world!&quot;</span><span class="p">),</span>
+<span class="p">),</span>
+<span class="n">Container</span><span class="p">(</span>
+  <span class="nl">padding:</span> <span class="n">EdgeInsets</span><span class="p">.</span><span class="n">all</span><span class="p">(</span><span class="m">20.0</span><span class="p">),</span> <span class="c1">//容器内补白</span>
+  <span class="nl">color:</span> <span class="n">Colors</span><span class="p">.</span><span class="n">orange</span><span class="p">,</span>
+  <span class="nl">child:</span> <span class="n">Text</span><span class="p">(</span><span class="s2">&quot;Hello world!&quot;</span><span class="p">),</span>
+<span class="p">),</span>
+<span class="p">...</span>
+</pre></div>
+</div>
+<p><img alt="图5-17" src="../_images/5-17.png" /></p>
+<p>可以发现，直观的感觉就是<code class="docutils literal notranslate"><span class="pre">margin</span></code>的留白是在容器外部，而<code class="docutils literal notranslate"><span class="pre">padding</span></code>的留白是在容器内部，读者需要记住这个差异。事实上，<code class="docutils literal notranslate"><span class="pre">Container</span></code>内<code class="docutils literal notranslate"><span class="pre">margin</span></code>和<code class="docutils literal notranslate"><span class="pre">padding</span></code>都是通过<code class="docutils literal notranslate"><span class="pre">Padding</span></code> 组件来实现的，上面的示例代码实际上等价于：</p>
+<div class="highlight-dart notranslate"><div class="highlight"><pre><span></span><span class="p">...</span>
+<span class="n">Padding</span><span class="p">(</span>
+  <span class="nl">padding:</span> <span class="n">EdgeInsets</span><span class="p">.</span><span class="n">all</span><span class="p">(</span><span class="m">20.0</span><span class="p">),</span>
+  <span class="nl">child:</span> <span class="n">DecoratedBox</span><span class="p">(</span>
+    <span class="nl">decoration:</span> <span class="n">BoxDecoration</span><span class="p">(</span><span class="nl">color:</span> <span class="n">Colors</span><span class="p">.</span><span class="n">orange</span><span class="p">),</span>
+    <span class="nl">child:</span> <span class="n">Text</span><span class="p">(</span><span class="s2">&quot;Hello world!&quot;</span><span class="p">),</span>
+  <span class="p">),</span>
+<span class="p">),</span>
+<span class="n">DecoratedBox</span><span class="p">(</span>
+  <span class="nl">decoration:</span> <span class="n">BoxDecoration</span><span class="p">(</span><span class="nl">color:</span> <span class="n">Colors</span><span class="p">.</span><span class="n">orange</span><span class="p">),</span>
+  <span class="nl">child:</span> <span class="n">Padding</span><span class="p">(</span>
+    <span class="nl">padding:</span> <span class="k">const</span> <span class="n">EdgeInsets</span><span class="p">.</span><span class="n">all</span><span class="p">(</span><span class="m">20.0</span><span class="p">),</span>
+    <span class="nl">child:</span> <span class="n">Text</span><span class="p">(</span><span class="s2">&quot;Hello world!&quot;</span><span class="p">),</span>
+  <span class="p">),</span>
+<span class="p">),</span>
+<span class="p">...</span>    
+</pre></div>
+</div>
+</div>
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">Flutter in action</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2014, Miguel Grinberg.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.5.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="../_sources/chapter5/container.md.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

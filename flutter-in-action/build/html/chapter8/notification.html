@@ -1,0 +1,320 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>8.4 Notification &#8212; Flutter in action  documentation</title>
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="notification">
+<h1>8.4 Notification<a class="headerlink" href="#notification" title="Permalink to this headline">¶</a></h1>
+<p>通知（Notification）是Flutter中一个重要的机制，在widget树中，每一个节点都可以分发通知，通知会沿着当前节点向上传递，所有父节点都可以通过<code class="docutils literal notranslate"><span class="pre">NotificationListener</span></code>来监听通知。Flutter中将这种由子向父的传递通知的机制称为<strong>通知冒泡</strong>（Notification Bubbling）。通知冒泡和用户触摸事件冒泡是相似的，但有一点不同：通知冒泡可以中止，但用户触摸事件不行。</p>
+<blockquote>
+<div><p>通知冒泡和Web开发中浏览器事件冒泡原理是相似的，都是事件从出发源逐层向上传递，我们可以在上层节点任意位置来监听通知/事件，也可以终止冒泡过程，终止冒泡后，通知将不会再向上传递。</p>
+</div></blockquote>
+<p>Flutter中很多地方使用了通知，如可滚动组件（Scrollable Widget）滑动时就会分发<strong>滚动通知</strong>（ScrollNotification），而Scrollbar正是通过监听ScrollNotification来确定滚动条位置的。</p>
+<p>下面是一个监听可滚动组件滚动通知的例子：</p>
+<div class="highlight-dart notranslate"><div class="highlight"><pre><span></span><span class="n">NotificationListener</span><span class="p">(</span>
+  <span class="nl">onNotification:</span> <span class="p">(</span><span class="n">notification</span><span class="p">){</span>
+    <span class="k">switch</span> <span class="p">(</span><span class="n">notification</span><span class="p">.</span><span class="n">runtimeType</span><span class="p">){</span>
+      <span class="k">case</span> <span class="nl">ScrollStartNotification:</span> <span class="n">print</span><span class="p">(</span><span class="s2">&quot;开始滚动&quot;</span><span class="p">);</span> <span class="k">break</span><span class="p">;</span>
+      <span class="k">case</span> <span class="nl">ScrollUpdateNotification:</span> <span class="n">print</span><span class="p">(</span><span class="s2">&quot;正在滚动&quot;</span><span class="p">);</span> <span class="k">break</span><span class="p">;</span>
+      <span class="k">case</span> <span class="nl">ScrollEndNotification:</span> <span class="n">print</span><span class="p">(</span><span class="s2">&quot;滚动停止&quot;</span><span class="p">);</span> <span class="k">break</span><span class="p">;</span>
+      <span class="k">case</span> <span class="nl">OverscrollNotification:</span> <span class="n">print</span><span class="p">(</span><span class="s2">&quot;滚动到边界&quot;</span><span class="p">);</span> <span class="k">break</span><span class="p">;</span>
+    <span class="p">}</span>
+  <span class="p">},</span>
+  <span class="nl">child:</span> <span class="n">ListView</span><span class="p">.</span><span class="n">builder</span><span class="p">(</span>
+      <span class="nl">itemCount:</span> <span class="m">100</span><span class="p">,</span>
+      <span class="nl">itemBuilder:</span> <span class="p">(</span><span class="n">context</span><span class="p">,</span> <span class="n">index</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">return</span> <span class="n">ListTile</span><span class="p">(</span><span class="nl">title:</span> <span class="n">Text</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">$</span><span class="n">index</span><span class="s2">&quot;</span><span class="p">),);</span>
+      <span class="p">}</span>
+  <span class="p">),</span>
+<span class="p">);</span>
+</pre></div>
+</div>
+<p>上例中的滚动通知如<code class="docutils literal notranslate"><span class="pre">ScrollStartNotification</span></code>、<code class="docutils literal notranslate"><span class="pre">ScrollUpdateNotification</span></code>等都是继承自<code class="docutils literal notranslate"><span class="pre">ScrollNotification</span></code>类，不同类型的通知子类会包含不同的信息，比如<code class="docutils literal notranslate"><span class="pre">ScrollUpdateNotification</span></code>有一个<code class="docutils literal notranslate"><span class="pre">scrollDelta</span></code>属性，它记录了移动的位移，其它通知属性读者可以自己查看SDK文档。</p>
+<p>上例中，我们通过<code class="docutils literal notranslate"><span class="pre">NotificationListener</span></code>来监听子<code class="docutils literal notranslate"><span class="pre">ListView</span></code>的滚动通知的，<code class="docutils literal notranslate"><span class="pre">NotificationListener</span></code>定义如下：</p>
+<div class="highlight-dart notranslate"><div class="highlight"><pre><span></span><span class="kd">class</span> <span class="nc">NotificationListener</span><span class="o">&lt;</span><span class="n">T</span> <span class="kd">extends</span> <span class="n">Notification</span><span class="o">&gt;</span> <span class="kd">extends</span> <span class="n">StatelessWidget</span> <span class="p">{</span>
+  <span class="k">const</span> <span class="n">NotificationListener</span><span class="p">({</span>
+    <span class="n">Key</span> <span class="n">key</span><span class="p">,</span>
+    <span class="nd">@required</span> <span class="k">this</span><span class="p">.</span><span class="n">child</span><span class="p">,</span>
+    <span class="k">this</span><span class="p">.</span><span class="n">onNotification</span><span class="p">,</span>
+  <span class="p">})</span> <span class="o">:</span> <span class="k">super</span><span class="p">(</span><span class="nl">key:</span> <span class="n">key</span><span class="p">);</span>
+ <span class="p">...</span><span class="c1">//省略无关代码 </span>
+<span class="p">}</span>  
+</pre></div>
+</div>
+<p>我们可以看到：</p>
+<ol>
+<li><p><code class="docutils literal notranslate"><span class="pre">NotificationListener</span></code> 继承自<code class="docutils literal notranslate"><span class="pre">StatelessWidget</span> </code>类，所以它可以直接嵌套到Widget树中。</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">NotificationListener</span></code> 可以指定一个模板参数，该模板参数类型必须是继承自<code class="docutils literal notranslate"><span class="pre">Notification</span></code>；当显式指定模板参数时，<code class="docutils literal notranslate"><span class="pre">NotificationListener</span></code> 便只会接收该参数类型的通知。举个例子，如果我们将上例子代码改为：</p>
+<div class="highlight-dart notranslate"><div class="highlight"><pre><span></span><span class="c1">//指定监听通知的类型为滚动结束通知(ScrollEndNotification)</span>
+<span class="n">NotificationListener</span><span class="o">&lt;</span><span class="n">ScrollEndNotification</span><span class="o">&gt;</span><span class="p">(</span>
+  <span class="nl">onNotification:</span> <span class="p">(</span><span class="n">notification</span><span class="p">){</span>
+    <span class="c1">//只会在滚动结束时才会触发此回调</span>
+    <span class="n">print</span><span class="p">(</span><span class="n">notification</span><span class="p">);</span>
+  <span class="p">},</span>
+  <span class="nl">child:</span> <span class="n">ListView</span><span class="p">.</span><span class="n">builder</span><span class="p">(</span>
+      <span class="nl">itemCount:</span> <span class="m">100</span><span class="p">,</span>
+      <span class="nl">itemBuilder:</span> <span class="p">(</span><span class="n">context</span><span class="p">,</span> <span class="n">index</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">return</span> <span class="n">ListTile</span><span class="p">(</span><span class="nl">title:</span> <span class="n">Text</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">$</span><span class="n">index</span><span class="s2">&quot;</span><span class="p">),);</span>
+      <span class="p">}</span>
+  <span class="p">),</span>
+<span class="p">);</span>
+</pre></div>
+</div>
+<p>上面代码运行后便只会在滚动结束时在控制台打印出通知的信息。</p>
+</li>
+<li><p><code class="docutils literal notranslate"><span class="pre">onNotification</span></code>回调为通知处理回调，其函数签名如下：</p>
+<div class="highlight-dart notranslate"><div class="highlight"><pre><span></span><span class="kd">typedef</span> <span class="n">NotificationListenerCallback</span><span class="o">&lt;</span><span class="n">T</span> <span class="kd">extends</span> <span class="n">Notification</span><span class="o">&gt;</span> <span class="o">=</span> <span class="kt">bool</span> <span class="kt">Function</span><span class="p">(</span><span class="n">T</span> <span class="n">notification</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>它的返回值类型为布尔值，当返回值为<code class="docutils literal notranslate"><span class="pre">true</span></code>时，阻止冒泡，其父级Widget将再也收不到该通知；当返回值为<code class="docutils literal notranslate"><span class="pre">false</span></code> 时继续向上冒泡通知。</p>
+</li>
+</ol>
+<p>Flutter的UI框架实现中，除了在可滚动组件在滚动过程中会发出<code class="docutils literal notranslate"><span class="pre">ScrollNotification</span></code>之外，还有一些其它的通知，如<code class="docutils literal notranslate"><span class="pre">SizeChangedLayoutNotification</span></code>、<code class="docutils literal notranslate"><span class="pre">KeepAliveNotification</span></code> 、<code class="docutils literal notranslate"><span class="pre">LayoutChangedNotification</span></code>等，Flutter正是通过这种通知机制来使父元素可以在一些特定时机来做一些事情。</p>
+<div class="section" id="id1">
+<h2>自定义通知<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h2>
+<p>除了Flutter内部通知，我们也可以自定义通知，下面我们看看如何实现自定义通知：</p>
+<ol>
+<li><p>定义一个通知类，要继承自Notification类；</p>
+<div class="highlight-dart notranslate"><div class="highlight"><pre><span></span><span class="kd">class</span> <span class="nc">MyNotification</span> <span class="kd">extends</span> <span class="n">Notification</span> <span class="p">{</span>
+  <span class="n">MyNotification</span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="n">msg</span><span class="p">);</span>
+  <span class="kd">final</span> <span class="kt">String</span> <span class="n">msg</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</li>
+<li><p>分发通知。</p>
+<p><code class="docutils literal notranslate"><span class="pre">Notification</span></code>有一个<code class="docutils literal notranslate"><span class="pre">dispatch(context)</span></code>方法，它是用于分发通知的，我们说过<code class="docutils literal notranslate"><span class="pre">context</span></code>实际上就是操作<code class="docutils literal notranslate"><span class="pre">Element</span></code>的一个接口，它与<code class="docutils literal notranslate"><span class="pre">Element</span></code>树上的节点是对应的，通知会从<code class="docutils literal notranslate"><span class="pre">context</span></code>对应的<code class="docutils literal notranslate"><span class="pre">Element</span></code>节点向上冒泡。</p>
+</li>
+</ol>
+<p>下面我们看一个完整的例子：</p>
+<div class="highlight-dart notranslate"><div class="highlight"><pre><span></span><span class="kd">class</span> <span class="nc">NotificationRoute</span> <span class="kd">extends</span> <span class="n">StatefulWidget</span> <span class="p">{</span>
+  <span class="nd">@override</span>
+  <span class="n">NotificationRouteState</span> <span class="n">createState</span><span class="p">()</span> <span class="p">{</span>
+    <span class="k">return</span> <span class="k">new</span> <span class="n">NotificationRouteState</span><span class="p">();</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="kd">class</span> <span class="nc">NotificationRouteState</span> <span class="kd">extends</span> <span class="n">State</span><span class="o">&lt;</span><span class="n">NotificationRoute</span><span class="o">&gt;</span> <span class="p">{</span>
+  <span class="kt">String</span> <span class="n">_msg</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">;</span>
+  <span class="nd">@override</span>
+  <span class="n">Widget</span> <span class="n">build</span><span class="p">(</span><span class="n">BuildContext</span> <span class="n">context</span><span class="p">)</span> <span class="p">{</span>
+    <span class="c1">//监听通知  </span>
+    <span class="k">return</span> <span class="n">NotificationListener</span><span class="o">&lt;</span><span class="n">MyNotification</span><span class="o">&gt;</span><span class="p">(</span>
+      <span class="nl">onNotification:</span> <span class="p">(</span><span class="n">notification</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">setState</span><span class="p">(()</span> <span class="p">{</span>
+          <span class="n">_msg</span><span class="o">+=</span><span class="n">notification</span><span class="p">.</span><span class="n">msg</span><span class="o">+</span><span class="s2">&quot;  &quot;</span><span class="p">;</span>
+        <span class="p">});</span>
+       <span class="k">return</span> <span class="kc">true</span><span class="p">;</span>
+      <span class="p">},</span>
+      <span class="nl">child:</span> <span class="n">Center</span><span class="p">(</span>
+        <span class="nl">child:</span> <span class="n">Column</span><span class="p">(</span>
+          <span class="nl">mainAxisSize:</span> <span class="n">MainAxisSize</span><span class="p">.</span><span class="n">min</span><span class="p">,</span>
+          <span class="nl">children:</span> <span class="o">&lt;</span><span class="n">Widget</span><span class="o">&gt;</span><span class="p">[</span>
+<span class="c1">//          RaisedButton(</span>
+<span class="c1">//           onPressed: () =&gt; MyNotification(&quot;Hi&quot;).dispatch(context),</span>
+<span class="c1">//           child: Text(&quot;Send Notification&quot;),</span>
+<span class="c1">//          ),  </span>
+            <span class="n">Builder</span><span class="p">(</span>
+              <span class="nl">builder:</span> <span class="p">(</span><span class="n">context</span><span class="p">)</span> <span class="p">{</span>
+                <span class="k">return</span> <span class="n">RaisedButton</span><span class="p">(</span>
+                  <span class="c1">//按钮点击时分发通知  </span>
+                  <span class="nl">onPressed:</span> <span class="p">()</span> <span class="o">=&gt;</span> <span class="n">MyNotification</span><span class="p">(</span><span class="s2">&quot;Hi&quot;</span><span class="p">).</span><span class="n">dispatch</span><span class="p">(</span><span class="n">context</span><span class="p">),</span>
+                  <span class="nl">child:</span> <span class="n">Text</span><span class="p">(</span><span class="s2">&quot;Send Notification&quot;</span><span class="p">),</span>
+                <span class="p">);</span>
+              <span class="p">},</span>
+            <span class="p">),</span>
+            <span class="n">Text</span><span class="p">(</span><span class="n">_msg</span><span class="p">)</span>
+          <span class="p">],</span>
+        <span class="p">),</span>
+      <span class="p">),</span>
+    <span class="p">);</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="kd">class</span> <span class="nc">MyNotification</span> <span class="kd">extends</span> <span class="n">Notification</span> <span class="p">{</span>
+  <span class="n">MyNotification</span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="n">msg</span><span class="p">);</span>
+  <span class="kd">final</span> <span class="kt">String</span> <span class="n">msg</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>上面代码中，我们每点一次按钮就会分发一个<code class="docutils literal notranslate"><span class="pre">MyNotification</span></code>类型的通知，我们在Widget根上监听通知，收到通知后我们将通知通过Text显示在屏幕上。</p>
+<blockquote>
+<div><p>注意：代码中注释的部分是不能正常工作的，因为这个<code class="docutils literal notranslate"><span class="pre">context</span></code>是根Context，而NotificationListener是监听的子树，所以我们通过<code class="docutils literal notranslate"><span class="pre">Builder</span></code>来构建RaisedButton，来获得按钮位置的context。</p>
+</div></blockquote>
+<p>运行效果如图8-6所示：</p>
+<p><img alt="图8-6" src="../_images/8-6.png" /></p>
+</div>
+<div class="section" id="id2">
+<h2>阻止冒泡<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h2>
+<p>我们将上面的例子改为：</p>
+<div class="highlight-dart notranslate"><div class="highlight"><pre><span></span><span class="kd">class</span> <span class="nc">NotificationRouteState</span> <span class="kd">extends</span> <span class="n">State</span><span class="o">&lt;</span><span class="n">NotificationRoute</span><span class="o">&gt;</span> <span class="p">{</span>
+  <span class="kt">String</span> <span class="n">_msg</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">;</span>
+  <span class="nd">@override</span>
+  <span class="n">Widget</span> <span class="n">build</span><span class="p">(</span><span class="n">BuildContext</span> <span class="n">context</span><span class="p">)</span> <span class="p">{</span>
+    <span class="c1">//监听通知</span>
+    <span class="k">return</span> <span class="n">NotificationListener</span><span class="o">&lt;</span><span class="n">MyNotification</span><span class="o">&gt;</span><span class="p">(</span>
+      <span class="nl">onNotification:</span> <span class="p">(</span><span class="n">notification</span><span class="p">){</span>
+        <span class="n">print</span><span class="p">(</span><span class="n">notification</span><span class="p">.</span><span class="n">msg</span><span class="p">);</span> <span class="c1">//打印通知</span>
+        <span class="k">return</span> <span class="kc">false</span><span class="p">;</span>
+      <span class="p">},</span>
+      <span class="nl">child:</span> <span class="n">NotificationListener</span><span class="o">&lt;</span><span class="n">MyNotification</span><span class="o">&gt;</span><span class="p">(</span>
+        <span class="nl">onNotification:</span> <span class="p">(</span><span class="n">notification</span><span class="p">)</span> <span class="p">{</span>
+          <span class="n">setState</span><span class="p">(()</span> <span class="p">{</span>
+            <span class="n">_msg</span><span class="o">+=</span><span class="n">notification</span><span class="p">.</span><span class="n">msg</span><span class="o">+</span><span class="s2">&quot;  &quot;</span><span class="p">;</span>
+          <span class="p">});</span>
+          <span class="k">return</span> <span class="kc">false</span><span class="p">;</span> 
+        <span class="p">},</span>
+        <span class="nl">child:</span> <span class="p">...</span><span class="c1">//省略重复代码</span>
+      <span class="p">),</span>
+    <span class="p">);</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>上列中两个<code class="docutils literal notranslate"><span class="pre">NotificationListener</span></code>进行了嵌套，子<code class="docutils literal notranslate"><span class="pre">NotificationListener</span></code>的<code class="docutils literal notranslate"><span class="pre">onNotification</span></code>回调返回了<code class="docutils literal notranslate"><span class="pre">false</span></code>，表示不阻止冒泡，所以父<code class="docutils literal notranslate"><span class="pre">NotificationListener</span></code>仍然会受到通知，所以控制台会打印出通知信息；如果将子<code class="docutils literal notranslate"><span class="pre">NotificationListener</span></code>的<code class="docutils literal notranslate"><span class="pre">onNotification</span></code>回调的返回值改为<code class="docutils literal notranslate"><span class="pre">true</span></code>，则父<code class="docutils literal notranslate"><span class="pre">NotificationListener</span></code>便不会再打印通知了，因为子<code class="docutils literal notranslate"><span class="pre">NotificationListener</span></code>已经终止通知冒泡了。</p>
+</div>
+<div class="section" id="id3">
+<h2>通知冒泡原理<a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h2>
+<p>我们在上面介绍了通知冒泡的现象及使用，现在我们更深入一些，介绍一下Flutter框架中是如何实现通知冒泡的。为了搞清楚这个问题，就必须看一下源码，我们从通知分发的的源头出发，然后再顺藤摸瓜。由于通知是通过<code class="docutils literal notranslate"><span class="pre">Notification</span></code>的<code class="docutils literal notranslate"><span class="pre">dispatch(context)</span></code>方法发出的，那我们先看看<code class="docutils literal notranslate"><span class="pre">dispatch(context)</span></code>方法中做了什么，下面是相关源码：</p>
+<div class="highlight-dart notranslate"><div class="highlight"><pre><span></span><span class="kt">void</span> <span class="n">dispatch</span><span class="p">(</span><span class="n">BuildContext</span> <span class="n">target</span><span class="p">)</span> <span class="p">{</span>
+  <span class="n">target</span><span class="o">?</span><span class="p">.</span><span class="n">visitAncestorElements</span><span class="p">(</span><span class="n">visitAncestor</span><span class="p">);</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">dispatch(context)</span></code>中调用了当前context的<code class="docutils literal notranslate"><span class="pre">visitAncestorElements</span></code>方法，该方法会从当前Element开始向上遍历父级元素；<code class="docutils literal notranslate"><span class="pre">visitAncestorElements</span></code>有一个遍历回调参数，在遍历过程中对遍历到的父级元素都会执行该回调。遍历的终止条件是：已经遍历到根Element或某个遍历回调返回<code class="docutils literal notranslate"><span class="pre">false</span></code>。源码中传给<code class="docutils literal notranslate"><span class="pre">visitAncestorElements</span></code>方法的遍历回调为<code class="docutils literal notranslate"><span class="pre">visitAncestor</span></code>方法，我们看看<code class="docutils literal notranslate"><span class="pre">visitAncestor</span></code>方法的实现：</p>
+<div class="highlight-dart notranslate"><div class="highlight"><pre><span></span><span class="c1">//遍历回调，会对每一个父级Element执行此回调</span>
+<span class="kt">bool</span> <span class="n">visitAncestor</span><span class="p">(</span><span class="n">Element</span> <span class="n">element</span><span class="p">)</span> <span class="p">{</span>
+  <span class="c1">//判断当前element对应的Widget是否是NotificationListener。</span>
+  
+  <span class="c1">//由于NotificationListener是继承自StatelessWidget，</span>
+  <span class="c1">//故先判断是否是StatelessElement</span>
+  <span class="k">if</span> <span class="p">(</span><span class="n">element</span> <span class="k">is</span> <span class="n">StatelessElement</span><span class="p">)</span> <span class="p">{</span>
+    <span class="c1">//是StatelessElement，则获取element对应的Widget，判断</span>
+    <span class="c1">//是否是NotificationListener 。</span>
+    <span class="kd">final</span> <span class="n">StatelessWidget</span> <span class="n">widget</span> <span class="o">=</span> <span class="n">element</span><span class="p">.</span><span class="n">widget</span><span class="p">;</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">widget</span> <span class="k">is</span> <span class="n">NotificationListener</span><span class="o">&lt;</span><span class="n">Notification</span><span class="o">&gt;</span><span class="p">)</span> <span class="p">{</span>
+      <span class="c1">//是NotificationListener，则调用该NotificationListener的_dispatch方法</span>
+      <span class="k">if</span> <span class="p">(</span><span class="n">widget</span><span class="p">.</span><span class="n">_dispatch</span><span class="p">(</span><span class="k">this</span><span class="p">,</span> <span class="n">element</span><span class="p">))</span> 
+        <span class="k">return</span> <span class="kc">false</span><span class="p">;</span>
+    <span class="p">}</span>
+  <span class="p">}</span>
+  <span class="k">return</span> <span class="kc">true</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">visitAncestor</span> </code>会判断每一个遍历到的父级Widget是否是<code class="docutils literal notranslate"><span class="pre">NotificationListener</span></code>，如果不是，则返回<code class="docutils literal notranslate"><span class="pre">true</span></code>继续向上遍历，如果是，则调用<code class="docutils literal notranslate"><span class="pre">NotificationListener</span></code>的<code class="docutils literal notranslate"><span class="pre">_dispatch</span></code>方法，我们看看<code class="docutils literal notranslate"><span class="pre">_dispatch</span></code>方法的源码：</p>
+<div class="highlight-dart notranslate"><div class="highlight"><pre><span></span>  <span class="kt">bool</span> <span class="n">_dispatch</span><span class="p">(</span><span class="n">Notification</span> <span class="n">notification</span><span class="p">,</span> <span class="n">Element</span> <span class="n">element</span><span class="p">)</span> <span class="p">{</span>
+    <span class="c1">// 如果通知监听器不为空，并且当前通知类型是该NotificationListener</span>
+    <span class="c1">// 监听的通知类型，则调用当前NotificationListener的onNotification</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">onNotification</span> <span class="o">!=</span> <span class="kc">null</span> <span class="o">&amp;&amp;</span> <span class="n">notification</span> <span class="k">is</span> <span class="n">T</span><span class="p">)</span> <span class="p">{</span>
+      <span class="kd">final</span> <span class="kt">bool</span> <span class="n">result</span> <span class="o">=</span> <span class="n">onNotification</span><span class="p">(</span><span class="n">notification</span><span class="p">);</span>
+      <span class="c1">// 返回值决定是否继续向上遍历</span>
+      <span class="k">return</span> <span class="n">result</span> <span class="o">==</span> <span class="kc">true</span><span class="p">;</span> 
+    <span class="p">}</span>
+    <span class="k">return</span> <span class="kc">false</span><span class="p">;</span>
+  <span class="p">}</span>
+</pre></div>
+</div>
+<p>我们可以看到<code class="docutils literal notranslate"><span class="pre">NotificationListener</span></code>的<code class="docutils literal notranslate"><span class="pre">onNotification</span></code>回调最终是在<code class="docutils literal notranslate"><span class="pre">_dispatch</span></code>方法中执行的，然后会根据返回值来确定是否继续向上冒泡。上面的源码实现其实并不复杂，通过阅读这些源码，一些额外的点读者可以注意一下：</p>
+<ol class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">Context</span></code>上也提供了遍历Element树的方法。</p></li>
+<li><p>我们可以通过<code class="docutils literal notranslate"><span class="pre">Element.widget</span></code>得到<code class="docutils literal notranslate"><span class="pre">element</span></code>节点对应的widget；我们已经反复讲过Widget和Element的对应关系，读者通过这些源码来加深理解。</p></li>
+</ol>
+</div>
+<div class="section" id="id4">
+<h2>总结<a class="headerlink" href="#id4" title="Permalink to this headline">¶</a></h2>
+<p>Flutter中通过通知冒泡实现了一套自低向上的消息传递机制，这个和Web开发中浏览器的事件冒泡原理类似，Web开发者可以类比学习。另外我们通过源码了解了Flutter 通知冒泡的流程和原理，便于读者加深理解和学习Flutter的框架设计思想，在此，再次建议读者在平时学习中能多看看源码，定会受益匪浅。</p>
+</div>
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">Flutter in action</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2014, Miguel Grinberg.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.5.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="../_sources/chapter8/notification.md.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

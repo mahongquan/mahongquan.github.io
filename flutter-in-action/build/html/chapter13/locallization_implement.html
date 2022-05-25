@@ -1,0 +1,179 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>13.2 实现Localizations &#8212; Flutter in action  documentation</title>
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="localizations">
+<h1>13.2 实现Localizations<a class="headerlink" href="#localizations" title="Permalink to this headline">¶</a></h1>
+<p>前面讲了Material组件库如何支持国际化，本节我们将介绍一下我们自己的UI中如何支持多语言。根据上节所述，我们需要实现两个类：一个<code class="docutils literal notranslate"><span class="pre">Delegate</span></code>类一个<code class="docutils literal notranslate"><span class="pre">Localizations</span></code>类，下面我们通过一个实例说明。</p>
+<div class="section" id="id1">
+<h2>实现Localizations类<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h2>
+<p>我们已经知道<code class="docutils literal notranslate"><span class="pre">Localizations</span></code>类中主要实现提供了本地化值，如文本：</p>
+<div class="highlight-dart notranslate"><div class="highlight"><pre><span></span><span class="c1">//Locale资源类</span>
+<span class="kd">class</span> <span class="nc">DemoLocalizations</span> <span class="p">{</span>
+  <span class="n">DemoLocalizations</span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="n">isZh</span><span class="p">);</span>
+  <span class="c1">//是否为中文</span>
+  <span class="kt">bool</span> <span class="n">isZh</span> <span class="o">=</span> <span class="kc">false</span><span class="p">;</span>
+  <span class="c1">//为了使用方便，我们定义一个静态方法</span>
+  <span class="kd">static</span> <span class="n">DemoLocalizations</span> <span class="n">of</span><span class="p">(</span><span class="n">BuildContext</span> <span class="n">context</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">return</span> <span class="n">Localizations</span><span class="p">.</span><span class="n">of</span><span class="o">&lt;</span><span class="n">DemoLocalizations</span><span class="o">&gt;</span><span class="p">(</span><span class="n">context</span><span class="p">,</span> <span class="n">DemoLocalizations</span><span class="p">);</span>
+  <span class="p">}</span>
+  <span class="c1">//Locale相关值，title为应用标题</span>
+  <span class="kt">String</span> <span class="kd">get</span> <span class="n">title</span> <span class="p">{</span>
+    <span class="k">return</span> <span class="n">isZh</span> <span class="o">?</span> <span class="s2">&quot;Flutter应用&quot;</span> <span class="o">:</span> <span class="s2">&quot;Flutter APP&quot;</span><span class="p">;</span>
+  <span class="p">}</span>
+  <span class="c1">//... 其它的值  </span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">DemoLocalizations</span></code>中会根据当前的语言来返回不同的文本，如<code class="docutils literal notranslate"><span class="pre">title</span></code>，我们可以将所有需要支持多语言的文本都在此类中定义。<code class="docutils literal notranslate"><span class="pre">DemoLocalizations</span></code>的实例将会在Delegate类的<code class="docutils literal notranslate"><span class="pre">load</span></code>方法中创建。</p>
+</div>
+<div class="section" id="delegate">
+<h2>实现Delegate类<a class="headerlink" href="#delegate" title="Permalink to this headline">¶</a></h2>
+<p>Delegate类的职责是在Locale改变时加载新的Locale资源，所以它有一个<code class="docutils literal notranslate"><span class="pre">load</span></code>方法，Delegate类需要继承自<code class="docutils literal notranslate"><span class="pre">LocalizationsDelegate</span></code>类，实现相应的接口，示例如下：</p>
+<div class="highlight-dart notranslate"><div class="highlight"><pre><span></span><span class="c1">//Locale代理类</span>
+<span class="kd">class</span> <span class="nc">DemoLocalizationsDelegate</span> <span class="kd">extends</span> <span class="n">LocalizationsDelegate</span><span class="o">&lt;</span><span class="n">DemoLocalizations</span><span class="o">&gt;</span> <span class="p">{</span>
+  <span class="k">const</span> <span class="n">DemoLocalizationsDelegate</span><span class="p">();</span>
+
+  <span class="c1">//是否支持某个Local</span>
+  <span class="nd">@override</span>
+  <span class="kt">bool</span> <span class="n">isSupported</span><span class="p">(</span><span class="n">Locale</span> <span class="n">locale</span><span class="p">)</span> <span class="o">=&gt;</span> <span class="p">[</span><span class="s1">&#39;en&#39;</span><span class="p">,</span> <span class="s1">&#39;zh&#39;</span><span class="p">].</span><span class="n">contains</span><span class="p">(</span><span class="n">locale</span><span class="p">.</span><span class="n">languageCode</span><span class="p">);</span>
+
+  <span class="c1">// Flutter会调用此类加载相应的Locale资源类</span>
+  <span class="nd">@override</span>
+  <span class="n">Future</span><span class="o">&lt;</span><span class="n">DemoLocalizations</span><span class="o">&gt;</span> <span class="n">load</span><span class="p">(</span><span class="n">Locale</span> <span class="n">locale</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">$</span><span class="n">locale</span><span class="s2">&quot;</span><span class="p">);</span>
+    <span class="k">return</span> <span class="n">SynchronousFuture</span><span class="o">&lt;</span><span class="n">DemoLocalizations</span><span class="o">&gt;</span><span class="p">(</span>
+        <span class="n">DemoLocalizations</span><span class="p">(</span><span class="n">locale</span><span class="p">.</span><span class="n">languageCode</span> <span class="o">==</span> <span class="s2">&quot;zh&quot;</span><span class="p">)</span>
+    <span class="p">);</span>
+  <span class="p">}</span>
+
+  <span class="nd">@override</span>
+  <span class="kt">bool</span> <span class="n">shouldReload</span><span class="p">(</span><span class="n">DemoLocalizationsDelegate</span> <span class="n">old</span><span class="p">)</span> <span class="o">=&gt;</span> <span class="kc">false</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">shouldReload</span></code>的返回值决定当Localizations组件重新build时，是否调用<code class="docutils literal notranslate"><span class="pre">load</span></code>方法重新加载Locale资源。一般情况下，Locale资源只应该在Locale切换时加载一次，不需要每次在<code class="docutils literal notranslate"><span class="pre">Localizations</span></code>重新build时都加载，所以返回<code class="docutils literal notranslate"><span class="pre">false</span></code>即可。可能有些人会担心返回<code class="docutils literal notranslate"><span class="pre">false</span></code>的话在APP启动后用户再改变系统语言时<code class="docutils literal notranslate"><span class="pre">load</span></code>方法将不会被调用，所以Locale资源将不会被加载。事实上，每当Locale改变时Flutter都会再调用<code class="docutils literal notranslate"><span class="pre">load</span></code>方法加载新的Locale，无论<code class="docutils literal notranslate"><span class="pre">shouldReload</span></code>返回<code class="docutils literal notranslate"><span class="pre">true</span></code>还是<code class="docutils literal notranslate"><span class="pre">false</span></code>。</p>
+</div>
+<div class="section" id="id2">
+<h2>最后一步：添加多语言支持<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h2>
+<p>和上一节中介绍的相同，我们现在需要先注册<code class="docutils literal notranslate"><span class="pre">DemoLocalizationsDelegate</span></code>类，然后再通过<code class="docutils literal notranslate"><span class="pre">DemoLocalizations.of(context)</span></code>来动态获取当前Locale文本。</p>
+<p>只需要在MaterialApp或WidgetsApp的<code class="docutils literal notranslate"><span class="pre">localizationsDelegates</span></code>列表中添加我们的Delegate实例即可完成注册：</p>
+<div class="highlight-dart notranslate"><div class="highlight"><pre><span></span><span class="nl">localizationsDelegates:</span> <span class="p">[</span>
+ <span class="c1">// 本地化的代理类</span>
+ <span class="n">GlobalMaterialLocalizations</span><span class="p">.</span><span class="n">delegate</span><span class="p">,</span>
+ <span class="n">GlobalWidgetsLocalizations</span><span class="p">.</span><span class="n">delegate</span><span class="p">,</span>
+ <span class="c1">// 注册我们的Delegate</span>
+ <span class="n">DemoLocalizationsDelegate</span><span class="p">()</span>
+<span class="p">],</span>
+</pre></div>
+</div>
+<p>接下来我们可以在Widget中使用Locale值：</p>
+<div class="highlight-dart notranslate"><div class="highlight"><pre><span></span>return Scaffold(
+  appBar: AppBar(
+    //使用Locale title  
+    title: Text(DemoLocalizations.of(context).title),
+  ),
+  ... //省略无关代码
+ ） 
+</pre></div>
+</div>
+<p>这样，当在美国英语和中文简体之间切换系统语言时，APP的标题将会分别为“Flutter APP”和“Flutter应用”。</p>
+</div>
+<div class="section" id="id3">
+<h2>总结<a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h2>
+<p>本节我们通过一个简单的示例说明了Flutter应用国际化的基本过程及原理。但是上面的实例还有一个严重的不足就是我们需要在DemoLocalizations类中获取<code class="docutils literal notranslate"><span class="pre">title</span></code>时手动的判断当前语言Locale，然后返回合适的文本。试想一下，当我们要支持的语言不是两种而是8种甚至20几种时，如果为每个文本属性都要分别去判断到底是哪种Locale从而获取相应语言的文本将会是一件非常复杂的事。还有，通常情况下翻译人员并不是开发人员，能不能像i18n或l10n标准那样可以将翻译单独保存为一个arb文件交由翻译人员去翻译，翻译好之后开发人员再通过工具将arb文件转为代码。答案是肯定的！我们将在下一节介绍如何通过Dart intl包来实现这些。</p>
+</div>
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">Flutter in action</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2014, Miguel Grinberg.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.5.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="../_sources/chapter13/locallization_implement.md.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

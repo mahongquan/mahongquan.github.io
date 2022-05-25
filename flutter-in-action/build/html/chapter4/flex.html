@@ -1,0 +1,209 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>4.3 弹性布局（Flex） &#8212; Flutter in action  documentation</title>
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="flex">
+<h1>4.3 弹性布局（Flex）<a class="headerlink" href="#flex" title="Permalink to this headline">¶</a></h1>
+<p>弹性布局允许子组件按照一定比例来分配父容器空间。弹性布局的概念在其它UI系统中也都存在，如H5中的弹性盒子布局，Android中的<code class="docutils literal notranslate"><span class="pre">FlexboxLayout</span></code>等。Flutter中的弹性布局主要通过<code class="docutils literal notranslate"><span class="pre">Flex</span></code>和<code class="docutils literal notranslate"><span class="pre">Expanded</span></code>来配合实现。</p>
+<div class="section" id="id1">
+<h2>Flex<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">Flex</span></code>组件可以沿着水平或垂直方向排列子组件，如果你知道主轴方向，使用<code class="docutils literal notranslate"><span class="pre">Row</span></code>或<code class="docutils literal notranslate"><span class="pre">Column</span></code>会方便一些，因为<code class="docutils literal notranslate"><span class="pre">Row</span></code>和<code class="docutils literal notranslate"><span class="pre">Column</span></code>都继承自<code class="docutils literal notranslate"><span class="pre">Flex</span></code>，参数基本相同，所以能使用Flex的地方基本上都可以使用<code class="docutils literal notranslate"><span class="pre">Row</span></code>或<code class="docutils literal notranslate"><span class="pre">Column</span></code>。<code class="docutils literal notranslate"><span class="pre">Flex</span></code>本身功能是很强大的，它也可以和<code class="docutils literal notranslate"><span class="pre">Expanded</span></code>组件配合实现弹性布局。接下来我们只讨论<code class="docutils literal notranslate"><span class="pre">Flex</span></code>和弹性布局相关的属性(其它属性已经在介绍<code class="docutils literal notranslate"><span class="pre">Row</span></code>和<code class="docutils literal notranslate"><span class="pre">Column</span></code>时介绍过了)。</p>
+<div class="highlight-dart notranslate"><div class="highlight"><pre><span></span><span class="n">Flex</span><span class="p">({</span>
+  <span class="p">...</span>
+  <span class="nd">@required</span> <span class="k">this</span><span class="p">.</span><span class="n">direction</span><span class="p">,</span> <span class="c1">//弹性布局的方向, Row默认为水平方向，Column默认为垂直方向</span>
+  <span class="n">List</span><span class="o">&lt;</span><span class="n">Widget</span><span class="o">&gt;</span> <span class="n">children</span> <span class="o">=</span> <span class="k">const</span> <span class="o">&lt;</span><span class="n">Widget</span><span class="o">&gt;</span><span class="p">[],</span>
+<span class="p">})</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">Flex</span></code>继承自<code class="docutils literal notranslate"><span class="pre">MultiChildRenderObjectWidget</span></code>，对应的<code class="docutils literal notranslate"><span class="pre">RenderObject</span></code>为<code class="docutils literal notranslate"><span class="pre">RenderFlex</span></code>，<code class="docutils literal notranslate"><span class="pre">RenderFlex</span></code>中实现了其布局算法。</p>
+</div>
+<div class="section" id="expanded">
+<h2>Expanded<a class="headerlink" href="#expanded" title="Permalink to this headline">¶</a></h2>
+<p>可以按比例“扩伸” <code class="docutils literal notranslate"><span class="pre">Row</span></code>、<code class="docutils literal notranslate"><span class="pre">Column</span></code>和<code class="docutils literal notranslate"><span class="pre">Flex</span></code>子组件所占用的空间。</p>
+<div class="highlight-dart notranslate"><div class="highlight"><pre><span></span><span class="k">const</span> <span class="n">Expanded</span><span class="p">({</span>
+  <span class="kt">int</span> <span class="n">flex</span> <span class="o">=</span> <span class="m">1</span><span class="p">,</span> 
+  <span class="nd">@required</span> <span class="n">Widget</span> <span class="n">child</span><span class="p">,</span>
+<span class="p">})</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">flex</span></code>参数为弹性系数，如果为0或<code class="docutils literal notranslate"><span class="pre">null</span></code>，则<code class="docutils literal notranslate"><span class="pre">child</span></code>是没有弹性的，即不会被扩伸占用的空间。如果大于0，所有的<code class="docutils literal notranslate"><span class="pre">Expanded</span></code>按照其flex的比例来分割主轴的全部空闲空间。下面我们看一个例子：</p>
+<div class="highlight-dart notranslate"><div class="highlight"><pre><span></span><span class="kd">class</span> <span class="nc">FlexLayoutTestRoute</span> <span class="kd">extends</span> <span class="n">StatelessWidget</span> <span class="p">{</span>
+  <span class="nd">@override</span>
+  <span class="n">Widget</span> <span class="n">build</span><span class="p">(</span><span class="n">BuildContext</span> <span class="n">context</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">return</span> <span class="n">Column</span><span class="p">(</span>
+      <span class="nl">children:</span> <span class="o">&lt;</span><span class="n">Widget</span><span class="o">&gt;</span><span class="p">[</span>
+        <span class="c1">//Flex的两个子widget按1：2来占据水平空间  </span>
+        <span class="n">Flex</span><span class="p">(</span>
+          <span class="nl">direction:</span> <span class="n">Axis</span><span class="p">.</span><span class="n">horizontal</span><span class="p">,</span>
+          <span class="nl">children:</span> <span class="o">&lt;</span><span class="n">Widget</span><span class="o">&gt;</span><span class="p">[</span>
+            <span class="n">Expanded</span><span class="p">(</span>
+              <span class="nl">flex:</span> <span class="m">1</span><span class="p">,</span>
+              <span class="nl">child:</span> <span class="n">Container</span><span class="p">(</span>
+                <span class="nl">height:</span> <span class="m">30.0</span><span class="p">,</span>
+                <span class="nl">color:</span> <span class="n">Colors</span><span class="p">.</span><span class="n">red</span><span class="p">,</span>
+              <span class="p">),</span>
+            <span class="p">),</span>
+            <span class="n">Expanded</span><span class="p">(</span>
+              <span class="nl">flex:</span> <span class="m">2</span><span class="p">,</span>
+              <span class="nl">child:</span> <span class="n">Container</span><span class="p">(</span>
+                <span class="nl">height:</span> <span class="m">30.0</span><span class="p">,</span>
+                <span class="nl">color:</span> <span class="n">Colors</span><span class="p">.</span><span class="n">green</span><span class="p">,</span>
+              <span class="p">),</span>
+            <span class="p">),</span>
+          <span class="p">],</span>
+        <span class="p">),</span>
+        <span class="n">Padding</span><span class="p">(</span>
+          <span class="nl">padding:</span> <span class="k">const</span> <span class="n">EdgeInsets</span><span class="p">.</span><span class="n">only</span><span class="p">(</span><span class="nl">top:</span> <span class="m">20.0</span><span class="p">),</span>
+          <span class="nl">child:</span> <span class="n">SizedBox</span><span class="p">(</span>
+            <span class="nl">height:</span> <span class="m">100.0</span><span class="p">,</span>
+            <span class="c1">//Flex的三个子widget，在垂直方向按2：1：1来占用100像素的空间  </span>
+            <span class="nl">child:</span> <span class="n">Flex</span><span class="p">(</span>
+              <span class="nl">direction:</span> <span class="n">Axis</span><span class="p">.</span><span class="n">vertical</span><span class="p">,</span>
+              <span class="nl">children:</span> <span class="o">&lt;</span><span class="n">Widget</span><span class="o">&gt;</span><span class="p">[</span>
+                <span class="n">Expanded</span><span class="p">(</span>
+                  <span class="nl">flex:</span> <span class="m">2</span><span class="p">,</span>
+                  <span class="nl">child:</span> <span class="n">Container</span><span class="p">(</span>
+                    <span class="nl">height:</span> <span class="m">30.0</span><span class="p">,</span>
+                    <span class="nl">color:</span> <span class="n">Colors</span><span class="p">.</span><span class="n">red</span><span class="p">,</span>
+                  <span class="p">),</span>
+                <span class="p">),</span>
+                <span class="n">Spacer</span><span class="p">(</span>
+                  <span class="nl">flex:</span> <span class="m">1</span><span class="p">,</span>
+                <span class="p">),</span>
+                <span class="n">Expanded</span><span class="p">(</span>
+                  <span class="nl">flex:</span> <span class="m">1</span><span class="p">,</span>
+                  <span class="nl">child:</span> <span class="n">Container</span><span class="p">(</span>
+                    <span class="nl">height:</span> <span class="m">30.0</span><span class="p">,</span>
+                    <span class="nl">color:</span> <span class="n">Colors</span><span class="p">.</span><span class="n">green</span><span class="p">,</span>
+                  <span class="p">),</span>
+                <span class="p">),</span>
+              <span class="p">],</span>
+            <span class="p">),</span>
+          <span class="p">),</span>
+        <span class="p">),</span>
+      <span class="p">],</span>
+    <span class="p">);</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>运行效果如图4-5所示：</p>
+<p><img alt="弹性布局" src="../_images/4-5.png" /></p>
+<p>示例中的<code class="docutils literal notranslate"><span class="pre">Spacer</span></code>的功能是占用指定比例的空间，实际上它只是<code class="docutils literal notranslate"><span class="pre">Expanded</span></code>的一个包装类，<code class="docutils literal notranslate"><span class="pre">Spacer</span></code>的源码如下：</p>
+<div class="highlight-dart notranslate"><div class="highlight"><pre><span></span><span class="kd">class</span> <span class="nc">Spacer</span> <span class="kd">extends</span> <span class="n">StatelessWidget</span> <span class="p">{</span>
+  <span class="k">const</span> <span class="n">Spacer</span><span class="p">({</span><span class="n">Key</span> <span class="n">key</span><span class="p">,</span> <span class="k">this</span><span class="p">.</span><span class="n">flex</span> <span class="o">=</span> <span class="m">1</span><span class="p">})</span>
+    <span class="o">:</span> <span class="k">assert</span><span class="p">(</span><span class="n">flex</span> <span class="o">!=</span> <span class="kc">null</span><span class="p">),</span>
+      <span class="k">assert</span><span class="p">(</span><span class="n">flex</span> <span class="o">&gt;</span> <span class="m">0</span><span class="p">),</span>
+      <span class="k">super</span><span class="p">(</span><span class="nl">key:</span> <span class="n">key</span><span class="p">);</span>
+  
+  <span class="kd">final</span> <span class="kt">int</span> <span class="n">flex</span><span class="p">;</span>
+
+  <span class="nd">@override</span>
+  <span class="n">Widget</span> <span class="n">build</span><span class="p">(</span><span class="n">BuildContext</span> <span class="n">context</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">return</span> <span class="n">Expanded</span><span class="p">(</span>
+      <span class="nl">flex:</span> <span class="n">flex</span><span class="p">,</span>
+      <span class="nl">child:</span> <span class="k">const</span> <span class="n">SizedBox</span><span class="p">.</span><span class="n">shrink</span><span class="p">(),</span>
+    <span class="p">);</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="id2">
+<h2>小结<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h2>
+<p>弹性布局比较简单，唯一需要注意的就是<code class="docutils literal notranslate"><span class="pre">Row</span></code>、<code class="docutils literal notranslate"><span class="pre">Column</span></code>以及<code class="docutils literal notranslate"><span class="pre">Flex</span></code>的关系。</p>
+</div>
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">Flutter in action</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2014, Miguel Grinberg.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.5.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="../_sources/chapter4/flex.md.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

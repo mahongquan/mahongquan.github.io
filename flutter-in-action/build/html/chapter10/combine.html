@@ -1,0 +1,227 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>10.2 组合现有组件 &#8212; Flutter in action  documentation</title>
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="id1">
+<h1>10.2 组合现有组件<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h1>
+<p>在Flutter中页面UI通常都是由一些低阶别的组件组合而成，当我们需要封装一些通用组件时，应该首先考虑是否可以通过组合其它组件来实现，如果可以，则应优先使用组合，因为直接通过现有组件拼装会非常简单、灵活、高效。</p>
+<div class="section" id="id2">
+<h2>示例：自定义渐变按钮<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h2>
+<p>Flutter Material组件库中的按钮默认不支持渐变背景，为了实现渐变背景按钮，我们自定义一个<code class="docutils literal notranslate"><span class="pre">GradientButton</span> </code>组件，它需要支持一下功能：</p>
+<ol class="simple">
+<li><p>背景支持渐变色</p></li>
+<li><p>手指按下时有涟漪效果</p></li>
+<li><p>可以支持圆角</p></li>
+</ol>
+<p>我们先来看看最终要实现的效果（图10-1）：</p>
+<p><img alt="gradient-button" src="../_images/10-1.png" /></p>
+<p>我们<code class="docutils literal notranslate"><span class="pre">DecoratedBox</span></code>可以支持背景色渐变和圆角，<code class="docutils literal notranslate"><span class="pre">InkWell</span></code>在手指按下有涟漪效果，所以我们可以通过组合<code class="docutils literal notranslate"><span class="pre">DecoratedBox</span></code>和<code class="docutils literal notranslate"><span class="pre">InkWell</span></code>来实现<code class="docutils literal notranslate"><span class="pre">GradientButton</span></code>，代码如下：</p>
+<div class="highlight-dart notranslate"><div class="highlight"><pre><span></span><span class="k">import</span> <span class="s1">&#39;package:flutter/material.dart&#39;</span><span class="p">;</span>
+
+<span class="kd">class</span> <span class="nc">GradientButton</span> <span class="kd">extends</span> <span class="n">StatelessWidget</span> <span class="p">{</span>
+  <span class="n">GradientButton</span><span class="p">({</span>
+    <span class="k">this</span><span class="p">.</span><span class="n">colors</span><span class="p">,</span>
+    <span class="k">this</span><span class="p">.</span><span class="n">width</span><span class="p">,</span>
+    <span class="k">this</span><span class="p">.</span><span class="n">height</span><span class="p">,</span>
+    <span class="k">this</span><span class="p">.</span><span class="n">onPressed</span><span class="p">,</span>
+    <span class="k">this</span><span class="p">.</span><span class="n">borderRadius</span><span class="p">,</span>
+    <span class="nd">@required</span> <span class="k">this</span><span class="p">.</span><span class="n">child</span><span class="p">,</span>
+  <span class="p">});</span>
+
+  <span class="c1">// 渐变色数组</span>
+  <span class="kd">final</span> <span class="n">List</span><span class="o">&lt;</span><span class="n">Color</span><span class="o">&gt;</span> <span class="n">colors</span><span class="p">;</span>
+
+  <span class="c1">// 按钮宽高</span>
+  <span class="kd">final</span> <span class="kt">double</span> <span class="n">width</span><span class="p">;</span>
+  <span class="kd">final</span> <span class="kt">double</span> <span class="n">height</span><span class="p">;</span>
+
+  <span class="kd">final</span> <span class="n">Widget</span> <span class="n">child</span><span class="p">;</span>
+  <span class="kd">final</span> <span class="n">BorderRadius</span> <span class="n">borderRadius</span><span class="p">;</span>
+
+  <span class="c1">//点击回调</span>
+  <span class="kd">final</span> <span class="n">GestureTapCallback</span> <span class="n">onPressed</span><span class="p">;</span>
+
+  <span class="nd">@override</span>
+  <span class="n">Widget</span> <span class="n">build</span><span class="p">(</span><span class="n">BuildContext</span> <span class="n">context</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">ThemeData</span> <span class="n">theme</span> <span class="o">=</span> <span class="n">Theme</span><span class="p">.</span><span class="n">of</span><span class="p">(</span><span class="n">context</span><span class="p">);</span>
+
+    <span class="c1">//确保colors数组不空</span>
+    <span class="n">List</span><span class="o">&lt;</span><span class="n">Color</span><span class="o">&gt;</span> <span class="n">_colors</span> <span class="o">=</span> <span class="n">colors</span> <span class="o">??</span>
+        <span class="p">[</span><span class="n">theme</span><span class="p">.</span><span class="n">primaryColor</span><span class="p">,</span> <span class="n">theme</span><span class="p">.</span><span class="n">primaryColorDark</span> <span class="o">??</span> <span class="n">theme</span><span class="p">.</span><span class="n">primaryColor</span><span class="p">];</span>
+
+    <span class="k">return</span> <span class="n">DecoratedBox</span><span class="p">(</span>
+      <span class="nl">decoration:</span> <span class="n">BoxDecoration</span><span class="p">(</span>
+        <span class="nl">gradient:</span> <span class="n">LinearGradient</span><span class="p">(</span><span class="nl">colors:</span> <span class="n">_colors</span><span class="p">),</span>
+        <span class="nl">borderRadius:</span> <span class="n">borderRadius</span><span class="p">,</span>
+      <span class="p">),</span>
+      <span class="nl">child:</span> <span class="n">Material</span><span class="p">(</span>
+        <span class="nl">type:</span> <span class="n">MaterialType</span><span class="p">.</span><span class="n">transparency</span><span class="p">,</span>
+        <span class="nl">child:</span> <span class="n">InkWell</span><span class="p">(</span>
+          <span class="nl">splashColor:</span> <span class="n">_colors</span><span class="p">.</span><span class="n">last</span><span class="p">,</span>
+          <span class="nl">highlightColor:</span> <span class="n">Colors</span><span class="p">.</span><span class="n">transparent</span><span class="p">,</span>
+          <span class="nl">borderRadius:</span> <span class="n">borderRadius</span><span class="p">,</span>
+          <span class="nl">onTap:</span> <span class="n">onPressed</span><span class="p">,</span>
+          <span class="nl">child:</span> <span class="n">ConstrainedBox</span><span class="p">(</span>
+            <span class="nl">constraints:</span> <span class="n">BoxConstraints</span><span class="p">.</span><span class="n">tightFor</span><span class="p">(</span><span class="nl">height:</span> <span class="n">height</span><span class="p">,</span> <span class="nl">width:</span> <span class="n">width</span><span class="p">),</span>
+            <span class="nl">child:</span> <span class="n">Center</span><span class="p">(</span>
+              <span class="nl">child:</span> <span class="n">Padding</span><span class="p">(</span>
+                <span class="nl">padding:</span> <span class="k">const</span> <span class="n">EdgeInsets</span><span class="p">.</span><span class="n">all</span><span class="p">(</span><span class="m">8.0</span><span class="p">),</span>
+                <span class="nl">child:</span> <span class="n">DefaultTextStyle</span><span class="p">(</span>
+                  <span class="nl">style:</span> <span class="n">TextStyle</span><span class="p">(</span><span class="nl">fontWeight:</span> <span class="n">FontWeight</span><span class="p">.</span><span class="n">bold</span><span class="p">),</span>
+                  <span class="nl">child:</span> <span class="n">child</span><span class="p">,</span>
+                <span class="p">),</span>
+              <span class="p">),</span>
+            <span class="p">),</span>
+          <span class="p">),</span>
+        <span class="p">),</span>
+      <span class="p">),</span>
+    <span class="p">);</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>可以看到<code class="docutils literal notranslate"><span class="pre">GradientButton</span></code>是由<code class="docutils literal notranslate"><span class="pre">DecoratedBox</span></code>、<code class="docutils literal notranslate"><span class="pre">Padding</span></code>、<code class="docutils literal notranslate"><span class="pre">Center</span></code>、<code class="docutils literal notranslate"><span class="pre">InkWell</span></code>等组件组合而成。当然上面的代码只是一个示例，作为一个按钮它还并不完整，比如没有禁用状态，读者可以根据实际需要来完善。</p>
+<div class="section" id="gradientbutton">
+<h3>使用GradientButton<a class="headerlink" href="#gradientbutton" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-dart notranslate"><div class="highlight"><pre><span></span><span class="k">import</span> <span class="s1">&#39;package:flutter/material.dart&#39;</span><span class="p">;</span>
+<span class="k">import</span> <span class="s1">&#39;../widgets/index.dart&#39;</span><span class="p">;</span>
+
+<span class="kd">class</span> <span class="nc">GradientButtonRoute</span> <span class="kd">extends</span> <span class="n">StatefulWidget</span> <span class="p">{</span>
+  <span class="nd">@override</span>
+  <span class="n">_GradientButtonRouteState</span> <span class="n">createState</span><span class="p">()</span> <span class="o">=&gt;</span> <span class="n">_GradientButtonRouteState</span><span class="p">();</span>
+<span class="p">}</span>
+
+<span class="kd">class</span> <span class="nc">_GradientButtonRouteState</span> <span class="kd">extends</span> <span class="n">State</span><span class="o">&lt;</span><span class="n">GradientButtonRoute</span><span class="o">&gt;</span> <span class="p">{</span>
+  <span class="nd">@override</span>
+  <span class="n">Widget</span> <span class="n">build</span><span class="p">(</span><span class="n">BuildContext</span> <span class="n">context</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">return</span> <span class="n">Container</span><span class="p">(</span>
+      <span class="nl">child:</span> <span class="n">Column</span><span class="p">(</span>
+        <span class="nl">children:</span> <span class="o">&lt;</span><span class="n">Widget</span><span class="o">&gt;</span><span class="p">[</span>
+          <span class="n">GradientButton</span><span class="p">(</span>
+            <span class="nl">colors:</span> <span class="p">[</span><span class="n">Colors</span><span class="p">.</span><span class="n">orange</span><span class="p">,</span> <span class="n">Colors</span><span class="p">.</span><span class="n">red</span><span class="p">],</span>
+            <span class="nl">height:</span> <span class="m">50.0</span><span class="p">,</span>
+            <span class="nl">child:</span> <span class="n">Text</span><span class="p">(</span><span class="s2">&quot;Submit&quot;</span><span class="p">),</span>
+            <span class="nl">onPressed:</span> <span class="n">onTap</span><span class="p">,</span>
+          <span class="p">),</span>
+          <span class="n">GradientButton</span><span class="p">(</span>
+            <span class="nl">height:</span> <span class="m">50.0</span><span class="p">,</span>
+            <span class="nl">colors:</span> <span class="p">[</span><span class="n">Colors</span><span class="p">.</span><span class="n">lightGreen</span><span class="p">,</span> <span class="n">Colors</span><span class="p">.</span><span class="n">green</span><span class="p">[</span><span class="m">700</span><span class="p">]],</span>
+            <span class="nl">child:</span> <span class="n">Text</span><span class="p">(</span><span class="s2">&quot;Submit&quot;</span><span class="p">),</span>
+            <span class="nl">onPressed:</span> <span class="n">onTap</span><span class="p">,</span>
+          <span class="p">),</span>
+          <span class="n">GradientButton</span><span class="p">(</span>
+            <span class="nl">height:</span> <span class="m">50.0</span><span class="p">,</span>
+            <span class="nl">colors:</span> <span class="p">[</span><span class="n">Colors</span><span class="p">.</span><span class="n">lightBlue</span><span class="p">[</span><span class="m">300</span><span class="p">],</span> <span class="n">Colors</span><span class="p">.</span><span class="n">blueAccent</span><span class="p">],</span>
+            <span class="nl">child:</span> <span class="n">Text</span><span class="p">(</span><span class="s2">&quot;Submit&quot;</span><span class="p">),</span>
+            <span class="nl">onPressed:</span> <span class="n">onTap</span><span class="p">,</span>
+          <span class="p">),</span>
+        <span class="p">],</span>
+      <span class="p">),</span>
+    <span class="p">);</span>
+  <span class="p">}</span>
+  <span class="n">onTap</span><span class="p">()</span> <span class="p">{</span>
+    <span class="n">print</span><span class="p">(</span><span class="s2">&quot;button click&quot;</span><span class="p">);</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="id3">
+<h2>总结<a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h2>
+<p>通过组合的方式定义组件和我们之前写界面并无差异，不过在抽离出单独的组件时我们要考虑代码规范性，如必要参数要用<code class="docutils literal notranslate"><span class="pre">&#64;required</span></code> 标注，对于可选参数在特定场景需要判空或设置默认值等。这是由于使用者大多时候可能不了解组件的内部细节，所以为了保证代码健壮性，我们需要在用户错误地使用组件时能够兼容或报错提示（使用<code class="docutils literal notranslate"><span class="pre">assert</span></code>断言函数）。</p>
+</div>
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">Flutter in action</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2014, Miguel Grinberg.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.5.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="../_sources/chapter10/combine.md.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

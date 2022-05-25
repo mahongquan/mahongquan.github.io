@@ -1,0 +1,300 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>3.3 文本及样式 &#8212; Flutter in action  documentation</title>
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="id1">
+<h1>3.3 文本及样式<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="text">
+<h2>3.3.1 Text<a class="headerlink" href="#text" title="Permalink to this headline">¶</a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">Text</span></code>用于显示简单样式文本，它包含一些控制文本显示样式的一些属性，一个简单的例子如下：</p>
+<div class="highlight-dart notranslate"><div class="highlight"><pre><span></span><span class="n">Text</span><span class="p">(</span><span class="s2">&quot;Hello world&quot;</span><span class="p">,</span>
+  <span class="nl">textAlign:</span> <span class="n">TextAlign</span><span class="p">.</span><span class="n">left</span><span class="p">,</span>
+<span class="p">);</span>
+
+<span class="n">Text</span><span class="p">(</span><span class="s2">&quot;Hello world! I&#39;m Jack. &quot;</span><span class="o">*</span><span class="m">4</span><span class="p">,</span>
+  <span class="nl">maxLines:</span> <span class="m">1</span><span class="p">,</span>
+  <span class="nl">overflow:</span> <span class="n">TextOverflow</span><span class="p">.</span><span class="n">ellipsis</span><span class="p">,</span>
+<span class="p">);</span>
+
+<span class="n">Text</span><span class="p">(</span><span class="s2">&quot;Hello world&quot;</span><span class="p">,</span>
+  <span class="nl">textScaleFactor:</span> <span class="m">1.5</span><span class="p">,</span>
+<span class="p">);</span>
+</pre></div>
+</div>
+<p>运行效果如图3-5所示：</p>
+<p><img alt="image-20180829103242552" src="../_images/3-5.png" /></p>
+<ul>
+<li><p><code class="docutils literal notranslate"><span class="pre">textAlign</span></code>：文本的对齐方式；可以选择左对齐、右对齐还是居中。注意，对齐的参考系是Text widget本身。本例中虽然是指定了居中对齐，但因为Text文本内容宽度不足一行，Text的宽度和文本内容长度相等，那么这时指定对齐方式是没有意义的，只有Text宽度大于文本内容长度时指定此属性才有意义。下面我们指定一个较长的字符串：</p>
+<div class="highlight-dart notranslate"><div class="highlight"><pre><span></span>Text(&quot;Hello world &quot;*6,  //字符串重复六次
+  textAlign: TextAlign.center,
+)；
+</pre></div>
+</div>
+<p>运行效果如图3-6所示：</p>
+<p><img alt="image-20180829104807535" src="../_images/3-6.png" /></p>
+</li>
+</ul>
+<p>​      字符串内容超过一行，Text宽度等于屏幕宽度，第二行文本便会居中显示。</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">maxLines</span></code>、<code class="docutils literal notranslate"><span class="pre">overflow</span></code>：指定文本显示的最大行数，默认情况下，文本是自动折行的，如果指定此参数，则文本最多不会超过指定的行。如果有多余的文本，可以通过<code class="docutils literal notranslate"><span class="pre">overflow</span></code>来指定截断方式，默认是直接截断，本例中指定的截断方式<code class="docutils literal notranslate"><span class="pre">TextOverflow.ellipsis</span></code>，它会将多余文本截断后以省略符“…”表示；TextOverflow的其它截断方式请参考SDK文档。</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">textScaleFactor</span></code>：代表文本相对于当前字体大小的缩放因子，相对于去设置文本的样式<code class="docutils literal notranslate"><span class="pre">style</span></code>属性的<code class="docutils literal notranslate"><span class="pre">fontSize</span></code>，它是调整字体大小的一个快捷方式。该属性的默认值可以通过<code class="docutils literal notranslate"><span class="pre">MediaQueryData.textScaleFactor</span></code>获得，如果没有<code class="docutils literal notranslate"><span class="pre">MediaQuery</span></code>，那么会默认值将为1.0。</p></li>
+</ul>
+</div>
+<div class="section" id="textstyle">
+<h2>3.3.2 TextStyle<a class="headerlink" href="#textstyle" title="Permalink to this headline">¶</a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">TextStyle</span></code>用于指定文本显示的样式如颜色、字体、粗细、背景等。我们看一个示例：</p>
+<div class="highlight-dart notranslate"><div class="highlight"><pre><span></span><span class="n">Text</span><span class="p">(</span><span class="s2">&quot;Hello world&quot;</span><span class="p">,</span>
+  <span class="nl">style:</span> <span class="n">TextStyle</span><span class="p">(</span>
+    <span class="nl">color:</span> <span class="n">Colors</span><span class="p">.</span><span class="n">blue</span><span class="p">,</span>
+    <span class="nl">fontSize:</span> <span class="m">18.0</span><span class="p">,</span>
+    <span class="nl">height:</span> <span class="m">1.2</span><span class="p">,</span>  
+    <span class="nl">fontFamily:</span> <span class="s2">&quot;Courier&quot;</span><span class="p">,</span>
+    <span class="nl">background:</span> <span class="k">new</span> <span class="n">Paint</span><span class="p">()..</span><span class="n">color</span><span class="o">=</span><span class="n">Colors</span><span class="p">.</span><span class="n">yellow</span><span class="p">,</span>
+    <span class="nl">decoration:</span><span class="n">TextDecoration</span><span class="p">.</span><span class="n">underline</span><span class="p">,</span>
+    <span class="nl">decorationStyle:</span> <span class="n">TextDecorationStyle</span><span class="p">.</span><span class="n">dashed</span>
+  <span class="p">),</span>
+<span class="p">);</span>
+</pre></div>
+</div>
+<p>效果如图3-7所示：</p>
+<p><img alt="3-7" src="../_images/3-7.png" /></p>
+<p>此示例只展示了TextStyle的部分属性，它还有一些其它属性，属性名基本都是自解释的，在此不再赘述，读者可以查阅SDK文档。值得注意的是：</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">height</span></code>：该属性用于指定行高，但它并不是一个绝对值，而是一个因子，具体的行高等于<code class="docutils literal notranslate"><span class="pre">fontSize</span></code>*<code class="docutils literal notranslate"><span class="pre">height</span></code>。</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">fontFamily</span></code> ：由于不同平台默认支持的字体集不同，所以在手动指定字体时一定要先在不同平台测试一下。</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">fontSize</span></code>：该属性和Text的<code class="docutils literal notranslate"><span class="pre">textScaleFactor</span></code>都用于控制字体大小。但是有两个主要区别：</p>
+<ul>
+<li><p><code class="docutils literal notranslate"><span class="pre">fontSize</span></code>可以精确指定字体大小，而<code class="docutils literal notranslate"><span class="pre">textScaleFactor</span></code>只能通过缩放比例来控制。</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">textScaleFactor</span></code>主要是用于系统字体大小设置改变时对Flutter应用字体进行全局调整，而<code class="docutils literal notranslate"><span class="pre">fontSize</span></code>通常用于单个文本，字体大小不会跟随系统字体大小变化。</p></li>
+</ul>
+</li>
+</ul>
+</div>
+<div class="section" id="textspan">
+<h2>3.3.3 TextSpan<a class="headerlink" href="#textspan" title="Permalink to this headline">¶</a></h2>
+<p>在上面的例子中，Text的所有文本内容只能按同一种样式，如果我们需要对一个Text内容的不同部分按照不同的样式显示，这时就可以使用<code class="docutils literal notranslate"><span class="pre">TextSpan</span></code>，它代表文本的一个“片段”。我们看看TextSpan的定义:</p>
+<div class="highlight-dart notranslate"><div class="highlight"><pre><span></span><span class="k">const</span> <span class="n">TextSpan</span><span class="p">({</span>
+  <span class="n">TextStyle</span> <span class="n">style</span><span class="p">,</span> 
+  <span class="n">Sting</span> <span class="n">text</span><span class="p">,</span>
+  <span class="n">List</span><span class="o">&lt;</span><span class="n">TextSpan</span><span class="o">&gt;</span> <span class="n">children</span><span class="p">,</span>
+  <span class="n">GestureRecognizer</span> <span class="n">recognizer</span><span class="p">,</span>
+<span class="p">});</span>
+</pre></div>
+</div>
+<p>其中<code class="docutils literal notranslate"><span class="pre">style</span></code> 和 <code class="docutils literal notranslate"><span class="pre">text</span></code>属性代表该文本片段的样式和内容。  <code class="docutils literal notranslate"><span class="pre">children</span></code>是一个<code class="docutils literal notranslate"><span class="pre">TextSpan</span></code>的数组，也就是说<code class="docutils literal notranslate"><span class="pre">TextSpan</span></code>可以包括其他<code class="docutils literal notranslate"><span class="pre">TextSpan</span></code>。而<code class="docutils literal notranslate"><span class="pre">recognizer</span></code>用于对该文本片段上用于手势进行识别处理。下面我们看一个效果（图3-8），然后用<code class="docutils literal notranslate"><span class="pre">TextSpan</span></code>实现它。</p>
+<p><img alt="3-8" src="../_images/3-8.png" /></p>
+<p>源码：</p>
+<div class="highlight-dart notranslate"><div class="highlight"><pre><span></span><span class="n">Text</span><span class="p">.</span><span class="n">rich</span><span class="p">(</span><span class="n">TextSpan</span><span class="p">(</span>
+    <span class="nl">children:</span> <span class="p">[</span>
+     <span class="n">TextSpan</span><span class="p">(</span>
+       <span class="nl">text:</span> <span class="s2">&quot;Home: &quot;</span>
+     <span class="p">),</span>
+     <span class="n">TextSpan</span><span class="p">(</span>
+       <span class="nl">text:</span> <span class="s2">&quot;https://flutterchina.club&quot;</span><span class="p">,</span>
+       <span class="nl">style:</span> <span class="n">TextStyle</span><span class="p">(</span>
+         <span class="nl">color:</span> <span class="n">Colors</span><span class="p">.</span><span class="n">blue</span>
+       <span class="p">),</span>  
+       <span class="nl">recognizer:</span> <span class="n">_tapRecognizer</span>
+     <span class="p">),</span>
+    <span class="p">]</span>
+<span class="p">))</span>
+</pre></div>
+</div>
+<ul class="simple">
+<li><p>上面代码中，我们通过TextSpan实现了一个基础文本片段和一个链接片段，然后通过<code class="docutils literal notranslate"><span class="pre">Text.rich</span> </code> 方法将<code class="docutils literal notranslate"><span class="pre">TextSpan</span></code> 添加到Text中，之所以可以这样做，是因为Text其实就是RichText的一个包装，而RichText是可以显示多种样式(富文本)的widget。</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">_tapRecognizer</span></code>，它是点击链接后的一个处理器（代码已省略），关于手势识别的更多内容我们将在后面单独介绍。</p></li>
+</ul>
+</div>
+<div class="section" id="defaulttextstyle">
+<h2>3.3.4 DefaultTextStyle<a class="headerlink" href="#defaulttextstyle" title="Permalink to this headline">¶</a></h2>
+<p>在Widget树中，文本的样式默认是可以被继承的（子类文本类组件未指定具体样式时可以使用Widget树中父级设置的默认样式），因此，如果在Widget树的某一个节点处设置一个默认的文本样式，那么该节点的子树中所有文本都会默认使用这个样式，而<code class="docutils literal notranslate"><span class="pre">DefaultTextStyle</span></code>正是用于设置默认文本样式的。下面我们看一个例子：</p>
+<div class="highlight-dart notranslate"><div class="highlight"><pre><span></span><span class="n">DefaultTextStyle</span><span class="p">(</span>
+  <span class="c1">//1.设置文本默认样式  </span>
+  <span class="nl">style:</span> <span class="n">TextStyle</span><span class="p">(</span>
+    <span class="nl">color:</span><span class="n">Colors</span><span class="p">.</span><span class="n">red</span><span class="p">,</span>
+    <span class="nl">fontSize:</span> <span class="m">20.0</span><span class="p">,</span>
+  <span class="p">),</span>
+  <span class="nl">textAlign:</span> <span class="n">TextAlign</span><span class="p">.</span><span class="n">start</span><span class="p">,</span>
+  <span class="nl">child:</span> <span class="n">Column</span><span class="p">(</span>
+    <span class="nl">crossAxisAlignment:</span> <span class="n">CrossAxisAlignment</span><span class="p">.</span><span class="n">start</span><span class="p">,</span>
+    <span class="nl">children:</span> <span class="o">&lt;</span><span class="n">Widget</span><span class="o">&gt;</span><span class="p">[</span>
+      <span class="n">Text</span><span class="p">(</span><span class="s2">&quot;hello world&quot;</span><span class="p">),</span>
+      <span class="n">Text</span><span class="p">(</span><span class="s2">&quot;I am Jack&quot;</span><span class="p">),</span>
+      <span class="n">Text</span><span class="p">(</span><span class="s2">&quot;I am Jack&quot;</span><span class="p">,</span>
+        <span class="nl">style:</span> <span class="n">TextStyle</span><span class="p">(</span>
+          <span class="nl">inherit:</span> <span class="kc">false</span><span class="p">,</span> <span class="c1">//2.不继承默认样式</span>
+          <span class="nl">color:</span> <span class="n">Colors</span><span class="p">.</span><span class="n">grey</span>
+        <span class="p">),</span>
+      <span class="p">),</span>
+    <span class="p">],</span>
+  <span class="p">),</span>
+<span class="p">);</span>
+</pre></div>
+</div>
+<p>上面代码中，我们首先设置了一个默认的文本样式，即字体为20像素(逻辑像素)、颜色为红色。然后通过<code class="docutils literal notranslate"><span class="pre">DefaultTextStyle</span></code> 设置给了子树Column节点处，这样一来Column的所有子孙Text默认都会继承该样式，除非Text显示指定不继承样式，如代码中注释2。示例运行效果如图3-9：</p>
+<p><img alt="3-9" src="../_images/3-9.png" /></p>
+</div>
+<div class="section" id="id2">
+<h2>3.3.5 字体<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h2>
+<p>可以在Flutter应用程序中使用不同的字体。例如，我们可能会使用设计人员创建的自定义字体，或者其它第三方的字体，如<a class="reference external" href="https://fonts.google.com/">Google Fonts</a>中的字体。本节将介绍如何为Flutter应用配置字体，并在渲染文本时使用它们。</p>
+<p>在Flutter中使用字体分两步完成。首先在<code class="docutils literal notranslate"><span class="pre">pubspec.yaml</span></code>中声明它们，以确保它们会打包到应用程序中。然后通过<a class="reference external" href="https://docs.flutter.io/flutter/painting/TextStyle-class.html"><code class="docutils literal notranslate"><span class="pre">TextStyle</span></code></a>属性使用字体。</p>
+<div class="section" id="asset">
+<h3>在asset中声明<a class="headerlink" href="#asset" title="Permalink to this headline">¶</a></h3>
+<p>要将字体文件打包到应用中，和使用其它资源一样，要先在<code class="docutils literal notranslate"><span class="pre">pubspec.yaml</span></code>中声明它。然后将字体文件复制到在<code class="docutils literal notranslate"><span class="pre">pubspec.yaml</span></code>中指定的位置。如：</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">flutter</span><span class="p">:</span>
+  <span class="nt">fonts</span><span class="p">:</span>
+    <span class="p p-Indicator">-</span> <span class="nt">family</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">Raleway</span>
+      <span class="nt">fonts</span><span class="p">:</span>
+        <span class="p p-Indicator">-</span> <span class="nt">asset</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">assets/fonts/Raleway-Regular.ttf</span>
+        <span class="p p-Indicator">-</span> <span class="nt">asset</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">assets/fonts/Raleway-Medium.ttf</span>
+          <span class="nt">weight</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">500</span>
+        <span class="p p-Indicator">-</span> <span class="nt">asset</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">assets/fonts/Raleway-SemiBold.ttf</span>
+          <span class="nt">weight</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">600</span>
+    <span class="p p-Indicator">-</span> <span class="nt">family</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">AbrilFatface</span>
+      <span class="nt">fonts</span><span class="p">:</span>
+        <span class="p p-Indicator">-</span> <span class="nt">asset</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">assets/fonts/abrilfatface/AbrilFatface-Regular.ttf</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="id3">
+<h3>使用字体<a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-dart notranslate"><div class="highlight"><pre><span></span><span class="c1">// 声明文本样式</span>
+<span class="k">const</span> <span class="n">textStyle</span> <span class="o">=</span> <span class="k">const</span> <span class="n">TextStyle</span><span class="p">(</span>
+  <span class="nl">fontFamily:</span> <span class="s1">&#39;Raleway&#39;</span><span class="p">,</span>
+<span class="p">);</span>
+
+<span class="c1">// 使用文本样式</span>
+<span class="kd">var</span> <span class="n">buttonText</span> <span class="o">=</span> <span class="k">const</span> <span class="n">Text</span><span class="p">(</span>
+  <span class="s2">&quot;Use the font for this text&quot;</span><span class="p">,</span>
+  <span class="nl">style:</span> <span class="n">textStyle</span><span class="p">,</span>
+<span class="p">);</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="package">
+<h3>Package中的字体<a class="headerlink" href="#package" title="Permalink to this headline">¶</a></h3>
+<p>要使用Package中定义的字体，<strong>必须提供<code class="docutils literal notranslate"><span class="pre">package</span></code>参数</strong>。例如，假设上面的字体声明位于<code class="docutils literal notranslate"><span class="pre">my_package</span></code>包中。然后创建TextStyle的过程如下：</p>
+<div class="highlight-dart notranslate"><div class="highlight"><pre><span></span><span class="k">const</span> <span class="n">textStyle</span> <span class="o">=</span> <span class="k">const</span> <span class="n">TextStyle</span><span class="p">(</span>
+  <span class="nl">fontFamily:</span> <span class="s1">&#39;Raleway&#39;</span><span class="p">,</span>
+  <span class="nl">package:</span> <span class="s1">&#39;my_package&#39;</span><span class="p">,</span> <span class="c1">//指定包名</span>
+<span class="p">);</span>
+</pre></div>
+</div>
+<p>如果在package包内部使用它自己定义的字体，也应该在创建文本样式时指定<code class="docutils literal notranslate"><span class="pre">package</span></code>参数，如上例所示。</p>
+<p>一个包也可以只提供字体文件而不需要在pubspec.yaml中声明。 这些文件应该存放在包的<code class="docutils literal notranslate"><span class="pre">lib/</span></code>文件夹中。字体文件不会自动绑定到应用程序中，应用程序可以在声明字体时有选择地使用这些字体。假设一个名为my_package的包中有一个字体文件：</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">lib</span><span class="o">/</span><span class="n">fonts</span><span class="o">/</span><span class="n">Raleway</span><span class="o">-</span><span class="n">Medium</span><span class="o">.</span><span class="n">ttf</span>
+</pre></div>
+</div>
+<p>然后，应用程序可以声明一个字体，如下面的示例所示：</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span> <span class="nt">flutter</span><span class="p">:</span>
+   <span class="nt">fonts</span><span class="p">:</span>
+     <span class="p p-Indicator">-</span> <span class="nt">family</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">Raleway</span>
+       <span class="nt">fonts</span><span class="p">:</span>
+         <span class="p p-Indicator">-</span> <span class="nt">asset</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">assets/fonts/Raleway-Regular.ttf</span>
+         <span class="p p-Indicator">-</span> <span class="nt">asset</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">packages/my_package/fonts/Raleway-Medium.ttf</span>
+           <span class="nt">weight</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">500</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">lib/</span></code>是隐含的，所以它不应该包含在asset路径中。</p>
+<p>在这种情况下，由于应用程序本地定义了字体，所以在创建TextStyle时可以不指定<code class="docutils literal notranslate"><span class="pre">package</span></code>参数：</p>
+<div class="highlight-dart notranslate"><div class="highlight"><pre><span></span><span class="k">const</span> <span class="n">textStyle</span> <span class="o">=</span> <span class="k">const</span> <span class="n">TextStyle</span><span class="p">(</span>
+  <span class="nl">fontFamily:</span> <span class="s1">&#39;Raleway&#39;</span><span class="p">,</span>
+<span class="p">);</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">Flutter in action</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2014, Miguel Grinberg.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.5.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="../_sources/chapter3/text.md.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>
